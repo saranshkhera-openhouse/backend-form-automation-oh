@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start":"node db/seed.js"
     "dev": "node --watch server.js",
     "migrate": "node db/migrate.js",
     "seed": "node db/seed.js"
