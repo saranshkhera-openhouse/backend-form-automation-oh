@@ -74,12 +74,12 @@ async function start() {
     app.listen(PORT, () => {
       console.log(`
   ┌─────────────────────────────────────────────────┐
-  │           OPENHOUSE FORMS SERVER                 │
+  │           OPENHOUSE FORMS SERVER                │
   ├─────────────────────────────────────────────────┤
   │  Visit Form   →  /visit                         │
   │  Token Form   →  /token                         │
   │  Admin Panel  →  /admin                         │
-  │  Port: ${PORT}                                      │
+  │  Port: ${PORT}                                  │
   └─────────────────────────────────────────────────┘
       `);
     });

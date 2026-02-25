@@ -296,6 +296,51 @@ async function generateTokenPDF(data, outputPath) {
           }
         );
 
+              // ───────── PAGE 2 : TERMS & CONDITIONS ─────────
+      doc.addPage();
+
+      doc.moveDown(1);
+
+      // Heading
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(14)
+        .text('Terms and Conditions', {
+          underline: true
+        });
+
+      doc.moveDown(1);
+
+      const terms = [
+        'Should any discrepancies/unavailability of required documents arise during the document verification process, Openhouse reserves the right to withhold execution of the agreement. In such an event, the advance token paid will be refunded to Openhouse in full.',
+
+        'All charges related to the Society NOC (No Objection Certificate) shall be the sole responsibility of the seller and must be settled at the time of ownership transfer.',
+
+        'To facilitate maximum visits to your property, Openhouse will install a smart lock on your property for digital access at no cost to you.',
+
+        'Openhouse is committed to facilitating a seamless, transparent, and mutually beneficial transaction. We look forward to partnering with you through every step of this process.'
+      ];
+
+      let startY = doc.y;
+      let number = 1;
+
+      terms.forEach(term => {
+        doc
+          .font('Helvetica-Oblique') // Italic
+          .fontSize(11)
+          .text(`${number}.`, 50, startY, { continued: true });
+
+        doc
+          .text(` ${term}`, {
+            width: 480,
+            align: 'left'
+          });
+
+        doc.moveDown(0.8);
+        startY = doc.y;
+        number++;
+      });
+
       doc.end();
 
       stream.on('finish', () => resolve());
