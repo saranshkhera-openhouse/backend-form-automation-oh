@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const pool = require('./db/pool');
 const { MIGRATION_SQL } = require('./db/migrate');
+const { SOCIETIES } = require('./db/seed');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,21 +43,33 @@ app.get('/token', (req, res) => res.sendFile(path.join(__dirname, 'public', 'tok
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/', (req, res) => res.redirect('/admin'));
 
-// ── Startup: auto-migrate then listen ──
+// ── Startup: auto-migrate + auto-seed ──
 async function start() {
   try {
-    // Run migrations on startup (safe to re-run, uses IF NOT EXISTS)
+    // 1. Run migrations (safe to re-run, uses IF NOT EXISTS)
     await pool.query(MIGRATION_SQL);
-    console.log('✓ Database ready');
+    console.log('✓ Database tables ready');
 
-    // Check if societies are seeded
+    // 2. Auto-seed societies if table is empty
     const { rows } = await pool.query('SELECT COUNT(*) as count FROM master_societies');
-    if (parseInt(rows[0].count) === 0) {
-      console.log('⚠ No society data found. Run: npm run seed');
+    const count = parseInt(rows[0].count);
+
+    if (count === 0) {
+      console.log('  Seeding society data (first run)...');
+      const insertSQL = `
+        INSERT INTO master_societies (city, locality, society_name)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (city, locality, society_name) DO NOTHING
+      `;
+      for (const [city, locality, society] of SOCIETIES) {
+        await pool.query(insertSQL, [city, locality, society]);
+      }
+      console.log(`✓ Seeded ${SOCIETIES.length} societies`);
     } else {
-      console.log(`✓ ${rows[0].count} societies loaded`);
+      console.log(`✓ ${count} societies loaded`);
     }
 
+    // 3. Start server
     app.listen(PORT, () => {
       console.log(`
   ┌─────────────────────────────────────────────────┐
