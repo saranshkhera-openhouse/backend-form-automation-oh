@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Openhouse — Visit Form</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="header"><div><div class="logo">OPENHOUSE</div><div class="subtitle">Visit Form — Ground Staff</div></div></header>
+<div class="container">
+  <div class="stepper">
+    <div class="step active" onclick="goStep(1)"><div class="step-num">1</div><span class="step-text">Property</span></div><div class="step-line"></div>
+    <div class="step" onclick="goStep(2)"><div class="step-num">2</div><span class="step-text">Amenities</span></div><div class="step-line"></div>
+    <div class="step" onclick="goStep(3)"><div class="step-num">3</div><span class="step-text">Balconies</span></div><div class="step-line"></div>
+    <div class="step" onclick="goStep(4)"><div class="step-num">4</div><span class="step-text">Facing</span></div>
+  </div>
+  <div class="progress-wrap" id="prog"><div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">0% complete</div></div>
+
+  <form id="form">
+    <!-- ═══ PAGE 1: Property ═══ -->
+    <div class="page active" id="p1"><div class="card"><div class="card-title">Property Identification</div><div class="card-desc">Basic details captured during the site visit.</div>
+      <div class="fg"><label>UID <span class="req">*</span></label><input type="text" name="uid" id="uid" placeholder="Enter UID (company format)" required style="font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:.5px"><div class="err-msg">UID is required</div></div>
+      <hr class="div">
+      <div class="fg"><label>Source <span class="req">*</span></label><div class="radios" id="srcGroup"></div><div class="err-msg">Select source</div></div>
+      <div class="fg"><label>Demand Price (₹ Lakhs) <span class="req">*</span></label><input type="number" name="demand_price" class="input-md" placeholder="e.g. 85.5" step="0.01" required><div class="err-msg">Required</div></div>
+      <hr class="div">
+      <div class="fg"><label>Owner / Broker Name <span class="req">*</span></label><input type="text" name="owner_broker_name" placeholder="Full name" required><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Contact No. <span class="req">*</span></label><input type="tel" name="contact_no" placeholder="10-digit mobile" maxlength="10" required><div class="err-msg">Required</div></div>
+      <hr class="div">
+      <div class="row3">
+        <div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Society <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled><option value="">Select city first</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Select society first</option></select><div class="err-msg">Required</div></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Unit No. <span class="req">*</span></label><input type="text" name="unit_no" placeholder="e.g. B-1204" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Floor <span class="req">*</span></label><input type="number" name="floor" class="input-sm" placeholder="12" min="0" required><div class="err-msg">Required</div></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Configuration <span class="req">*</span></label><select name="configuration" id="selConfig" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Area (sqft) <span class="req">*</span></label><input type="number" name="area_sqft" class="input-md" placeholder="1450" required><div class="err-msg">Required</div></div>
+      </div>
+      <div class="fg"><label>Extra Area</label><div class="pills" id="extraPills"></div></div>
+      <div class="row2">
+        <div class="fg"><label>Bathrooms <span class="req">*</span></label><input type="number" name="bathrooms" class="input-sm" min="0" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Total Balconies <span class="req">*</span></label><input type="number" name="balconies" class="input-sm" min="0" required id="balconyCount"><div class="err-msg">Required</div></div>
+      </div>
+    </div>
+    <div class="btn-row"><div></div><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
+
+    <!-- ═══ PAGE 2: Amenities ═══ -->
+    <div class="page" id="p2"><div class="card"><div class="card-title">Amenities & Features</div><div class="card-desc">Facilities, furnishing, and building details.</div>
+      <div class="fg"><label>Gas Pipeline <span class="req">*</span></label><div class="radios" id="gasGroup"></div><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Possession Status <span class="req">*</span></label><select name="possession_status" id="selPoss" required></select><div class="err-msg">Required</div></div>
+      <!-- Tenant handover (shown conditionally) -->
+      <div class="fg" id="handoverWrap" style="display:none"><label>Tentative Handover Date <span class="req">*</span></label><input type="date" name="tentative_handover_date" id="handoverDate"><div class="err-msg">Required when tenant</div></div>
+      <div class="row2">
+        <div class="fg"><label>Club Facility <span class="req">*</span></label><div class="radios" id="clubGroup"></div><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Parking <span class="req">*</span></label><select name="parking" id="selPark" required></select><div class="err-msg">Required</div></div>
+      </div>
+      <div class="fg"><label>Sunlight (1-10) <span class="req">*</span></label><input type="number" name="sunlight" class="input-sm" min="1" max="10" required><div class="err-msg">1-10</div></div>
+      <hr class="div">
+      <div class="fg"><label>Furnishing <span class="req">*</span></label><select name="furnishing" id="selFurn" required></select><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Furnishing Details</label><div class="pills" id="furnPills"></div></div>
+      <hr class="div">
+      <div class="row3">
+        <div class="fg"><label>Total Lifts <span class="req">*</span></label><input type="number" name="total_lifts" class="input-sm" min="0" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Floors (Tower) <span class="req">*</span></label><input type="number" name="total_floors_tower" class="input-sm" min="1" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Flats/Floor <span class="req">*</span></label><input type="number" name="total_flats_floor" class="input-sm" min="1" required><div class="err-msg">Required</div></div>
+      </div>
+    </div>
+    <div class="btn-row"><button type="button" class="btn btn-outline" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
+
+    <!-- ═══ PAGE 3: Balcony Details ═══ -->
+    <div class="page" id="p3"><div class="card"><div class="card-title">Balcony Information</div><div class="card-desc">Details for each balcony. Count auto-filled from Page 1.</div>
+      <div id="balconyCards"></div>
+      <p style="font-size:11px;color:var(--text-3);margin-top:8px;">Set balcony count on Page 1 to auto-generate fields here.</p>
+    </div>
+    <div class="btn-row"><button type="button" class="btn btn-outline" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
+
+    <!-- ═══ PAGE 4: Facing & Media ═══ -->
+    <div class="page" id="p4"><div class="card"><div class="card-title">Facing & Views</div><div class="card-desc">Directions, compass links, and media.</div>
+      <div class="fg"><label>Exit Facing <span class="req">*</span></label><select name="exit_facing" id="selExit" required></select><div class="err-msg">Required</div></div>
+      <hr class="div">
+      <div class="sub-h">Master Bedroom</div>
+      <div class="row2"><div class="fg"><label>Balcony Facing</label><select name="master_bedroom_balcony_facing" class="ds"></select></div><div class="fg"><label>Balcony View</label><select name="master_bedroom_balcony_view" class="vs"></select></div></div>
+      <div class="fg"><label>Compass Link</label><input type="url" name="master_bedroom_compass_link" placeholder="Google Drive link"></div>
+      <hr class="div">
+      <div class="sub-h">Second Bedroom</div>
+      <div class="row2"><div class="fg"><label>Balcony Facing</label><select name="second_bedroom_balcony_facing" class="ds"></select></div><div class="fg"><label>Balcony View</label><select name="second_bedroom_balcony_view" class="vs"></select></div></div>
+      <div class="fg"><label>Compass Link</label><input type="url" name="second_bedroom_compass_link" placeholder="Google Drive link"></div>
+      <hr class="div">
+      <div class="sub-h">Third Bedroom</div>
+      <div class="row2"><div class="fg"><label>Balcony Facing</label><select name="third_bedroom_balcony_facing" class="ds"></select></div><div class="fg"><label>Balcony View</label><select name="third_bedroom_balcony_view" class="vs"></select></div></div>
+      <div class="fg"><label>Compass Link</label><input type="url" name="third_bedroom_compass_link" placeholder="Google Drive link"></div>
+      <hr class="div">
+      <div class="sub-h">Kitchen</div>
+      <div class="row2"><div class="fg"><label>Balcony Facing</label><select name="kitchen_balcony_facing" class="ds"></select></div><div class="fg"><label>Balcony View</label><select name="kitchen_balcony_view" class="vs"></select></div></div>
+      <hr class="div">
+      <div class="sub-h">Living Room</div>
+      <div class="row2"><div class="fg"><label>Balcony 1 Facing</label><select name="living_room_balcony1_facing" class="ds"></select></div><div class="fg"><label>Balcony 1 View</label><select name="living_room_balcony1_view" class="vs"></select></div></div>
+      <div class="row2"><div class="fg"><label>Balcony 2 Facing</label><select name="living_room_balcony2_facing" class="ds"></select></div><div class="fg"><label>Balcony 2 View</label><select name="living_room_balcony2_view" class="vs"></select></div></div>
+      <hr class="div">
+      <div class="fg"><label>Video Link <span class="req">*</span></label><input type="url" name="video_link" placeholder="Google Drive / YouTube" required><div class="err-msg">Required</div></div>
+      <hr class="div">
+      <div class="card-title" style="margin-bottom:6px">Property Images</div>
+      <div class="img-upload-zone" id="imgZone"><div class="icon">📷</div><p>Tap to upload or drag images here</p></div>
+      <div class="img-previews" id="imgPreviews"></div>
+    </div>
+    <div class="btn-row"><button type="button" class="btn btn-outline" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" id="submitBtn">Submit Visit Form</button></div></div>
+  </form>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+let S, opts, imgUploader;
+const pages=['p1','p2','p3','p4'];
+
+function goStep(n){if(n<S.current){S.show(n);return}for(let i=S.current;i<n;i++){if(!validatePage(pages[i-1]))return}S.show(n)}
+function nextStep(){if(validatePage(pages[S.current-1]))S.next()}
+
+document.addEventListener('DOMContentLoaded', async()=>{
+  S=makeStepper(4,document.getElementById('prog'));
+  try{const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;initFields();await loadCities(document.getElementById('selCity'));setupCascade(document.getElementById('selCity'),document.getElementById('selSoc'),document.getElementById('selLoc'));makeSearchable(document.getElementById('selSoc'));imgUploader=initImageUpload('imgZone','imgPreviews')}catch(e){toast('Config load failed','err')}
+  // Tenant conditional
+  document.getElementById('selPoss').addEventListener('change',e=>{const w=document.getElementById('handoverWrap'),d=document.getElementById('handoverDate');if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
+  // Balcony count → generate cards
+  document.getElementById('balconyCount').addEventListener('change',buildBalconyCards);
+});
+
+function initFields(){
+  fillRadios(document.getElementById('srcGroup'),'source',opts.sources,true);
+  fillSelect(document.getElementById('selConfig'),opts.configurations,'Select Config');
+  fillPills(document.getElementById('extraPills'),'extra_area',opts.extraAreas);
+  fillRadios(document.getElementById('gasGroup'),'gas_pipeline',opts.yesNo,true);
+  fillSelect(document.getElementById('selPoss'),opts.possessionStatuses,'Select Status');
+  fillRadios(document.getElementById('clubGroup'),'club_facility',opts.yesNo,true);
+  fillSelect(document.getElementById('selPark'),opts.parkingOptions,'Select');
+  fillSelect(document.getElementById('selFurn'),opts.furnishingLevels,'Select');
+  fillPills(document.getElementById('furnPills'),'furnishing_details',opts.furnishingDetails);
+  fillSelect(document.getElementById('selExit'),opts.directions,'Select');
+  document.querySelectorAll('.ds').forEach(s=>fillSelect(s,opts.directions,'Select'));
+  document.querySelectorAll('.vs').forEach(s=>fillSelect(s,opts.balconyViews,'Select'));
+}
+
+function buildBalconyCards(){
+  const n=parseInt(document.getElementById('balconyCount').value)||0;
+  const c=document.getElementById('balconyCards');c.innerHTML='';
+  for(let i=1;i<=n;i++){
+    c.innerHTML+=`<div class="card" style="margin-top:10px"><div class="sub-h">Balcony ${i}</div>
+      <div class="row3">
+        <div class="fg"><label>Type <span class="req">*</span></label><select class="bal-type" data-idx="${i}" required>${opts.balconyTypes.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="fg"><label>Facing <span class="req">*</span></label><select class="bal-facing" data-idx="${i}" required>${opts.directions.map(d=>`<option>${d}</option>`).join('')}</select></div>
+        <div class="fg"><label>Area (sqft)</label><input type="number" class="bal-area input-sm" data-idx="${i}" placeholder="sqft"></div>
+      </div></div>`;
+  }
+}
+
+function getBalconyDetails(){
+  const items=[];
+  document.querySelectorAll('.bal-type').forEach(el=>{const i=el.dataset.idx;
+    items.push({index:parseInt(i),type:el.value,facing:document.querySelector(`.bal-facing[data-idx="${i}"]`)?.value||'',area:parseFloat(document.querySelector(`.bal-area[data-idx="${i}"]`)?.value)||null})});
+  return JSON.stringify(items);
+}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  if(!validatePage('p4'))return;
+  const fd=new FormData(document.getElementById('form'));
+  const body=Object.fromEntries(fd.entries());
+  body.extra_area=getCheckedJSON('extra_area');
+  body.furnishing_details=getCheckedJSON('furnishing_details');
+  body.source=getRadio('source');body.gas_pipeline=getRadio('gas_pipeline');body.club_facility=getRadio('club_facility');
+  body.balcony_details=getBalconyDetails();
+  if(imgUploader)body.image_urls=imgUploader.getUrls();
+
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/visit/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    toast(`Visit submitted! UID: ${res.uid}`,'ok',6000);
+    setTimeout(()=>{if(confirm('Submitted! Start new visit?'))location.reload()},1200);
+  });
+});
+</script>
+</body></html>
