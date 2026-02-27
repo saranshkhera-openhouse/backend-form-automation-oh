@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Openhouse — Visit Form</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr"><div><div class="logo">OPENHOUSE</div><div class="logo-sub">Visit Form — Ground Staff</div></div></header>
+<div class="ctn">
+  <!-- UID Loader -->
+  <div class="card">
+    <div class="card-t">Load Scheduled Visit</div>
+    <div class="load-row">
+      <div class="fg"><label>UID <span class="req">*</span></label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button>
+    </div>
+    <div class="pf-st" id="pfSt"></div>
+  </div>
+
+  <form id="form" style="display:none">
+    <input type="hidden" name="uid" id="fUid">
+    <div class="stepper">
+      <div class="step active" onclick="goStep(1)"><div class="step-num">1</div><span class="step-text">Property</span></div><div class="step-line"></div>
+      <div class="step" onclick="goStep(2)"><div class="step-num">2</div><span class="step-text">Amenities</span></div><div class="step-line"></div>
+      <div class="step" onclick="goStep(3)"><div class="step-num">3</div><span class="step-text">Balconies</span></div><div class="step-line"></div>
+      <div class="step" onclick="goStep(4)"><div class="step-num">4</div><span class="step-text">Facing</span></div>
+    </div>
+    <div class="prog-wrap" id="prog"><div class="prog-bar"><div class="prog-fill" style="width:0%"></div></div><div class="prog-lbl">0%</div></div>
+
+    <!-- ═══ P1: Property ═══ -->
+    <div class="page active" id="p1"><div class="card" id="propCard">
+      <div class="card-t">Property Identification</div><div class="card-d">Editable — changes save to database.</div>
+      <div class="r2"><div class="fg"><label>Source <span class="req">*</span></label><div class="radios" id="srcGrp"></div><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Demand (₹ Lakhs) <span class="req">*</span></label><input type="number" name="demand_price" class="input-md" step="0.01" required><div class="err-msg">Required</div></div></div>
+      <div class="r2"><div class="fg"><label>Owner / Broker <span class="req">*</span></label><input type="text" name="owner_broker_name" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Contact No. <span class="req">*</span></label><input type="tel" name="contact_no" maxlength="10" required><div class="err-msg">Required</div></div></div>
+      <hr class="div">
+      <div class="r3"><div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Society <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled></select><div class="err-msg">Required</div></div></div>
+      <div class="r3"><div class="fg"><label>Unit No. <span class="req">*</span></label><input type="text" name="unit_no" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Floor <span class="req">*</span></label><select name="floor" id="selFloor" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Config <span class="req">*</span></label><select name="configuration" id="selCfg" required></select><div class="err-msg">Required</div></div></div>
+      <div class="r3"><div class="fg"><label>Area (sqft) <span class="req">*</span></label><input type="number" name="area_sqft" class="input-md" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bathrooms <span class="req">*</span></label><select name="bathrooms" id="selBath" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Balconies <span class="req">*</span></label><select name="balconies" id="selBal" required></select><div class="err-msg">Required</div></div></div>
+      <div class="fg"><label>Extra Area</label><div class="pills" id="extraP"></div></div>
+    </div>
+    <div class="btn-row"><div></div><button type="button" class="btn btn-dark" onclick="nextStep()">Save & Next →</button></div></div>
+
+    <!-- ═══ P2: Amenities ═══ -->
+    <div class="page" id="p2"><div class="card">
+      <div class="card-t">Amenities & Features</div>
+      <div class="r2"><div class="fg"><label>Gas Pipeline <span class="req">*</span></label><div class="radios" id="gasGrp"></div><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Possession <span class="req">*</span></label><select name="possession_status" id="selPoss" required></select><div class="err-msg">Required</div></div></div>
+      <div class="fg" id="hdWrap" style="display:none"><label>Tentative Handover Date <span class="req">*</span></label><input type="date" name="tentative_handover_date" id="hdDate"><div class="err-msg">Required</div></div>
+      <div class="r2"><div class="fg"><label>Club Facility <span class="req">*</span></label><div class="radios" id="clubGrp"></div><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Parking <span class="req">*</span></label><select name="parking" id="selPark" required></select><div class="err-msg">Required</div></div></div>
+      <div class="fg"><label>Sunlight (1-10) <span class="req">*</span></label><select name="sunlight" id="selSun" required></select><div class="err-msg">Required</div></div>
+      <hr class="div">
+      <div class="fg"><label>Furnishing <span class="req">*</span></label><select name="furnishing" id="selFurn" required></select><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Furnishing Details</label><div class="pills" id="furnP"></div></div>
+      <hr class="div">
+      <div class="r3"><div class="fg"><label>Total Lifts <span class="req">*</span></label><select name="total_lifts" id="selLift" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Total Floors in Tower <span class="req">*</span></label><select name="total_floors_tower" id="selTFloor" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Flats per Floor <span class="req">*</span></label><select name="total_flats_floor" id="selFlat" required></select><div class="err-msg">Required</div></div></div>
+    </div>
+    <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Save & Next →</button></div></div>
+
+    <!-- ═══ P3: Balconies ═══ -->
+    <div class="page" id="p3"><div class="card">
+      <div class="card-t">Balcony Information</div><div class="card-d">Auto-generated from balcony count on Page 1.</div>
+      <div id="balCards"></div>
+      <p style="font-size:10px;color:var(--tx3);margin-top:6px">Set balcony count on Page 1 to generate fields.</p>
+    </div>
+    <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Save & Next →</button></div></div>
+
+    <!-- ═══ P4: Facing & Media ═══ -->
+    <div class="page" id="p4"><div class="card">
+      <div class="card-t">Facing & Views</div>
+      <div class="fg"><label>Exit Facing <span class="req">*</span></label><select name="exit_facing" id="selExit" required></select><div class="err-msg">Required</div></div>
+      <hr class="div">
+      <div class="sub-h">Master Bedroom</div>
+      <div class="r2"><div class="fg"><label>Facing</label><select name="master_bedroom_balcony_facing" class="ds"></select></div><div class="fg"><label>View</label><select name="master_bedroom_balcony_view" class="vs"></select></div></div>
+      <div class="fg"><label>Compass Photo</label><div class="img-single"><button type="button" class="img-single-btn" id="mbCBtn">📷 Upload</button><div class="img-single-preview" id="mbCPrev"><img></div><input type="hidden" name="master_bedroom_compass_image" id="mbCUrl"></div></div>
+      <hr class="div">
+      <div class="sub-h">Second Bedroom</div>
+      <div class="r2"><div class="fg"><label>Facing</label><select name="second_bedroom_balcony_facing" class="ds"></select></div><div class="fg"><label>View</label><select name="second_bedroom_balcony_view" class="vs"></select></div></div>
+      <div class="fg"><label>Compass Photo</label><div class="img-single"><button type="button" class="img-single-btn" id="sbCBtn">📷 Upload</button><div class="img-single-preview" id="sbCPrev"><img></div><input type="hidden" name="second_bedroom_compass_image" id="sbCUrl"></div></div>
+      <hr class="div">
+      <div class="sub-h">Third Bedroom</div>
+      <div class="r2"><div class="fg"><label>Facing</label><select name="third_bedroom_balcony_facing" class="ds"></select></div><div class="fg"><label>View</label><select name="third_bedroom_balcony_view" class="vs"></select></div></div>
+      <div class="fg"><label>Compass Photo</label><div class="img-single"><button type="button" class="img-single-btn" id="tbCBtn">📷 Upload</button><div class="img-single-preview" id="tbCPrev"><img></div><input type="hidden" name="third_bedroom_compass_image" id="tbCUrl"></div></div>
+      <hr class="div">
+      <div class="sub-h">Kitchen</div>
+      <div class="r2"><div class="fg"><label>Facing</label><select name="kitchen_balcony_facing" class="ds"></select></div><div class="fg"><label>View</label><select name="kitchen_balcony_view" class="vs"></select></div></div>
+      <hr class="div">
+      <div class="sub-h">Living Room</div>
+      <div class="r2"><div class="fg"><label>Balcony 1 Facing</label><select name="living_room_balcony1_facing" class="ds"></select></div><div class="fg"><label>Balcony 1 View</label><select name="living_room_balcony1_view" class="vs"></select></div></div>
+      <div class="r2"><div class="fg"><label>Balcony 2 Facing</label><select name="living_room_balcony2_facing" class="ds"></select></div><div class="fg"><label>Balcony 2 View</label><select name="living_room_balcony2_view" class="vs"></select></div></div>
+      <hr class="div">
+      <div class="fg"><label>Video Link</label><input type="url" name="video_link" placeholder="Google Drive / YouTube"></div>
+      <hr class="div">
+      <div class="sub-h">Additional Images (if any)</div>
+      <div class="img-zone" id="imgZone"><div class="icon">📷</div><p>Tap to upload or drag images</p></div>
+      <div class="img-previews" id="imgPrev"></div>
+    </div>
+    <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" id="submitBtn">Submit Visit ✓</button></div></div>
+  </form>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+let S,opts,imgUp,mbC,sbC,tbC;const pages=['p1','p2','p3','p4'];
+function goStep(n){if(n<S.current){S.show(n);return}for(let i=S.current;i<n;i++)if(!validatePage(pages[i-1]))return;S.show(n)}
+function nextStep(){if(validatePage(pages[S.current-1]))S.next()}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  S=makeStepper(4,document.getElementById('prog'));
+  try{const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;initFields();
+    await loadCities(document.getElementById('selCity'));setupCascade(document.getElementById('selCity'),document.getElementById('selSoc'),document.getElementById('selLoc'));
+    makeSearchable(document.getElementById('selSoc'));imgUp=initImageUpload('imgZone','imgPrev');
+    mbC=initSingleUpload('mbCBtn','mbCPrev','mbCUrl');sbC=initSingleUpload('sbCBtn','sbCPrev','sbCUrl');tbC=initSingleUpload('tbCBtn','tbCPrev','tbCUrl');
+    // Load UIDs
+    const ur=await fetch(`${API}/api/visit/uids`);const uids=await ur.json();
+    const sel=document.getElementById('selUid');sel.innerHTML='<option value="">Select UID...</option>';
+    uids.forEach(u=>{sel.innerHTML+=`<option value="${u.uid}">${u.uid} — ${u.society_name||''}, ${u.unit_no||''}</option>`});makeSearchable(sel);
+    const p=new URLSearchParams(location.search);if(p.get('uid')){sel.value=p.get('uid');loadData()}
+  }catch(e){toast('Config failed','err')}
+
+  document.getElementById('selPoss').addEventListener('change',e=>{const w=document.getElementById('hdWrap'),d=document.getElementById('hdDate');if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
+  document.getElementById('selBal').addEventListener('change',buildBalconyCards);
+});
+
+function initFields(){
+  fillRadios(document.getElementById('srcGrp'),'source',opts.sources,true);
+  fillSelect(document.getElementById('selCfg'),opts.configurations,'Config');
+  fillNumSelect(document.getElementById('selFloor'),0,50,'Floor');
+  fillNumSelect(document.getElementById('selBath'),0,10,'Qty');
+  fillNumSelect(document.getElementById('selBal'),0,10,'Qty');
+  fillNumSelect(document.getElementById('selSun'),1,10,'Rating');
+  fillNumSelect(document.getElementById('selLift'),0,10,'Qty');
+  fillNumSelect(document.getElementById('selTFloor'),1,50,'Floors');
+  fillNumSelect(document.getElementById('selFlat'),1,10,'Flats');
+  fillSelect(document.getElementById('selPoss'),opts.possessionStatuses,'Status');
+  fillRadios(document.getElementById('gasGrp'),'gas_pipeline',opts.yesNo,true);
+  fillRadios(document.getElementById('clubGrp'),'club_facility',opts.yesNo,true);
+  fillSelect(document.getElementById('selPark'),opts.parkingOptions,'Select');
+  fillSelect(document.getElementById('selFurn'),opts.furnishingLevels,'Select');
+  fillPills(document.getElementById('extraP'),'extra_area',opts.extraAreas);
+  fillPills(document.getElementById('furnP'),'furnishing_details',opts.furnishingDetails);
+  fillSelect(document.getElementById('selExit'),opts.directions,'Select');
+  document.querySelectorAll('.ds').forEach(s=>fillSelect(s,opts.directions,'—'));
+  document.querySelectorAll('.vs').forEach(s=>fillSelect(s,opts.balconyViews,'—'));
+}
+
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){
+  const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/visit/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
+    document.getElementById('fUid').value=d.uid;
+    // Set schedule/visit fields
+    const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
+    const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
+    sr('source',d.source);sv('demand_price',d.demand_price);sv('owner_broker_name',d.owner_broker_name);sv('contact_no',d.contact_no);
+    sv('unit_no',d.unit_no);sv('area_sqft',d.area_sqft);
+    // Cascade must be set in order
+    if(d.city){document.getElementById('selCity').value=d.city;await loadSocieties(d.city,document.getElementById('selSoc'),document.getElementById('selLoc'));
+      if(d.society_name){document.getElementById('selSoc').value=d.society_name;await loadLocalities(d.city,d.society_name,document.getElementById('selLoc'));if(d.locality)document.getElementById('selLoc').value=d.locality}}
+    sv('floor',d.floor);sv('configuration',d.configuration);sv('bathrooms',d.bathrooms);sv('balconies',d.balconies);
+    // Page 2
+    sr('gas_pipeline',d.gas_pipeline);sv('possession_status',d.possession_status);
+    if(d.possession_status==='Tenant'){document.getElementById('hdWrap').style.display='block';document.getElementById('hdDate').required=true;if(d.tentative_handover_date)sv('tentative_handover_date',d.tentative_handover_date.split('T')[0])}
+    sr('club_facility',d.club_facility);sv('parking',d.parking);sv('sunlight',d.sunlight);sv('furnishing',d.furnishing);
+    sv('total_lifts',d.total_lifts);sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);
+    // Extra area + furnishing pills
+    if(d.extra_area){try{JSON.parse(d.extra_area).forEach(v=>{const cb=document.querySelector(`input[name="extra_area"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
+    if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
+    // Page 3 - balconies
+    if(d.balconies)buildBalconyCards();
+    if(d.balcony_details){try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details;
+      bd.forEach(b=>{const i=b.index;if(document.querySelector(`.bf[data-i="${i}"]`))document.querySelector(`.bf[data-i="${i}"]`).value=b.facing||'';
+        if(document.querySelector(`.bv[data-i="${i}"]`))document.querySelector(`.bv[data-i="${i}"]`).value=b.view||''})}catch(e){}}
+    // Page 4 - facing
+    sv('exit_facing',d.exit_facing);sv('master_bedroom_balcony_facing',d.master_bedroom_balcony_facing);sv('master_bedroom_balcony_view',d.master_bedroom_balcony_view);
+    sv('second_bedroom_balcony_facing',d.second_bedroom_balcony_facing);sv('second_bedroom_balcony_view',d.second_bedroom_balcony_view);
+    sv('third_bedroom_balcony_facing',d.third_bedroom_balcony_facing);sv('third_bedroom_balcony_view',d.third_bedroom_balcony_view);
+    sv('kitchen_balcony_facing',d.kitchen_balcony_facing);sv('kitchen_balcony_view',d.kitchen_balcony_view);
+    sv('living_room_balcony1_facing',d.living_room_balcony1_facing);sv('living_room_balcony1_view',d.living_room_balcony1_view);
+    sv('living_room_balcony2_facing',d.living_room_balcony2_facing);sv('living_room_balcony2_view',d.living_room_balcony2_view);
+    sv('video_link',d.video_link);
+    if(d.master_bedroom_compass_image)mbC.setUrl(d.master_bedroom_compass_image);
+    if(d.second_bedroom_compass_image)sbC.setUrl(d.second_bedroom_compass_image);
+    if(d.third_bedroom_compass_image)tbC.setUrl(d.third_bedroom_compass_image);
+    if(d.additional_images){try{imgUp.setUrls(typeof d.additional_images==='string'?JSON.parse(d.additional_images):d.additional_images)}catch(e){}}
+
+    document.getElementById('form').style.display='block';
+    st.className='pf-st show ok';st.textContent=`✓ Loaded: ${uid}`;
+  }catch(e){st.className='pf-st show err';st.textContent=`✗ ${e.message}`}
+}
+
+function buildBalconyCards(){
+  const n=parseInt(document.getElementById('selBal').value)||0;
+  const c=document.getElementById('balCards');c.innerHTML='';
+  for(let i=1;i<=n;i++){c.innerHTML+=`<div class="card" style="margin-top:6px;padding:10px"><div class="sub-h">Balcony ${i}</div>
+    <div class="r2"><div class="fg"><label>Facing</label><select class="bf" data-i="${i}">${opts.directions.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <div class="fg"><label>View</label><select class="bv" data-i="${i}">${opts.balconyViews.map(v=>`<option>${v}</option>`).join('')}</select></div></div>
+    <div class="fg"><label>Photo</label><div class="img-single"><button type="button" class="img-single-btn" id="bal${i}Btn">📷</button><div class="img-single-preview" id="bal${i}Prev"><img></div><input type="hidden" id="bal${i}Url"></div></div>
+  </div>`}
+  // Init image uploads for each balcony
+  for(let i=1;i<=n;i++)initSingleUpload(`bal${i}Btn`,`bal${i}Prev`,`bal${i}Url`);
+}
+
+function getBalconyDetails(){const items=[];document.querySelectorAll('.bf').forEach(el=>{const i=el.dataset.i;
+  items.push({index:parseInt(i),facing:el.value,view:document.querySelector(`.bv[data-i="${i}"]`)?.value||'',
+    image:document.getElementById(`bal${i}Url`)?.value||''})});return JSON.stringify(items)}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  if(!validatePage('p4'))return;
+  const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());
+  body.source=getRadio('source');body.gas_pipeline=getRadio('gas_pipeline');body.club_facility=getRadio('club_facility');
+  body.extra_area=getCheckedJSON('extra_area');body.furnishing_details=getCheckedJSON('furnishing_details');
+  body.balcony_details=getBalconyDetails();if(imgUp)body.additional_images=imgUp.getUrls();
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/visit/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    toast(`Visit submitted! UID: ${body.uid}`,'ok',5000);
+    setTimeout(()=>{if(confirm('Done! Open Token Request?'))window.location.href=`/token-request?uid=${body.uid}`},1500);
+  });
+});
+</script>
+</body></html>

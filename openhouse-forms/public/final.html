@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Openhouse — Final Token</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr"><div><div class="logo">OPENHOUSE</div><div class="logo-sub">Final Token Form</div></div></header>
+<div class="ctn">
+  <div class="card">
+    <div class="card-t">Load Property</div>
+    <div class="load-row">
+      <div class="fg"><label>UID <span class="req">*</span></label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button>
+    </div>
+    <div class="pf-st" id="pfSt"></div>
+  </div>
+
+  <form id="finalForm" style="display:none">
+    <input type="hidden" name="uid" id="fUid">
+    <div class="card" id="prevCard">
+      <div class="card-t">Property Details</div><div class="card-d">Double-tap to edit.</div>
+      <div class="r2"><div class="fg"><label>UID</label><input type="text" id="v_uid" class="pre" readonly></div><div class="fg"><label>City</label><input type="text" id="v_city" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Society</label><input type="text" id="v_soc" class="pre" readonly></div><div class="fg"><label>Locality</label><input type="text" id="v_loc" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="v_owner" class="pre" readonly></div><div class="fg"><label>Phone</label><input type="text" id="v_phone" class="pre" readonly></div></div>
+      <div class="r3"><div class="fg"><label>Unit</label><input type="text" id="v_unit" class="pre" readonly></div><div class="fg"><label>Floor</label><input type="text" id="v_floor" class="pre" readonly></div><div class="fg"><label>Config</label><input type="text" id="v_cfg" class="pre" readonly></div></div>
+      <div class="fg"><label>Area (sqft)</label><input type="text" id="v_area" class="pre" readonly></div>
+    </div>
+    <div class="card"><div class="card-t">Payment</div>
+      <div class="fg"><label>Amount Paid (₹) <span class="req">*</span></label><input type="number" name="token_amount_paid" class="input-md" required><div class="err-msg">Required</div></div></div>
+    <div class="card"><div class="card-t">Deal Terms</div>
+      <div class="fg"><label>Co-owner</label><input type="text" name="co_owner"></div>
+      <div class="r2"><div class="fg"><label>Registry Status <span class="req">*</span></label><select name="registry_status" required><option value="">Select...</option><option>Registered</option><option>Unregistered</option><option>Under Process</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Occupancy <span class="req">*</span></label><select name="occupancy_status" required><option value="">Select...</option><option>Vacant</option><option>Tenant</option><option>Owner Staying</option></select><div class="err-msg">Required</div></div></div>
+      <div class="fg"><label>Inclusions</label><textarea name="inclusions" rows="2"></textarea></div>
+      <div class="r2"><div class="fg"><label>Initial Period (Days)</label><input type="number" name="initial_period" class="input-sm"></div><div class="fg"><label>Grace Period (Days)</label><input type="number" name="grace_period" class="input-sm"></div></div>
+      <div class="fg"><label>Rent During Initial Period (₹)</label><div class="na-field"><input type="number" name="rent_payable_initial_period" id="rip" placeholder="₹"><label class="na-toggle"><input type="checkbox" id="rip_na" onchange="toggleNA('rip','No rent')"><span>No rent during initial period</span></label></div></div>
+      <div class="fg"><label>Rent During Grace Period (₹)</label><div class="na-field"><input type="number" name="rent_payable_grace_period" id="rgp" placeholder="₹"><label class="na-toggle"><input type="checkbox" id="rgp_na" onchange="toggleNA('rgp','No rent')"><span>No rent during grace period</span></label></div></div></div>
+    <div class="card"><div class="card-t">Loan Details</div>
+      <div class="fg"><label>Outstanding Loan (₹)</label><input type="number" name="outstanding_loan" class="input-md"></div>
+      <div class="r2"><div class="fg"><label>Bank (Loan A/c)</label><input type="text" name="bank_name_loan"></div><div class="fg"><label>Loan A/c No.</label><input type="text" name="loan_account_number"></div></div>
+      <div class="fg"><label>Willing to pay loan?</label><div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div></div>
+    <div class="card"><div class="card-t">Documents</div>
+      <div class="fg"><label>Papers available? <span class="req">*</span></label><div class="radios"><label><input type="radio" name="papers_available" value="Yes" required><span>Yes</span></label><label><input type="radio" name="papers_available" value="No"><span>No</span></label></div><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Documents</label><div id="docsSelect"></div></div>
+      <div class="fg"><label>Remarks</label><textarea name="token_remarks" rows="2"></textarea></div></div>
+    <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">💳 NEFT / Payment Details</div>
+      <div class="fg"><label>Cancelled Cheque</label><div class="img-single"><button type="button" class="img-single-btn" id="chequeBtn">📷 Upload</button><div class="img-single-preview" id="chequePrev"><img></div><input type="hidden" name="cheque_image_url" id="chequeUrl">
+        <button type="button" class="btn btn-sm btn-out" id="ocrBtn" style="display:none;margin-left:4px">🔍 Extract</button></div><div id="ocrStatus" style="font-size:10px;color:var(--tx3);margin-top:3px"></div></div>
+      <div class="r2"><div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="bank_account_number" id="neftAc" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bank Name <span class="req">*</span></label><input type="text" name="bank_name" id="neftBank" required><div class="err-msg">Required</div></div></div>
+      <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="ifsc_code" id="neftIfsc" class="input-md" required><div class="err-msg">Required</div></div>
+      <div class="r2"><div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="token_transfer_date" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="neft_reference" required><div class="err-msg">Required</div></div></div></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-dark" id="submitBtn">Submit Final</button>
+      <div class="tt-w" id="pdfWrap"><button type="button" class="btn btn-grn" id="pdfBtn" disabled>📄 PDF</button><span class="tt-t" id="pdfTip">Submit first</span></div>
+    </div>
+  </form>
+</div>
+<div class="pdf-overlay" id="pdfModal"><div class="pdf-modal"><div class="pdf-hdr"><h3>Final Token Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div><div class="pdf-body"><iframe id="pdfFrame"></iframe></div><div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" download>⬇ Download</a></div></div></div>
+
+<script src="/js/shared.js"></script>
+<script>
+let currentUid,isSubmitted=false,docsMsel,chequeUp;
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{const r=await fetch(`${API}/api/config`);const opts=(await r.json()).options;
+    docsMsel=makeMultiSelect(document.getElementById('docsSelect'),'documents_available',opts.documentsAvailable);
+    chequeUp=initSingleUpload('chequeBtn','chequePrev','chequeUrl');
+    const ur=await fetch(`${API}/api/final/uids`);const uids=await ur.json();
+    const sel=document.getElementById('selUid');sel.innerHTML='<option value="">Select UID...</option>';
+    uids.forEach(u=>{const s=u.final_submitted_at?'✅':'📝';sel.innerHTML+=`<option value="${u.uid}">${u.uid} — ${u.society_name||''} [${s}]</option>`});
+    makeSearchable(sel);const p=new URLSearchParams(location.search);if(p.get('uid')){sel.value=p.get('uid');loadData()}
+  }catch(e){toast('Failed','err')}
+  setInterval(()=>{document.getElementById('ocrBtn').style.display=document.getElementById('chequeUrl').value?'inline-flex':'none'},500);
+  document.getElementById('ocrBtn').addEventListener('click',async()=>{const url=document.getElementById('chequeUrl').value;if(!url)return;
+    document.getElementById('ocrStatus').textContent='Extracting...';const d=await ocrCheque(url);
+    if(d.extracted){if(d.account_number)document.getElementById('neftAc').value=d.account_number;if(d.bank_name)document.getElementById('neftBank').value=d.bank_name;
+      if(d.ifsc_code)document.getElementById('neftIfsc').value=d.ifsc_code;document.getElementById('ocrStatus').textContent='✓ Verify below';document.getElementById('ocrStatus').style.color='var(--grn)'}
+    else{document.getElementById('ocrStatus').textContent='Could not extract. Enter manually.';document.getElementById('ocrStatus').style.color='var(--red)'}});
+});
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/final/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
+    document.getElementById('fUid').value=d.uid;currentUid=uid;
+    document.getElementById('v_uid').value=d.uid;document.getElementById('v_city').value=d.city||'';document.getElementById('v_soc').value=d.society_name||'';document.getElementById('v_loc').value=d.locality||'';
+    document.getElementById('v_owner').value=d.owner_broker_name||'';document.getElementById('v_phone').value=d.contact_no||'';document.getElementById('v_unit').value=d.unit_no||'';
+    document.getElementById('v_floor').value=d.floor??'';document.getElementById('v_cfg').value=d.configuration||'';document.getElementById('v_area').value=d.area_sqft??'';
+    const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
+    sv('token_amount_paid',d.token_amount_paid);sv('co_owner',d.co_owner);sv('registry_status',d.registry_status);sv('occupancy_status',d.occupancy_status);sv('inclusions',d.inclusions);
+    sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
+    if(d.rent_payable_initial_period&&d.rent_payable_initial_period.toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent')}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
+    if(d.rent_payable_grace_period&&d.rent_payable_grace_period.toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent')}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
+    sv('outstanding_loan',d.outstanding_loan);sv('bank_name_loan',d.bank_name_loan);sv('loan_account_number',d.loan_account_number);sr('loan_pay_willingness',d.loan_pay_willingness);sr('papers_available',d.papers_available);
+    sv('token_remarks',d.token_remarks);sv('bank_account_number',d.bank_account_number);sv('bank_name',d.bank_name);sv('ifsc_code',d.ifsc_code);
+    if(d.token_transfer_date)sv('token_transfer_date',d.token_transfer_date.split('T')[0]);sv('neft_reference',d.neft_reference);
+    if(d.cheque_image_url)chequeUp.setUrl(d.cheque_image_url);
+    if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
+    isSubmitted=!!d.final_submitted_at;updatePdf();document.getElementById('finalForm').style.display='block';enableDoubleTapEdit(document.getElementById('prevCard'));
+    st.className='pf-st show ok';st.textContent=`✓ Loaded: ${uid}${d.final_submitted_at?' (Final)':''}`;
+  }catch(e){st.className='pf-st show err';st.textContent=`✗ ${e.message}`;document.getElementById('finalForm').style.display='none'}}
+function updatePdf(){document.getElementById('pdfBtn').disabled=!isSubmitted;document.getElementById('pdfTip').textContent=isSubmitted?'Preview PDF':'Submit first'}
+function collectBody(){const fd=new FormData(document.getElementById('finalForm'));const b=Object.fromEntries(fd.entries());b.loan_pay_willingness=getRadio('loan_pay_willingness');b.papers_available=getRadio('papers_available');b.documents_available=docsMsel.getSelected();
+  if(document.getElementById('rip').dataset.na==='1')b.rent_payable_initial_period='N/A';if(document.getElementById('rgp').dataset.na==='1')b.rent_payable_grace_period='N/A';return b}
+document.getElementById('submitBtn').addEventListener('click',()=>{const{valid,missing}=validateForm('finalForm');if(!valid){toast(`Missing: ${missing.slice(0,4).join(', ')}`,'err');return}
+  submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/final/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collectBody())});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);isSubmitted=true;updatePdf();toast('Final submitted! PDF ready.','ok',5000)})});
+document.getElementById('pdfBtn').addEventListener('click',()=>{if(!isSubmitted)return;const u=`${API}/api/final/pdf/${currentUid}`;document.getElementById('pdfFrame').src=u;document.getElementById('pdfDl').href=u;document.getElementById('pdfDl').download=`Final_${currentUid}.pdf`;document.getElementById('pdfModal').classList.add('open')});
+function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
+document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
+</script>
+</body></html>

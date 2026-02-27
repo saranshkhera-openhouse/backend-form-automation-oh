@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Openhouse — Admin</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr">
+  <div><div class="logo">OPENHOUSE</div><div class="logo-sub">Admin Dashboard</div></div>
+  <div style="display:flex;gap:4px;flex-wrap:wrap">
+    <a href="/schedule" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">+Schedule</a>
+    <a href="/visit" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">+Visit</a>
+    <a href="/token-request" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">+Token</a>
+  </div>
+</header>
+<div class="ctn wide">
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-val" id="sAll">—</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-val" id="sSch">—</div><div class="stat-lbl">Scheduled</div></div>
+    <div class="stat"><div class="stat-val" id="sVis">—</div><div class="stat-lbl">Visited</div></div>
+    <div class="stat"><div class="stat-val" id="sTok">—</div><div class="stat-lbl">Token Req</div></div>
+    <div class="stat"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal</div></div>
+    <div class="stat"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Final</div></div>
+    <div class="stat"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:8px 10px;border-bottom:1px solid var(--bd)">
+      <div class="fbar">
+        <input type="text" id="fQ" placeholder="🔍 Search UID, society, owner...">
+        <select id="fCity"><option value="">All Cities</option></select>
+        <select id="fSt"><option value="">All Status</option>
+          <option value="scheduled">Scheduled</option><option value="visited">Visited</option>
+          <option value="token">Token Req</option><option value="draft">Draft</option>
+          <option value="deal">Deal Done</option><option value="final">Final</option><option value="listed">Listed</option>
+        </select>
+        <button class="btn btn-out btn-sm" onclick="loadData()">↻</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl"><thead><tr>
+        <th data-s="uid">UID<span class="sa"></span></th><th data-s="city">City<span class="sa"></span></th>
+        <th data-s="society_name">Society<span class="sa"></span></th><th>Unit</th><th>Owner</th>
+        <th>Sch</th><th>Vis</th><th>Tok</th><th>Deal</th><th>Final</th><th>List</th><th>Actions</th>
+      </tr></thead><tbody id="tb"><tr><td colspan="12" style="text-align:center;padding:30px;color:var(--tx3)">Loading...</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+const API=window.location.origin;let allData=[],sortCol='',sortDir='desc';
+async function loadData(){try{const r=await fetch(`${API}/api/properties`);allData=await r.json();
+  const cities=[...new Set(allData.map(p=>p.city).filter(Boolean))].sort();const fc=document.getElementById('fCity');const c=fc.value;
+  fc.innerHTML='<option value="">All Cities</option>'+cities.map(c=>`<option>${c}</option>`).join('');fc.value=c;
+  document.getElementById('sAll').textContent=allData.length;
+  document.getElementById('sSch').textContent=allData.filter(p=>p.schedule_submitted_at).length;
+  document.getElementById('sVis').textContent=allData.filter(p=>p.visit_submitted_at).length;
+  document.getElementById('sTok').textContent=allData.filter(p=>p.token_submitted_at).length;
+  document.getElementById('sDeal').textContent=allData.filter(p=>p.token_deal_submitted_at).length;
+  document.getElementById('sFin').textContent=allData.filter(p=>p.final_submitted_at).length;
+  document.getElementById('sLst').textContent=allData.filter(p=>p.listing_submitted_at).length;
+  render()}catch(e){console.error(e)}}
+
+function render(){let d=[...allData];const q=document.getElementById('fQ').value.toLowerCase();const city=document.getElementById('fCity').value;const st=document.getElementById('fSt').value;
+  if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q));
+  if(city)d=d.filter(p=>p.city===city);
+  if(st==='scheduled')d=d.filter(p=>p.schedule_submitted_at&&!p.visit_submitted_at);
+  if(st==='visited')d=d.filter(p=>p.visit_submitted_at&&!p.token_submitted_at);
+  if(st==='token')d=d.filter(p=>p.token_submitted_at&&!p.token_is_draft&&!p.token_deal_submitted_at);
+  if(st==='draft')d=d.filter(p=>p.token_is_draft);
+  if(st==='deal')d=d.filter(p=>p.token_deal_submitted_at&&!p.final_submitted_at);
+  if(st==='final')d=d.filter(p=>p.final_submitted_at&&!p.listing_submitted_at);
+  if(st==='listed')d=d.filter(p=>p.listing_submitted_at);
+  if(sortCol)d.sort((a,b)=>{let va=(a[sortCol]||'').toString().toLowerCase(),vb=(b[sortCol]||'').toString().toLowerCase();return va<vb?(sortDir==='asc'?-1:1):va>vb?(sortDir==='asc'?1:-1):0});
+  const tb=document.getElementById('tb');
+  if(!d.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--tx3)">No results</td></tr>';return}
+  const ck=v=>v?'<span class="badge ok">✓</span>':'—';
+  tb.innerHTML=d.map(p=>{
+    let acts=[];
+    if(!p.visit_submitted_at)acts.push(`<a href="/visit?uid=${p.uid}" class="link">Visit</a>`);
+    if(p.visit_submitted_at)acts.push(`<a href="/token-request?uid=${p.uid}" class="link">Token</a>`);
+    if(p.token_submitted_at||p.token_is_draft)acts.push(`<a href="/token-deal?uid=${p.uid}" class="link">Deal</a>`);
+    if(p.token_deal_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">Final</a>`);
+    if(p.visit_submitted_at)acts.push(`<a href="/listing?uid=${p.uid}" class="link">List</a>`);
+    if(p.token_deal_submitted_at)acts.push(`<a href="/api/token-deal/pdf/${p.uid}" class="link" target="_blank">PDF</a>`);
+    return`<tr><td style="font-family:var(--mono);font-size:10px;font-weight:600">${p.uid}</td><td>${p.city||'—'}</td><td>${p.society_name||'—'}</td><td>${p.unit_no||'—'}</td><td>${p.owner_broker_name||'—'}</td>
+      <td>${ck(p.schedule_submitted_at)}</td><td>${ck(p.visit_submitted_at)}</td><td>${p.token_is_draft?'<span class="badge draft">Draft</span>':ck(p.token_submitted_at)}</td>
+      <td>${ck(p.token_deal_submitted_at)}</td><td>${ck(p.final_submitted_at)}</td><td>${ck(p.listing_submitted_at)}</td><td>${acts.join(' ')}</td></tr>`}).join('')}
+
+document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.s;if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=c;sortDir='asc'}
+  document.querySelectorAll('.tbl th .sa').forEach(s=>s.textContent='');th.querySelector('.sa').textContent=sortDir==='asc'?' ▲':' ▼';render()})});
+document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
+document.addEventListener('DOMContentLoaded',loadData);
+</script>
+</body></html>

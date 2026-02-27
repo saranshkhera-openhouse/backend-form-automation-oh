@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Openhouse — Listing Details</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr"><div><div class="logo">OPENHOUSE</div><div class="logo-sub">Listing Details Form</div></div></header>
+<div class="ctn">
+  <div class="card">
+    <div class="card-t">Load Property</div>
+    <div class="load-row">
+      <div class="fg"><label>UID <span class="req">*</span></label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button>
+    </div>
+    <div class="pf-st" id="pfSt"></div>
+  </div>
+
+  <form id="listForm" style="display:none">
+    <input type="hidden" name="uid" id="fUid">
+
+    <!-- Property Summary (from visit) -->
+    <div class="card" id="prevCard">
+      <div class="card-t">Property Summary</div><div class="card-d">Fetched from previous forms.</div>
+      <div class="r2"><div class="fg"><label>UID</label><input type="text" id="v_uid" class="pre" readonly></div><div class="fg"><label>City</label><input type="text" id="v_city" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Society</label><input type="text" id="v_soc" class="pre" readonly></div><div class="fg"><label>Locality</label><input type="text" id="v_loc" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="v_owner" class="pre" readonly></div><div class="fg"><label>Phone</label><input type="text" id="v_phone" class="pre" readonly></div></div>
+      <div class="r3"><div class="fg"><label>Unit</label><input type="text" id="v_unit" class="pre" readonly></div><div class="fg"><label>Floor</label><input type="text" id="v_floor" class="pre" readonly></div><div class="fg"><label>Config</label><input type="text" id="v_cfg" class="pre" readonly></div></div>
+    </div>
+
+    <!-- Physical Details -->
+    <div class="card">
+      <div class="card-t">Physical Details</div>
+      <div class="r3"><div class="fg"><label>Area (sqft)</label><input type="text" id="v_area" class="pre" readonly></div>
+        <div class="fg"><label>Bathrooms</label><input type="text" id="v_bath" class="pre" readonly></div>
+        <div class="fg"><label>Balconies</label><input type="text" id="v_bal" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Furnishing</label><input type="text" id="v_furn" class="pre" readonly></div>
+        <div class="fg"><label>Parking</label><input type="text" id="v_park" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Possession</label><input type="text" id="v_poss" class="pre" readonly></div>
+        <div class="fg"><label>Exit Facing</label><input type="text" id="v_exit" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Total Floors</label><input type="text" id="v_tflr" class="pre" readonly></div>
+        <div class="fg"><label>Lifts</label><input type="text" id="v_lift" class="pre" readonly></div></div>
+    </div>
+
+    <!-- Listing Specific -->
+    <div class="card">
+      <div class="card-t">Listing Information</div>
+      <div class="fg"><label>Asking Price (₹ Lakhs) <span class="req">*</span></label><input type="number" name="listing_asking_price" class="input-md" step="0.01" required><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Availability</label><select name="listing_availability"><option value="">Select...</option><option>Immediate</option><option>Within 1 Month</option><option>Within 3 Months</option><option>Within 6 Months</option><option>1 Year+</option></select></div>
+      <div class="fg"><label>Key Highlights</label><textarea name="listing_highlights" rows="3" placeholder="e.g. Corner unit, park-facing, recently renovated, modular kitchen..."></textarea></div>
+      <div class="fg"><label>Description</label><textarea name="listing_description" rows="4" placeholder="Detailed listing description for buyers..."></textarea></div>
+    </div>
+
+    <div class="btn-row"><div></div><button type="button" class="btn btn-dark" id="submitBtn" style="flex:none;max-width:none;width:100%">Submit Listing</button></div>
+  </form>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{const ur=await fetch(`${API}/api/listing/uids`);const uids=await ur.json();
+    const sel=document.getElementById('selUid');sel.innerHTML='<option value="">Select UID...</option>';
+    uids.forEach(u=>{const s=u.listing_submitted_at?'✅ Listed':'📝';sel.innerHTML+=`<option value="${u.uid}">${u.uid} — ${u.society_name||''}, ${u.unit_no||''} [${s}]</option>`});
+    makeSearchable(sel);const p=new URLSearchParams(location.search);if(p.get('uid')){sel.value=p.get('uid');loadData()}
+  }catch(e){toast('Failed','err')}
+});
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/listing/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
+    document.getElementById('fUid').value=d.uid;
+    document.getElementById('v_uid').value=d.uid;document.getElementById('v_city').value=d.city||'';
+    document.getElementById('v_soc').value=d.society_name||'';document.getElementById('v_loc').value=d.locality||'';
+    document.getElementById('v_owner').value=d.owner_broker_name||'';document.getElementById('v_phone').value=d.contact_no||'';
+    document.getElementById('v_unit').value=d.unit_no||'';document.getElementById('v_floor').value=d.floor??'';
+    document.getElementById('v_cfg').value=d.configuration||'';document.getElementById('v_area').value=d.area_sqft??'';
+    document.getElementById('v_bath').value=d.bathrooms??'';document.getElementById('v_bal').value=d.balconies??'';
+    document.getElementById('v_furn').value=d.furnishing||'';document.getElementById('v_park').value=d.parking||'';
+    document.getElementById('v_poss').value=d.possession_status||'';document.getElementById('v_exit').value=d.exit_facing||'';
+    document.getElementById('v_tflr').value=d.total_floors_tower??'';document.getElementById('v_lift').value=d.total_lifts??'';
+    if(d.listing_asking_price)document.querySelector('[name="listing_asking_price"]').value=d.listing_asking_price;
+    if(d.listing_availability)document.querySelector('[name="listing_availability"]').value=d.listing_availability;
+    if(d.listing_highlights)document.querySelector('[name="listing_highlights"]').value=d.listing_highlights;
+    if(d.listing_description)document.querySelector('[name="listing_description"]').value=d.listing_description;
+    document.getElementById('listForm').style.display='block';
+    st.className='pf-st show ok';st.textContent=`✓ Loaded: ${uid}`;
+  }catch(e){st.className='pf-st show err';st.textContent=`✗ ${e.message}`;document.getElementById('listForm').style.display='none'}}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const{valid,missing}=validateForm('listForm');if(!valid){toast(`Missing: ${missing.join(', ')}`,'err');return}
+  const fd=new FormData(document.getElementById('listForm'));const body=Object.fromEntries(fd.entries());
+  submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/listing/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Listing submitted!','ok',5000)})});
+</script>
+</body></html>
