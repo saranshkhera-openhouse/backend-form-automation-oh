@@ -64,7 +64,7 @@ async function loadLocalities(city,soc,locSel){locSel.innerHTML='<option value="
 function setupCascade(cityEl,socEl,locEl){cityEl.addEventListener('change',()=>loadSocieties(cityEl.value,socEl,locEl));socEl.addEventListener('change',()=>loadLocalities(cityEl.value,socEl.value,locEl))}
 
 // ══════ STEPPER + PROGRESS ══════
-function makeStepper(total,progEl){
+function makeStepper(total,progEl){ 
   let cur=1;
   function update(p){document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
     const pg=document.getElementById(`p${p}`);if(pg)pg.classList.add('active');
