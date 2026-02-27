@@ -92,7 +92,7 @@ function validateForm(fid){const form=document.getElementById(fid);if(!form)retu
 function initImageUpload(zoneId,previewsId,max=10){
   const zone=document.getElementById(zoneId),previews=document.getElementById(previewsId),urls=[];let cfg=null;
   fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cfg=c).catch(()=>{});
-  const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.multiple=true;fi.setAttribute('capture','environment');
+  const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.multiple=true;
   zone.addEventListener('click',()=>fi.click());
   zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover')});
   zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
@@ -114,7 +114,7 @@ function initSingleUpload(btnId,previewId,urlInputId){
   let cfg=null,currentUrl='';
   fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cfg=c).catch(()=>{});
   const btn=document.getElementById(btnId),prev=document.getElementById(previewId),urlInp=document.getElementById(urlInputId);
-  const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.setAttribute('capture','environment');
+  const fi=document.createElement('input');fi.type='file';fi.accept='image/*';
   btn.addEventListener('click',()=>fi.click());
   fi.addEventListener('change',async()=>{if(!fi.files.length)return;if(!cfg||!cfg.cloudName){toast('Cloudinary not configured','warn');return}
     btn.textContent='Uploading...';btn.disabled=true;
