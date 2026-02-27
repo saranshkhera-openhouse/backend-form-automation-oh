@@ -12,7 +12,7 @@ Multi-form property management system for Openhouse. Ground staff fills visit fo
 
 ## URLs
 
-| Page        | Path     | Who uses it               |
+| Page       | Path     | Who uses it               |
 |------------|----------|---------------------------|
 | Visit Form | `/visit` | Ground staff (mobile)     |
 | Token Form | `/token` | Sales rep (desktop)       |

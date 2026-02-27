@@ -47,16 +47,16 @@ async function start(){
     if(parseInt(rows[0].c)===0){for(const[c,l,s]of SOCIETIES)await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING',[c,l,s]);console.log(`✓ Seeded ${SOCIETIES.length} societies`)}
     app.listen(PORT,()=>console.log(`
   ┌────────────────────────────────────────┐
-  │  OPENHOUSE FORMS v4.0 — 6-Form System │
+  │  OPENHOUSE FORMS v4.0 — 6-Form System  │
   ├────────────────────────────────────────┤
-  │  1. Visit Schedule  → /schedule       │
-  │  2. Visit Form      → /visit          │
+  │  1. Visit Schedule  → /schedule        │
+  │  2. Visit Form      → /visit           │
   │  3. Token Request   → /token-request   │
   │  4. Token & Deal    → /token-deal      │
   │  5. Final Token     → /final           │
   │  6. Listing Details → /listing         │
   │  Admin Dashboard    → /admin           │
-  │  Port: ${PORT}                            │
+  │  Port: ${PORT}                         │
   └────────────────────────────────────────┘`));
   }catch(e){console.error('Startup failed:',e.message);process.exit(1)}
 }
