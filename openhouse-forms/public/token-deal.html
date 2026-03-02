@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Deal Terms</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr"><div><div class="logo">OPENHOUSE</div><div class="logo-sub">Deal Terms — For Owner</div></div></header>
+<div class="ctn">
+  <div class="card">
+    <div class="card-t">Load Property</div>
+    <div class="load-row">
+      <div class="fg"><label>UID <span class="req">*</span></label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button>
+    </div>
+    <div class="pf-st" id="pfSt"></div>
+  </div>
+
+  <form id="dealForm" style="display:none">
+    <input type="hidden" name="uid" id="fUid">
+
+    <!-- Token Amount -->
+    <div class="card"><div class="card-t">Token Amount</div>
+      <div class="fg"><label>Token (₹) <span class="req">*</span></label><input type="number" name="deal_token_amount" id="dealAmt" placeholder="e.g. 500000" required><div class="err-msg">Required</div></div>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn-out" id="previewBtn">👁 Preview Deal Terms</button>
+      <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
+    </div>
+
+    <!-- Preview Section (hidden until clicked) -->
+    <div class="preview-section" id="previewSection">
+      <!-- Card A: Property Details -->
+      <div class="preview-card">
+        <div class="pc-t">📍 Property Details</div>
+        <div id="pcProp"></div>
+      </div>
+      <!-- Card B: Money / Agreements -->
+      <div class="preview-card">
+        <div class="pc-t">💰 Financial Agreements</div>
+        <div id="pcMoney"></div>
+      </div>
+      <!-- Card C: Account Information -->
+      <div class="preview-card">
+        <div class="pc-t">🏦 Account Information</div>
+        <div id="pcAccount"></div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+let currentUid,propData=null;
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const ur=await fetch(`${API}/api/token-deal/uids`);const uids=await ur.json();
+    const sel=document.getElementById('selUid');sel.innerHTML='<option value="">Select UID...</option>';
+    uids.forEach(u=>{const s=u.token_deal_submitted_at?'✅':'📝';sel.innerHTML+=`<option value="${u.uid}">${u.uid} — ${u.society_name||''} [${s}]</option>`});
+    makeSearchable(sel);
+    const p=new URLSearchParams(location.search);if(p.get('uid')){sel.value=p.get('uid');loadData()}
+  }catch(e){toast('Failed','err')}
+});
+
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){
+  const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/token-deal/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
+    document.getElementById('fUid').value=propData.uid;currentUid=uid;
+    if(propData.deal_token_amount)document.getElementById('dealAmt').value=propData.deal_token_amount;
+    document.getElementById('dealForm').style.display='block';
+    document.getElementById('previewSection').classList.remove('show');
+    st.className='pf-st show ok';st.textContent=`✓ Loaded: ${uid}`;
+  }catch(e){st.className='pf-st show err';st.textContent=`✗ ${e.message}`;document.getElementById('dealForm').style.display='none'}
+}
+
+function pRow(label,val){return val?`<div class="pc-row"><span class="pc-l">${label}</span><span class="pc-v">${val}</span></div>`:''}
+function fmt(v){return v?'₹ '+Number(v).toLocaleString('en-IN'):'—'}
+
+document.getElementById('previewBtn').addEventListener('click',()=>{
+  if(!propData){toast('Load property first','warn');return}
+  const d=propData;const amt=document.getElementById('dealAmt').value;
+  // Property
+  document.getElementById('pcProp').innerHTML=pRow('UID',d.uid)+pRow('Society',d.society_name)+pRow('Locality',d.locality)+
+    pRow('Unit',d.unit_no)+pRow('Tower',d.tower_no)+pRow('Floor',d.floor)+pRow('Config',d.configuration)+
+    pRow('Area',d.area_sqft?d.area_sqft+' sqft':'')+pRow('Owner',d.owner_broker_name)+pRow('Phone',d.contact_no)+
+    pRow('Registry',d.registry_status)+pRow('Occupancy',d.occupancy_status);
+  // Money
+  let rentI=d.rent_payable_initial_period;let rentG=d.rent_payable_grace_period;
+  if(rentI&&rentI!=='N/A')rentI=fmt(rentI);if(rentG&&rentG!=='N/A')rentG=fmt(rentG);
+  document.getElementById('pcMoney').innerHTML=
+    pRow('Token Requested',fmt(d.token_amount_requested))+pRow('Deal Token',amt?fmt(amt):'—')+
+    pRow('Guaranteed Sale Price',d.guaranteed_sale_price?'₹ '+d.guaranteed_sale_price+' L':'—')+
+    pRow('Performance Guarantee',fmt(d.performance_guarantee))+
+    pRow('Initial Period',d.initial_period?d.initial_period+' days':'')+pRow('Rent (Initial)',rentI||'—')+
+    pRow('Grace Period',d.grace_period?d.grace_period+' days':'')+pRow('Rent (Grace)',rentG||'—')+
+    pRow('Outstanding Loan',fmt(d.outstanding_loan))+pRow('Loan Willingness',d.loan_pay_willingness);
+  // Account
+  document.getElementById('pcAccount').innerHTML=
+    pRow('Bank (Cheque)',d.cheque_bank_name||'—')+pRow('A/C No. (Cheque)',d.cheque_account_number||'—')+
+    pRow('IFSC (Cheque)',d.cheque_ifsc||'—')+pRow('Loan Bank',d.bank_name_loan||'—')+pRow('Loan A/C',d.loan_account_number||'—');
+  document.getElementById('previewSection').classList.add('show');
+});
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const amt=document.getElementById('dealAmt').value;if(!amt){toast('Enter token amount','err');return}
+  const body={uid:currentUid,deal_token_amount:amt};
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/token-deal/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Deal Terms submitted!','ok',5000);
+    setTimeout(()=>{if(confirm('Proceed to Final Form?'))window.location.href=`/final?uid=${currentUid}`},1500)});
+});
+</script>
+</body></html>
