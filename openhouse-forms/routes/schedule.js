@@ -16,7 +16,7 @@ module.exports=function(pool){
       // Count existing UIDs with this prefix
       const{rows}=await pool.query(`SELECT COUNT(*) as c FROM properties WHERE uid LIKE $1`,[prefix+'%']);
       const next=parseInt(rows[0].c)+1;
-      const uid=prefix+String(next).padStart(3,'0');
+      const uid=prefix+String(next).padStart(4,'0');
       res.json({uid,prefix,next});
     }catch(e){res.status(500).json({error:e.message})}
   });
