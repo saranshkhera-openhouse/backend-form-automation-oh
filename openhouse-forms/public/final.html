@@ -52,7 +52,7 @@
 <div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
   <div class="pdf-hdr"><h3>Final Token Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
   <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
-  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" download>⬇ Download</a></div>
+  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">↗ Open Full Page</a></div>
 </div></div>
 
 <script src="/js/shared.js"></script>
@@ -125,7 +125,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!isSubmitted||!currentUid)return;
   const url=`${API}/api/final/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
-  document.getElementById('pdfDl').href=url;document.getElementById('pdfDl').download=`Final_${currentUid}.pdf`;
+  document.getElementById('pdfDl').href=url;
   document.getElementById('pdfModal').classList.add('open')});
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});

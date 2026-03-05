@@ -1,5 +1,5 @@
 const express=require('express'),router=express.Router();
-const{generateTokenPDF}=require('../utils/pdf-generator');
+const{generateReceiptHTML}=require('../utils/pdf-template');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -32,8 +32,8 @@ module.exports=function(pool){
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
       if(!rows[0].final_submitted_at)return res.status(400).json({error:'Submit form first'});
-      const buf=await generateTokenPDF(rows[0]);
-      res.setHeader('Content-Type','application/pdf');res.setHeader('Content-Disposition',`inline; filename=Final_${rows[0].uid}.pdf`);res.send(buf);
+      const html=generateReceiptHTML(rows[0],'final');
+      res.setHeader('Content-Type','text/html');res.send(html);
     }catch(e){console.error('PDF:',e);res.status(500).json({error:'PDF failed'})}
   });
   return router;

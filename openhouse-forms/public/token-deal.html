@@ -23,6 +23,7 @@
     <div class="btn-row">
       <button type="button" class="btn btn-out" id="previewBtn">Preview Deal Terms</button>
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
+      <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">📄 PDF</button>
     </div>
 
     <!-- Preview Section (hidden until clicked) -->
@@ -74,6 +75,7 @@ async function loadData(){
     if(propData.deal_token_amount)document.getElementById('dealAmt').value=propData.deal_token_amount;
     document.getElementById('dealForm').style.display='block';
     document.getElementById('previewSection').classList.remove('show');
+    document.getElementById('pdfBtn').disabled=!propData.token_deal_submitted_at;
     st.className='pf-st show ok';st.textContent=`✓ Loaded: ${uid}`;
   }catch(e){st.className='pf-st show err';st.textContent=`✗ ${e.message}`;document.getElementById('dealForm').style.display='none'}
 }
@@ -119,7 +121,21 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const body={uid:currentUid,deal_token_amount:amt};
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/token-deal/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Deal Terms submitted!','ok',5000)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Deal Terms submitted!','ok',5000);
+    document.getElementById('pdfBtn').disabled=false});
 });
+
+document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
+  const url=`${API}/api/token-deal/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
+  document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
+function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
+document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
 </script>
+
+<!-- PDF Modal -->
+<div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
+  <div class="pdf-hdr"><h3>Deal Terms Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
+  <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
+  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">↗ Open Full</a></div>
+</div></div>
 </body></html>
