@@ -138,7 +138,7 @@ function generateReceiptHTML(p, mode='final'){
   <div class="greeting-strip">
     <div class="greeting-left">
       <div class="hi">Hello, <strong>${esc(firstName)}</strong></div>
-      <div class="sub">${mode==='deal'?'Here are the agreed deal terms for your property.':'Your token has been successfully received. Here\\'s a summary of your deal.'}</div>
+      <div class="sub">${mode==='deal'?'Here are the agreed deal terms for your property.':'Your token has been successfully received. Here is a summary of your deal.'}</div>
     </div>
     ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtCurrency(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
     ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div><div class="price-sub">INR Lakhs</div></div>`:''}
