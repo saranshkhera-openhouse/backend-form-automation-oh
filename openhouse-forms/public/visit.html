@@ -172,7 +172,7 @@ function buildBalconyCards(){
       <div class="fg"><label>Attached To <span class="req">*</span></label><select class="ba" data-i="${i}"><option value="">Select...</option>${opts.balconyAttach.map(a=>`<option>${a}</option>`).join('')}</select></div>
       <div class="r2"><div class="fg"><label>Facing</label><select class="bf" data-i="${i}">${['<option value="">—</option>',...opts.directions.map(d=>`<option>${d}</option>`)].join('')}</select></div>
         <div class="fg"><label>Compass Photo</label><div class="img-single"><button type="button" class="img-single-btn" id="bc${i}Btn">📷</button><div class="img-single-preview" id="bc${i}Prev"><img></div><input type="hidden" id="bc${i}Url"></div></div></div>
-      <div class="r2"><div class="fg"><label>View</label><select class="bv" data-i="${i}">${['<option value="">—</option>',...opts.balconyViews.map(v=>`<option>${v}</option>`)].join('')}</select></div>
+      <div class="r2"><div class="fg"><label>View</label><select class="bv" data-i="${i}">${['<option value="">—</option>',...(document.getElementById('v_uid').value.startsWith('OHG')?[...opts.balconyViews,'Aravali']:opts.balconyViews).map(v=>`<option>${v}</option>`)].join('')}</select></div>
         <div class="fg"><label>View Photo</label><div class="img-single"><button type="button" class="img-single-btn" id="bv${i}Btn">📷</button><div class="img-single-preview" id="bv${i}Prev"><img></div><input type="hidden" id="bv${i}Url"></div></div></div>
     </div>`}
   for(let i=1;i<=n;i++){initSingleUpload(`bc${i}Btn`,`bc${i}Prev`,`bc${i}Url`);initSingleUpload(`bv${i}Btn`,`bv${i}Prev`,`bv${i}Url`)}
