@@ -474,7 +474,6 @@ const SOCIETIES = [
   ["Noida", "Noida Extension", "Amrapali Tropical Garden"],
   ["Noida", "Noida Extension", "Gaur City 10Th Avenue"],
   ["Noida", "Noida Extension", "Geotech Pristine Avenue"],
-  ["Noida", "Noida Extension", "(blank)"],
   ["Noida", "Noida Extension", "Sky Gardens"],
   ["Noida", "Noida Extension", "Twin Celestial by Ambesten Homes"],
   ["Noida", "Noida Extension", "Vihaan Vista"],
