@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Visit Schedule</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr"><div><div class="logo">OPENHOUSE</div><div class="logo-sub">Visit Schedule Form</div></div></header>
+<div class="ctn">
+  <form id="form">
+
+    <!-- Card 1: City + Source → UID -->
+    <div class="card">
+      <div class="card-t">UID Generator</div>
+      <div class="card-d">Select city & source to auto-generate UID.</div>
+      <div class="r2">
+        <div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Source <span class="req">*</span></label><div class="radios" id="srcGroup"></div><div class="err-msg">Required</div></div>
+      </div>
+      <div class="uid-display empty" id="uidBox">Select city & source above</div>
+      <input type="hidden" name="uid" id="fUid">
+    </div>
+
+    <!-- Card 2: Schedule -->
+    <div class="card">
+      <div class="card-t">Schedule</div>
+      <div class="fg"><label>Lead ID</label><input type="text" name="lead_id" placeholder="e.g. M88741678"></div>
+      <div class="r2">
+        <div class="fg"><label>Date <span class="req">*</span></label><input type="date" name="schedule_date" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Time <span class="req">*</span></label><input type="time" name="schedule_time" required><div class="err-msg">Required</div></div>
+      </div>
+    </div>
+
+    <!-- Card 3: Owner -->
+    <div class="card">
+      <div class="card-t">Owner / Broker</div>
+      <div class="r2">
+        <div class="fg"><label>First Name <span class="req">*</span></label><input type="text" name="first_name" placeholder="First name" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Last Name</label><input type="text" name="last_name" placeholder="Last name"></div>
+      </div>
+      <div class="fg"><label>Contact No. <span class="req">*</span></label><input type="tel" name="contact_no" id="phone" placeholder="10-digit" maxlength="10" required><div class="inline-err" id="phoneErr"></div><div class="err-msg">Required</div></div>
+    </div>
+
+    <!-- Card 4: Property Info -->
+    <div class="card">
+      <div class="card-t">Property Info</div>
+      <div class="r2">
+        <div class="fg"><label>Society <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled><option value="">City first</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Society first</option></select><div class="err-msg">Required</div></div>
+      </div>
+      <div class="r3">
+        <div class="fg"><label>Unit No. <span class="req">*</span></label><input type="text" name="unit_no" placeholder="e.g. 106" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Tower No.</label><input type="text" name="tower_no" placeholder="e.g. R"></div>
+        <div class="fg"><label>Floor <span class="req">*</span></label><select name="floor" id="selFloor" required></select><div class="err-msg">Required</div></div>
+      </div>
+      <div class="r3">
+        <div class="fg"><label>Area (sqft) <span class="req">*</span></label><input type="number" name="area_sqft" placeholder="1075" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Config <span class="req">*</span></label><select name="configuration" id="selConfig" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Ask (₹ Lakhs)</label><input type="number" name="demand_price" placeholder="95" step="0.01"></div>
+      </div>
+    </div>
+
+    <!-- Card 5: Assignment -->
+    <div class="card">
+      <div class="card-t">Assignment</div>
+      <div class="fg"><label>Assigned By</label><input type="text" name="assigned_by" placeholder="Name or ID"></div>
+      <div class="fg"><label>Assigned To</label><input type="text" name="field_exec" placeholder="Name or ID"></div>
+    </div>
+
+    <div class="btn-row"><div></div><button type="button" class="btn btn-dark" id="submitBtn" style="flex:none;max-width:none;width:100%">📋 Create Visit Schedule</button></div>
+  </form>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+let opts;
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;
+    fillRadios(document.getElementById('srcGroup'),'source',opts.sources,true);
+    fillSelect(document.getElementById('selConfig'),opts.configurations,'Config');
+    fillNumSelect(document.getElementById('selFloor'),1,50,'Floor');
+    await loadCities(document.getElementById('selCity'));
+    // Cascade: city→society→locality
+    const cityEl=document.getElementById('selCity'),socEl=document.getElementById('selSoc'),locEl=document.getElementById('selLoc');
+    cityEl.addEventListener('change',()=>{loadSocieties(cityEl.value,socEl,locEl);genUID()});
+    socEl.addEventListener('change',()=>loadLocalities(cityEl.value,socEl.value,locEl));
+    makeSearchable(socEl);
+    // Source change triggers UID
+    document.getElementById('srcGroup').addEventListener('change',genUID);
+    setupContactValidation('phone','phoneErr');
+  }catch(e){toast('Config failed','err')}
+});
+
+async function genUID(){
+  const city=document.getElementById('selCity').value;const source=getRadio('source');
+  const box=document.getElementById('uidBox'),hidden=document.getElementById('fUid');
+  if(!city||!source){box.textContent='Select city & source above';box.classList.add('empty');hidden.value='';return}
+  try{
+    const r=await fetch(`${API}/api/schedule/next-uid?city=${encodeURIComponent(city)}&source=${encodeURIComponent(source)}`);
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    box.textContent=d.uid;box.classList.remove('empty');hidden.value=d.uid;
+  }catch(e){box.textContent='Error generating UID';box.classList.add('empty');hidden.value=''}
+}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const uid=document.getElementById('fUid').value;
+  if(!uid){toast('Select city & source to generate UID','err');return}
+  const{valid,missing}=validateForm('form');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  // Check phone is 10 digits
+  const ph=document.getElementById('phone').value.replace(/\D/g,'');
+  if(ph.length!==10){toast('Contact must be 10 digits','err');return}
+  const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());
+  body.source=getRadio('source');body.uid=uid;
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/schedule/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    toast(`Schedule created! UID: ${res.uid}`,'ok',5000);
+    document.getElementById('form').reset();document.getElementById('uidBox').textContent='Select city & source above';document.getElementById('uidBox').classList.add('empty');document.getElementById('fUid').value='';
+  });
+});
+</script>
+</body></html>
