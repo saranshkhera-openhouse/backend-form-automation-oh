@@ -212,17 +212,17 @@ function generateReceiptHTML(p, mode='final'){
   </div>
 
   <!-- TOKEN TRANSACTION (only if NEFT data exists) -->
-  ${hasNEFT?`
+  ${(mode==='deal'&&p.deal_neft_reference)||(mode==='final'&&hasNEFT)?`
   <div class="section-label">Token Transaction</div>
   <div class="token-strip">
     <div class="token-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
     <div class="token-info">
-      <div class="t-title">Token Paid — ${esc(p.bank_name||p.cheque_bank_name||'Bank')}</div>
-      <div class="t-ref">NEFT Ref: ${esc(p.neft_reference)}</div>
+      <div class="t-title">Token Paid — ${esc(mode==='deal'?(p.deal_bank_name||'Bank'):(p.bank_name||p.cheque_bank_name||'Bank'))}</div>
+      <div class="t-ref">NEFT Ref: ${esc(mode==='deal'?p.deal_neft_reference:p.neft_reference)}</div>
     </div>
     <div class="token-date">
       <div class="td-label">Transfer Date</div>
-      <div class="td-val">${fmtDate(p.token_transfer_date)}</div>
+      <div class="td-val">${fmtDate(mode==='deal'?p.deal_transfer_date:p.token_transfer_date)}</div>
     </div>
   </div>`:''}
 
