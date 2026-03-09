@@ -160,15 +160,7 @@ function generateInvoiceHTML(p){
     </div>
   </div>
 
-  <!-- Bank Details -->
-  <div class="inv-bank">
-    <div class="inv-bank-title">Payment Bank Details</div>
-    <div class="inv-bank-grid">
-      <div class="inv-bank-item"><div class="bl">Bank Name</div><div class="bv">${esc(p.bank_name||p.deal_bank_name||'—')}</div></div>
-      <div class="inv-bank-item"><div class="bl">Account No.</div><div class="bv mono">${esc(p.bank_account_number||p.deal_bank_account_number||'—')}</div></div>
-      <div class="inv-bank-item"><div class="bl">IFSC Code</div><div class="bv mono">${esc(p.ifsc_code||p.deal_ifsc_code||'—')}</div></div>
-    </div>
-  </div>
+  
 
   <!-- Status -->
   <div style="text-align:center;margin-top:16px">
