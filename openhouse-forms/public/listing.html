@@ -166,21 +166,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('listForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const fd=new FormData(document.getElementById('listForm'));const body=Object.fromEntries(fd.entries());
   body.gas_pipeline=getRadio('gas_pipeline');body.club_facility=getRadio('club_facility');body.furnishing_details=getCheckedJSON('furnishing_details');
-```
 
----
-
-**7. `db/migrate.js` — Add beta_pct column**
-
-In the properties CREATE TABLE, FIND:
-```
-  alpha_beta TEXT, loan_status TEXT,
-```
-
-REPLACE WITH:
-```
-  alpha_beta TEXT, beta_pct REAL, loan_status TEXT,
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='beta_pct') THEN ALTER TABLE properties ADD COLUMN beta_pct REAL; END IF;
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/listing/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(body.uid)})});
