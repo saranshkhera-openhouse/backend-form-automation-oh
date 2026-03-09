@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Listing Details</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr centered"><div class="logo">OPENHOUSE</div><div class="logo-sub">Listing Details</div></header>
+<div class="ctn">
+  <div class="card"><div class="card-t">Load Property</div>
+    <div class="load-row"><div class="fg"><label>UID</label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button></div>
+    <div class="pf-st" id="pfSt"></div></div>
+
+  <form id="listForm" style="display:none"><input type="hidden" name="uid" id="fUid">
+    <!-- Prefilled property card -->
+    <div class="card" id="prevCard"><div class="card-t">Property Details</div><div class="card-d">From previous forms. Double-tap to edit.</div>
+      <div class="r2"><div class="fg"><label>UID</label><input type="text" id="l_uid" class="pre" readonly></div>
+        <div class="fg"><label>City</label><input type="text" id="l_city" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Society</label><input type="text" id="l_soc" class="pre" readonly></div>
+        <div class="fg"><label>Locality</label><input type="text" id="l_loc" class="pre" readonly></div></div>
+      <div class="r3"><div class="fg"><label>Unit</label><input type="text" id="l_unit" class="pre" readonly></div>
+        <div class="fg"><label>Tower</label><input type="text" id="l_tower" class="pre" readonly></div>
+        <div class="fg"><label>Floor</label><input type="text" id="l_floor" class="pre" readonly></div></div>
+      <div class="r2"><div class="fg"><label>Area</label><input type="text" id="l_area" class="pre" readonly></div>
+        <div class="fg"><label>Config</label><input type="text" id="l_cfg" class="pre" readonly></div></div></div>
+
+    <!-- Rooms & Amenities (prefilled if exist) -->
+    <div class="card"><div class="card-t">Room & Amenities</div>
+      <div class="fg"><label>Acquisition By</label><input type="text" id="l_acq" class="pre" readonly></div>
+      <div class="r3">
+        <div class="fg"><label>No. of Bedrooms</label><input type="text" id="l_bed" class="pre" readonly></div>
+        <div class="fg"><label>No. of Baths</label><select name="bathrooms" id="selBath"></select></div>
+        <div class="fg"><label>No. of Balconies</label><select name="balconies" id="selBal"></select></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Gas Pipeline</label><div class="radios" id="gasGrp"></div></div>
+        <div class="fg"><label>Possession Status</label><select name="possession_status" id="selPoss"></select></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Club Facility</label><input type="text" name="club_facility"></div>
+        <div class="fg"><label>Parking</label><select name="parking" id="selPark"></select></div>
+      </div>
+      <div class="fg"><label>Parking Number</label><input type="text" name="parking_number" placeholder="e.g. B2-45"></div>
+      <div class="fg"><label>Furnishing</label><select name="furnishing" id="selFurn"></select></div>
+      <div class="fg" id="furnWrap"><label>Furnishing Items</label><div class="pills" id="furnP"></div></div>
+    </div>
+
+    <!-- Building Details -->
+    <div class="card"><div class="card-t">Building Details</div>
+      <div class="r3">
+        <div class="fg"><label>Total No of Floors</label><select name="total_floors_tower" id="selTFloor"></select></div>
+        <div class="fg"><label>Total Flats per Floor</label><select name="total_flats_floor" id="selFlat"></select></div>
+        <div class="fg"><label>Total Units</label><input type="number" name="total_units"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Exit Facing</label><input type="text" id="l_exit" class="pre" readonly></div>
+        <div class="fg"><label>Balcony Facing</label><input type="text" id="l_balf" class="pre" readonly></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Society Age (Years)</label><input type="number" name="society_age_years" step="0.5"></div>
+        <div class="fg"><label>Natural Light</label><input type="text" id="l_sun" class="pre" readonly></div>
+      </div>
+    </div>
+
+    <!-- Financial & Charges -->
+    <div class="card"><div class="card-t">Charges & Financial</div>
+      <div class="r2">
+        <div class="fg"><label>Maintenance (₹/sqft)</label><input type="number" name="maintenance_charges" step="0.01"></div>
+        <div class="fg"><label>Society Move-in Charges (₹)</label><input type="number" name="society_move_in_charges"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Electricity (₹/unit)</label><input type="number" name="electricity_charges" step="0.01"></div>
+        <div class="fg"><label>DG Charges (₹/unit)</label><input type="number" name="dg_charges" step="0.01"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Water Supply</label><select name="water_supply"><option value="">Select...</option><option>Corporation</option><option>Borewell</option><option>Both</option><option>Tanker</option></select></div>
+        <div class="fg"><label>Circle Rate (₹)</label><input type="number" name="circle_rate"></div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="card"><div class="card-t">Status & Classification</div>
+      <div class="r2">
+        <div class="fg"><label>Loan Status</label><select name="loan_status"><option value="">Select...</option><option>Clear</option><option>Under Loan</option><option>Pre-approved</option></select></div>
+        <div class="fg"><label>Seller Location</label><input type="text" name="seller_location"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Current Occupancy (%)</label><input type="number" name="current_occupancy_pct" min="0" max="100" step="1"></div>
+        <div class="fg"><label>Alpha / Beta</label><select name="alpha_beta"><option value="">Select...</option><option>Alpha</option><option>Beta</option></select></div>
+      </div>
+    </div>
+
+    <!-- Listing Specifics -->
+    <div class="card"><div class="card-t">Listing</div>
+      <div class="r2">
+        <div class="fg"><label>Asking Price (₹ Lakhs) <span class="req">*</span></label><input type="number" name="listing_asking_price" step="0.01" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Availability</label><select name="listing_availability"><option value="">Select...</option><option>Immediate</option><option>1 Month</option><option>3 Months</option><option>6 Months</option><option>1 Year+</option></select></div>
+      </div>
+      <div class="fg"><label>Key Highlights</label><textarea name="listing_highlights" rows="2"></textarea></div>
+      <div class="fg"><label>Description</label><textarea name="listing_description" rows="3"></textarea></div>
+    </div>
+
+    <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit Listing</button>
+  </form>
+</div>
+<script src="/js/shared.js"></script>
+<script>
+let opts;
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;
+    fillNumSelect(document.getElementById('selBath'),1,10,'Qty');fillNumSelect(document.getElementById('selBal'),1,10,'Qty');
+    fillRadios(document.getElementById('gasGrp'),'gas_pipeline',opts.yesNo);
+    fillSelect(document.getElementById('selPoss'),opts.possessionStatuses,'Select');
+    fillSelect(document.getElementById('selPark'),opts.parkingOptions,'Select');
+    fillSelect(document.getElementById('selFurn'),opts.furnishingLevels,'Select');
+    fillPills(document.getElementById('furnP'),'furnishing_details',opts.furnishingDetails,'No Items');
+    fillNumSelect(document.getElementById('selTFloor'),1,50,'Floors');fillNumSelect(document.getElementById('selFlat'),1,10,'Flats');
+    document.getElementById('selFurn').addEventListener('change',e=>{document.getElementById('furnWrap').style.display=e.target.value==='Unfurnished'?'none':'block'});
+    const ur=await fetch(`${API}/api/listing/uids`);const uids=await ur.json();
+    fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
+    const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
+  }catch(e){toast('Config failed','err')}
+});
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/listing/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
+    document.getElementById('fUid').value=d.uid;
+    document.getElementById('l_uid').value=d.uid;document.getElementById('l_city').value=d.city||'';
+    document.getElementById('l_soc').value=d.society_name||'';document.getElementById('l_loc').value=d.locality||'';
+    document.getElementById('l_unit').value=d.unit_no||'';document.getElementById('l_tower').value=d.tower_no||'';
+    document.getElementById('l_floor').value=d.floor??'';document.getElementById('l_area').value=d.area_sqft??'';
+    document.getElementById('l_cfg').value=configDisplay(d.configuration,d.extra_area);
+    document.getElementById('l_acq').value=d.assigned_by||'';
+    // Bedrooms from config
+    const cfg=d.configuration||'';const match=cfg.match(/(\d+)/);
+    document.getElementById('l_bed').value=match?match[1]:'';
+    // Prefill from visit data
+    const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
+    const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
+    sv('bathrooms',d.bathrooms);sv('balconies',d.balconies);sr('gas_pipeline',d.gas_pipeline);
+    sv('possession_status',d.possession_status||d.occupancy_status);sv('club_facility',d.club_facility);
+    sv('parking',d.parking);sv('parking_number',d.parking_number);
+    sv('furnishing',d.furnishing);if(d.furnishing==='Unfurnished')document.getElementById('furnWrap').style.display='none';
+    if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
+    sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);sv('total_units',d.total_units);
+    document.getElementById('l_exit').value=d.exit_facing||'';
+    // Balcony facing from first balcony
+    let bf='';try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details||[];if(bd.length)bf=bd[0].facing||''}catch(e){}
+    document.getElementById('l_balf').value=bf;
+    document.getElementById('l_sun').value=d.sunlight?d.sunlight+'/10':'';
+    sv('society_age_years',d.society_age_years);sv('maintenance_charges',d.maintenance_charges);
+    sv('society_move_in_charges',d.society_move_in_charges);sv('electricity_charges',d.electricity_charges);
+    sv('dg_charges',d.dg_charges);sv('water_supply',d.water_supply);sv('circle_rate',d.circle_rate);
+    sv('loan_status',d.loan_status);sv('seller_location',d.seller_location);
+    sv('current_occupancy_pct',d.current_occupancy_pct);sv('alpha_beta',d.alpha_beta);
+    sv('listing_asking_price',d.listing_asking_price);sv('listing_availability',d.listing_availability);
+    sv('listing_highlights',d.listing_highlights);sv('listing_description',d.listing_description);
+    document.getElementById('listForm').style.display='block';enableDoubleTapEdit(document.getElementById('prevCard'));
+    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
+  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('listForm').style.display='none'}}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const{valid,missing}=validateForm('listForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  const fd=new FormData(document.getElementById('listForm'));const body=Object.fromEntries(fd.entries());
+  body.gas_pipeline=getRadio('gas_pipeline');body.furnishing_details=getCheckedJSON('furnishing_details');
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/listing/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(body.uid)})});
+</script>
+</body></html>

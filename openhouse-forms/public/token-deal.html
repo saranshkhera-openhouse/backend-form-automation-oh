@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Deal Terms</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr centered"><div class="logo">OPENHOUSE</div><div class="logo-sub">Deal Terms — For Owner</div></header>
+<div class="ctn">
+  <div class="card"><div class="card-t">Load Property</div>
+    <div class="load-row"><div class="fg"><label>UID</label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button></div>
+    <div class="pf-st" id="pfSt"></div></div>
+
+  <form id="dealForm" style="display:none"><input type="hidden" name="uid" id="fUid">
+    <!-- Token Amount -->
+    <div class="card"><div class="card-t">Token Amount</div>
+      <div class="fg"><label>Token (₹) <span class="req">*</span></label><input type="number" name="deal_token_amount" id="dealAmt" required><div class="err-msg">Required</div></div></div>
+
+    <!-- NEFT Details -->
+    <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">NEFT Details</div>
+      <div class="r2">
+        <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="deal_bank_account_number" id="dAc" inputmode="numeric" pattern="[0-9]*" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bank Name <span class="req">*</span></label><input type="text" name="deal_bank_name" id="dBank" required><div class="err-msg">Required</div></div>
+      </div>
+      <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="deal_ifsc_code" id="dIfsc" class="input-md" required><div class="err-msg">Required</div></div>
+      <div class="r2">
+        <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="deal_transfer_date" id="dDate" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required><div class="err-msg">Required</div></div>
+      </div></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn-out" id="previewBtn">Preview Deal Terms</button>
+      <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
+      <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-section" id="previewSection">
+      <div class="preview-card"><div class="pc-t">Property Details</div><div id="pcProp"></div></div>
+      <div class="preview-card"><div class="pc-t">Financial Agreements</div><div id="pcMoney"></div></div>
+      <div class="preview-card"><div class="pc-t">Account Information</div><div id="pcAccount"></div></div>
+      <div class="preview-card"><div class="pc-t">Missing Documents</div><div id="pcMissing"></div></div>
+    </div>
+  </form>
+</div>
+
+<!-- PDF Modal -->
+<div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
+  <div class="pdf-hdr"><h3>Deal Terms Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
+  <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
+  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open Full</a></div>
+</div></div>
+
+<script src="/js/shared.js"></script>
+<script>
+let currentUid,propData=null,allDocOptions=[];
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const cr=await fetch(`${API}/api/config`);const opts=(await cr.json()).options;allDocOptions=opts.documentsAvailable||[];
+    const ur=await fetch(`${API}/api/token-deal/uids`);const uids=await ur.json();
+    fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
+    noFutureDate('dDate');
+    const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
+  }catch(e){toast('Failed','err')}
+});
+
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/token-deal/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
+    document.getElementById('fUid').value=propData.uid;currentUid=uid;
+    if(propData.deal_token_amount)document.getElementById('dealAmt').value=propData.deal_token_amount;
+    // Prefill NEFT from cheque OCR if deal NEFT not yet filled
+    document.getElementById('dAc').value=propData.deal_bank_account_number||propData.cheque_account_number||'';
+    document.getElementById('dBank').value=propData.deal_bank_name||propData.cheque_bank_name||'';
+    document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';
+    if(propData.deal_transfer_date)document.getElementById('dDate').value=propData.deal_transfer_date.split('T')[0];
+    if(propData.deal_neft_reference)document.getElementById('dRef').value=propData.deal_neft_reference;
+    document.getElementById('dealForm').style.display='block';
+    document.getElementById('previewSection').classList.remove('show');
+    document.getElementById('previewBtn').textContent='Preview Deal Terms';
+    document.getElementById('pdfBtn').disabled=!propData.token_deal_submitted_at;
+    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
+  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('dealForm').style.display='none'}}
+
+function pRow(l,v){return v&&v!=='—'?`<div class="pc-row"><span class="pc-l">${l}</span><span class="pc-v">${v}</span></div>`:''}
+function fmt(v){return v?'₹ '+Number(v).toLocaleString('en-IN'):'—'}
+
+document.getElementById('previewBtn').addEventListener('click',()=>{
+  if(!propData){toast('Load property first','warn');return}
+  const sec=document.getElementById('previewSection');
+  if(sec.classList.contains('show')){sec.classList.remove('show');document.getElementById('previewBtn').textContent='Preview Deal Terms';return}
+  const d=propData;const amt=document.getElementById('dealAmt').value;
+  document.getElementById('pcProp').innerHTML=pRow('UID',d.uid)+pRow('Society',d.society_name)+pRow('Locality',d.locality)+
+    pRow('Unit',d.unit_no)+pRow('Tower',d.tower_no)+pRow('Floor',d.floor)+pRow('Config',configDisplay(d.configuration,d.extra_area))+
+    pRow('Area',d.area_sqft?d.area_sqft+' sqft':'')+pRow('Owner',d.owner_broker_name)+pRow('Phone',d.contact_no)+
+    pRow('Registry',d.registry_status)+pRow('Occupancy',d.occupancy_status);
+  let ri=d.rent_payable_initial_period,rg=d.rent_payable_grace_period;
+  if(ri&&ri!=='N/A')ri=fmt(ri);if(rg&&rg!=='N/A')rg=fmt(rg);
+  document.getElementById('pcMoney').innerHTML=
+    pRow('Token Requested',fmt(d.token_amount_requested))+pRow('Deal Token',amt?fmt(amt):'—')+
+    pRow('Guaranteed Sale Price',d.guaranteed_sale_price?'₹'+d.guaranteed_sale_price+'L':'—')+pRow('Performance Guarantee',fmt(d.performance_guarantee))+
+    pRow('Initial Period',d.initial_period?d.initial_period+' days':'')+pRow('Rent (Initial)',ri||'—')+
+    pRow('Grace Period',d.grace_period?d.grace_period+' days':'')+pRow('Rent (Grace)',rg||'—')+
+    pRow('Outstanding Loan',fmt(d.outstanding_loan))+pRow('Loan Willingness',d.loan_pay_willingness);
+  const ac=document.getElementById('dAc').value,bk=document.getElementById('dBank').value,ifc=document.getElementById('dIfsc').value;
+  document.getElementById('pcAccount').innerHTML=
+    pRow('Bank Name',bk)+pRow('A/C No.',ac)+pRow('IFSC',ifc)+
+    pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value);
+  let sel=[];try{sel=typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available||[]}catch(e){}
+  const miss=allDocOptions.filter(doc=>!sel.includes(doc));
+  document.getElementById('pcMissing').innerHTML=miss.length?miss.map(m=>`<div class="pc-row"><span class="pc-l" style="color:var(--red)">✗</span><span class="pc-v" style="color:var(--red)">${m}</span></div>`).join(''):'<div class="pc-row"><span class="pc-v" style="color:var(--grn)">All documents available</span></div>';
+  sec.classList.add('show');document.getElementById('previewBtn').textContent='Hide Deal Terms';
+});
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const{valid,missing}=validateForm('dealForm');if(!valid){toast(`Missing: ${missing.slice(0,4).join(', ')}`,'err');return}
+  const fd=new FormData(document.getElementById('dealForm'));const body=Object.fromEntries(fd.entries());
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/token-deal/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    document.getElementById('pdfBtn').disabled=false;toast('Deal Terms submitted!','ok',5000)});
+});
+
+document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
+  const url=`${API}/api/token-deal/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
+  document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
+function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
+document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
+</script>
+</body></html>
