@@ -23,7 +23,19 @@ module.exports=function(pool){
          parseFloat(d.society_age_years)||null,parseInt(d.total_units)||null,parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
          parseFloat(d.electricity_charges)||null,d.water_supply||null,parseFloat(d.dg_charges)||null,d.alpha_beta||null,
          d.loan_status||null,d.seller_location||null,parseFloat(d.current_occupancy_pct)||null,parseFloat(d.circle_rate)||null,d.parking_number||null,
-         d.club_facility||null,d.uid]);
+         d.club_facility||null,parseFloat(d.beta_pct)||null,d.uid]);
+```
+
+And in the SQL UPDATE, FIND:
+```
+        club_facility=$18,
+        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$19`,
+```
+
+REPLACE WITH:
+```
+        club_facility=$18,beta_pct=$19,
+        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$20`,
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Listing:',e);res.status(500).json({error:e.message})}
   });
