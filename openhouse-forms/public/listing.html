@@ -83,7 +83,10 @@
       </div>
       <div class="r2">
         <div class="fg"><label>Current Occupancy (%)</label><input type="number" name="current_occupancy_pct" min="0" max="100" step="1"></div>
-        <div class="fg"><label>Alpha / Beta</label><select name="alpha_beta"><option value="">Select...</option><option>Alpha</option><option>Beta</option></select></div>
+        <div class="fg"><label>Alpha (%)</label><input type="number" name="alpha_beta" min="0" max="100" step="0.1" placeholder="e.g. 60"></div>
+        </div>
+        <div class="r2">
+        <div class="fg"><label>Beta (%)</label><input type="number" name="beta_pct" min="0" max="100" step="0.1" placeholder="e.g. 40"></div>
       </div>
     </div>
 
@@ -108,6 +111,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;
     fillNumSelect(document.getElementById('selBath'),1,10,'Qty');fillNumSelect(document.getElementById('selBal'),1,10,'Qty');
     fillRadios(document.getElementById('gasGrp'),'gas_pipeline',opts.yesNo);
+    fillRadios(document.getElementById('clubGrp'),'club_facility',opts.yesNo);
     fillSelect(document.getElementById('selPoss'),opts.possessionStatuses,'Select');
     fillSelect(document.getElementById('selPark'),opts.parkingOptions,'Select');
     fillSelect(document.getElementById('selFurn'),opts.furnishingLevels,'Select');
@@ -137,7 +141,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
     sv('bathrooms',d.bathrooms);sv('balconies',d.balconies);sr('gas_pipeline',d.gas_pipeline);
-    sv('possession_status',d.possession_status||d.occupancy_status);sv('club_facility',d.club_facility);
+    sv('possession_status',d.possession_status||d.occupancy_status);sr('club_facility',d.club_facility);
     sv('parking',d.parking);sv('parking_number',d.parking_number);
     sv('furnishing',d.furnishing);if(d.furnishing==='Unfurnished')document.getElementById('furnWrap').style.display='none';
     if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
@@ -151,7 +155,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('society_move_in_charges',d.society_move_in_charges);sv('electricity_charges',d.electricity_charges);
     sv('dg_charges',d.dg_charges);sv('water_supply',d.water_supply);sv('circle_rate',d.circle_rate);
     sv('loan_status',d.loan_status);sv('seller_location',d.seller_location);
-    sv('current_occupancy_pct',d.current_occupancy_pct);sv('alpha_beta',d.alpha_beta);
+    sv('current_occupancy_pct',d.current_occupancy_pct);sv('alpha_beta',d.alpha_beta);sv('beta_pct',d.beta_pct);
     sv('listing_asking_price',d.listing_asking_price);sv('listing_availability',d.listing_availability);
     sv('listing_highlights',d.listing_highlights);sv('listing_description',d.listing_description);
     document.getElementById('listForm').style.display='block';enableDoubleTapEdit(document.getElementById('prevCard'));
@@ -161,7 +165,22 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('listForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const fd=new FormData(document.getElementById('listForm'));const body=Object.fromEntries(fd.entries());
-  body.gas_pipeline=getRadio('gas_pipeline');body.furnishing_details=getCheckedJSON('furnishing_details');
+  body.gas_pipeline=getRadio('gas_pipeline');body.club_facility=getRadio('club_facility');body.furnishing_details=getCheckedJSON('furnishing_details');
+```
+
+---
+
+**7. `db/migrate.js` — Add beta_pct column**
+
+In the properties CREATE TABLE, FIND:
+```
+  alpha_beta TEXT, loan_status TEXT,
+```
+
+REPLACE WITH:
+```
+  alpha_beta TEXT, beta_pct REAL, loan_status TEXT,
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='beta_pct') THEN ALTER TABLE properties ADD COLUMN beta_pct REAL; END IF;
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/listing/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(body.uid)})});
