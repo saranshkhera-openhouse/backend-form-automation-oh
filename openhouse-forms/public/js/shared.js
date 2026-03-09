@@ -174,10 +174,9 @@ document.addEventListener('change',e=>{const fg=e.target.closest('.fg');if(fg&&f
 function showThankYou(uid){
   let ov=document.getElementById('tyOverlay');
   if(!ov){ov=document.createElement('div');ov.id='tyOverlay';ov.className='ty-overlay';document.body.appendChild(ov)}
-  ov.innerHTML=`<div class="ty-icon">✓</div><div class="ty-title">Thank you!</div><div class="ty-sub">Your response has been submitted.</div>${uid?`<div class="ty-uid">${uid}</div>`:''}<a href="/" class="ty-back">← Back to Home</a>`;
+  ov.innerHTML=`<div class="ty-icon">✓</div><div class="ty-title">Thank you!</div><div class="ty-sub">Your response has been submitted.</div>${uid?`<div class="ty-uid">${uid}</div>`:''}<a href="${window.location.pathname}" class="ty-back">← Back to Form</a>`;
   ov.classList.add('show');
 }
-
 // ══════ POPULATE UID SELECT WITH RICH LABELS ══════
 function fillUidSelect(sel,uids){
   sel.innerHTML='<option value="">Select UID...</option>';
@@ -189,7 +188,7 @@ function fillUidSelect(sel,uids){
 }
 
 // ══════ DATE MAX TODAY (no future) ══════
-function noFutureDate(inputId){const inp=document.getElementById(inputId);if(inp)inp.max=new Date().toISOString().split('T')[0]}
+function noFutureDate(inputId){const inp=document.getElementById(inputId);if(inp){inp.max=new Date().toISOString().split('T')[0];inp.addEventListener('change',()=>{if(inp.value>inp.max){inp.value=inp.max;toast('Future dates not allowed','warn')}})}}
 
 // ══════ CONFIG DISPLAY: 2.5 BHK (Pooja Room) ══════
 function configDisplay(config,extraArea){
