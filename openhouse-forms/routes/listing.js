@@ -17,23 +17,6 @@ module.exports=function(pool){
         society_age_years=$5,total_units=$6,maintenance_charges=$7,society_move_in_charges=$8,
         electricity_charges=$9,water_supply=$10,dg_charges=$11,alpha_beta=$12,
         loan_status=$13,seller_location=$14,current_occupancy_pct=$15,circle_rate=$16,parking_number=$17,
-        club_facility=$18,
-        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$19`,
-        [parseFloat(d.listing_asking_price)||null,d.listing_availability||null,d.listing_highlights||null,d.listing_description||null,
-         parseFloat(d.society_age_years)||null,parseInt(d.total_units)||null,parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
-         parseFloat(d.electricity_charges)||null,d.water_supply||null,parseFloat(d.dg_charges)||null,d.alpha_beta||null,
-         d.loan_status||null,d.seller_location||null,parseFloat(d.current_occupancy_pct)||null,parseFloat(d.circle_rate)||null,d.parking_number||null,
-         d.club_facility||null,parseFloat(d.beta_pct)||null,d.uid]);
-```
-
-And in the SQL UPDATE, FIND:
-```
-        club_facility=$18,
-        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$19`,
-```
-
-REPLACE WITH:
-```
         club_facility=$18,beta_pct=$19,
         listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$20`,
       res.json({success:true,uid:d.uid});
@@ -41,3 +24,10 @@ REPLACE WITH:
   });
   return router;
 };
+
+        [parseFloat(d.listing_asking_price)||null,d.listing_availability||null,d.listing_highlights||null,d.listing_description||null,
+         parseFloat(d.society_age_years)||null,parseInt(d.total_units)||null,parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
+         parseFloat(d.electricity_charges)||null,d.water_supply||null,parseFloat(d.dg_charges)||null,d.alpha_beta||null,
+         d.loan_status||null,d.seller_location||null,parseFloat(d.current_occupancy_pct)||null,parseFloat(d.circle_rate)||null,d.parking_number||null,
+         d.club_facility||null,parseFloat(d.beta_pct)||null,d.uid]);
+
