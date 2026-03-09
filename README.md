@@ -116,9 +116,10 @@ Example:
 
 ---
 TO ADD AREA IN SOCIETIES RUN IN RENDER SHELL FORMAT:
+```bash
 node -e "require('dotenv').config(); const pool=require('./db/pool'); pool.query(\"INSERT INTO master_areas(society_name,area_sqft) VALUES('AIPL Zen Residences',1075),('AIPL Zen Residences',1350) ON CONFLICT DO NOTHING\").then(()=>{console.log('✓');process.exit()}).catch(e=>{console.error(e);process.exit(1)})"
 
-
+```
 
 ## File Structure
 
