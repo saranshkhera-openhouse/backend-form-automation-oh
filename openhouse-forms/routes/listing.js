@@ -1,19 +1,57 @@
 const express = require('express');
-const router = express.Router();
-router.post('/submit', async (req, res) => {
-  try {
-    const d = req.body;
 
-    const { rows } = await pool.query(
-      'SELECT uid FROM properties WHERE uid=$1',
-      [d.uid]
-    );
+module.exports = function(pool){
 
-    if (!rows.length)
-      return res.status(404).json({ error: 'UID not found' });
+  const router = express.Router();
 
-    await pool.query(
-      `UPDATE properties SET
+  router.get('/prefill/:uid', async (req,res)=>{
+    try{
+      const {rows} = await pool.query(
+        'SELECT * FROM properties WHERE uid=$1',
+        [req.params.uid]
+      );
+
+      if(!rows.length)
+        return res.status(404).json({error:'UID not found'});
+
+      res.json(rows[0]);
+    }
+    catch(e){
+      res.status(500).json({error:e.message});
+    }
+  });
+
+  router.get('/uids', async (_,res)=>{
+    try{
+      const {rows} = await pool.query(`
+        SELECT uid,city,society_name,unit_no,tower_no,
+        owner_broker_name,visit_submitted_at,listing_submitted_at
+        FROM properties
+        WHERE visit_submitted_at IS NOT NULL
+        ORDER BY created_at DESC
+      `);
+
+      res.json(rows);
+    }
+    catch(e){
+      res.status(500).json({error:e.message});
+    }
+  });
+
+  router.post('/submit', async (req,res)=>{
+    try{
+      const d=req.body;
+
+      const {rows}=await pool.query(
+        'SELECT uid FROM properties WHERE uid=$1',
+        [d.uid]
+      );
+
+      if(!rows.length)
+        return res.status(404).json({error:'UID not found'});
+
+      await pool.query(`
+        UPDATE properties SET
         listing_asking_price=$1,
         listing_availability=$2,
         listing_highlights=$3,
@@ -35,35 +73,37 @@ router.post('/submit', async (req, res) => {
         beta_pct=$19,
         listing_submitted_at=NOW(),
         updated_at=NOW()
-      WHERE uid=$20`,
-      [
-        parseFloat(d.listing_asking_price) || null,
-        d.listing_availability || null,
-        d.listing_highlights || null,
-        d.listing_description || null,
-        parseFloat(d.society_age_years) || null,
-        parseInt(d.total_units) || null,
-        parseFloat(d.maintenance_charges) || null,
-        parseFloat(d.society_move_in_charges) || null,
-        parseFloat(d.electricity_charges) || null,
-        d.water_supply || null,
-        parseFloat(d.dg_charges) || null,
-        d.alpha_beta || null,
-        d.loan_status || null,
-        d.seller_location || null,
-        parseFloat(d.current_occupancy_pct) || null,
-        parseFloat(d.circle_rate) || null,
-        d.parking_number || null,
-        d.club_facility || null,
-        parseFloat(d.beta_pct) || null,
+        WHERE uid=$20
+      `,[
+        parseFloat(d.listing_asking_price)||null,
+        d.listing_availability||null,
+        d.listing_highlights||null,
+        d.listing_description||null,
+        parseFloat(d.society_age_years)||null,
+        parseInt(d.total_units)||null,
+        parseFloat(d.maintenance_charges)||null,
+        parseFloat(d.society_move_in_charges)||null,
+        parseFloat(d.electricity_charges)||null,
+        d.water_supply||null,
+        parseFloat(d.dg_charges)||null,
+        d.alpha_beta||null,
+        d.loan_status||null,
+        d.seller_location||null,
+        parseFloat(d.current_occupancy_pct)||null,
+        parseFloat(d.circle_rate)||null,
+        d.parking_number||null,
+        d.club_facility||null,
+        parseFloat(d.beta_pct)||null,
         d.uid
-      ]
-    );
+      ]);
 
-    res.json({ success: true, uid: d.uid });
+      res.json({success:true,uid:d.uid});
+    }
+    catch(e){
+      console.error(e);
+      res.status(500).json({error:e.message});
+    }
+  });
 
-  } catch (e) {
-    console.error('Listing:', e);
-    res.status(500).json({ error: e.message });
-  }
-});
+  return router;
+};
