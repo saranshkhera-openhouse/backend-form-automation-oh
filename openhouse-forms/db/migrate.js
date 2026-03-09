@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS properties (
   society_age_years REAL, total_units INTEGER,
   maintenance_charges REAL, society_move_in_charges REAL,
   electricity_charges REAL, water_supply TEXT, dg_charges REAL,
-  alpha_beta TEXT, loan_status TEXT, seller_location TEXT,
+  alpha_beta TEXT, beta_pct REAL, loan_status TEXT, seller_location TEXT,
   current_occupancy_pct REAL, circle_rate REAL, parking_number TEXT,
   listing_submitted_at TIMESTAMPTZ,
 
@@ -124,6 +124,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='listing_highlights') THEN ALTER TABLE properties ADD COLUMN listing_highlights TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='listing_description') THEN ALTER TABLE properties ADD COLUMN listing_description TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='listing_submitted_at') THEN ALTER TABLE properties ADD COLUMN listing_submitted_at TIMESTAMPTZ; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='beta_pct') THEN ALTER TABLE properties ADD COLUMN beta_pct REAL; END IF;
 END $$;
 `;
 
