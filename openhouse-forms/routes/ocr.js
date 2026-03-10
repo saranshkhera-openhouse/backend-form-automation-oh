@@ -25,9 +25,10 @@ module.exports=function(){
       const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
       let bank_name='',account_number='',ifsc_code='';
 
-      // IFSC: 11 chars, starts with 4 alpha + 0 + 6 alphanumeric
-      const ifscMatch=text.match(/[A-Z]{4}0[A-Z0-9]{6}/);
+      // IFSC: 11 chars, 4 alpha + 0 + 6 alphanumeric (case-insensitive, also look near "IFS" label)
+      const ifscMatch=text.toUpperCase().match(/[A-Z]{4}0[A-Z0-9]{6}/);
       if(ifscMatch)ifsc_code=ifscMatch[0];
+      if(!ifsc_code){for(const line of lines){if(/ifs/i.test(line)){const m=line.toUpperCase().match(/[A-Z]{4}0[A-Z0-9]{6}/);if(m){ifsc_code=m[0];break}}}}
 
       // Account number: long digit sequence (9-18 digits)
       const acMatches=text.match(/\b\d{9,18}\b/g);

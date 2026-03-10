@@ -24,7 +24,7 @@ module.exports=function(pool){
         token_transfer_date=$5,neft_reference=$6,final_submitted_at=NOW(),updated_at=NOW()
         WHERE uid=$7`,
         [parseFloat(d.remaining_amount)||null,d.bank_account_number,d.bank_name,d.ifsc_code,
-         d.token_transfer_date,d.neft_reference,d.uid]);
+         d.token_transfer_date,(d.neft_reference||'').toUpperCase(),d.uid]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });

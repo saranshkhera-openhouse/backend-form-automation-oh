@@ -20,7 +20,7 @@ module.exports=function(pool){
         deal_bank_name=$2,deal_bank_account_number=$3,deal_ifsc_code=$4,deal_transfer_date=$5,deal_neft_reference=$6,
         token_is_draft=FALSE,token_deal_submitted_at=NOW(),updated_at=NOW() WHERE uid=$7`,
         [parseFloat(d.deal_token_amount)||null,
-         d.deal_bank_name||null,d.deal_bank_account_number||null,d.deal_ifsc_code||null,d.deal_transfer_date||null,d.deal_neft_reference||null,
+         d.deal_bank_name||null,d.deal_bank_account_number||null,d.deal_ifsc_code||null,d.deal_transfer_date||null,(d.deal_neft_reference||'').toUpperCase()||null,
          d.uid]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('TokenDeal:',e);res.status(500).json({error:e.message})}
