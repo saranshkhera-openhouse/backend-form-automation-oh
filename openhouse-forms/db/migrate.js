@@ -97,6 +97,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='water_supply') THEN ALTER TABLE properties ADD COLUMN water_supply TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='dg_charges') THEN ALTER TABLE properties ADD COLUMN dg_charges REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='alpha_beta') THEN ALTER TABLE properties ADD COLUMN alpha_beta TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='beta_pct') THEN ALTER TABLE properties ADD COLUMN beta_pct REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='loan_status') THEN ALTER TABLE properties ADD COLUMN loan_status TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='seller_location') THEN ALTER TABLE properties ADD COLUMN seller_location TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='current_occupancy_pct') THEN ALTER TABLE properties ADD COLUMN current_occupancy_pct REAL; END IF;
@@ -124,7 +125,6 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='listing_highlights') THEN ALTER TABLE properties ADD COLUMN listing_highlights TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='listing_description') THEN ALTER TABLE properties ADD COLUMN listing_description TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='listing_submitted_at') THEN ALTER TABLE properties ADD COLUMN listing_submitted_at TIMESTAMPTZ; END IF;
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='beta_pct') THEN ALTER TABLE properties ADD COLUMN beta_pct REAL; END IF;
 END $$;
 `;
 
