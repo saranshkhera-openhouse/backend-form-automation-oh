@@ -225,6 +225,8 @@ function generateReceiptHTML(p, mode='final'){
       <div class="td-val">${fmtDate(mode==='deal'?p.deal_transfer_date:p.token_transfer_date)}</div>
     </div>
   </div>`:''}
+
+  
   <!-- TERMS & CONDITIONS -->
   <div class="section-label">Terms &amp; Conditions</div>
   <div class="terms-wrap">
