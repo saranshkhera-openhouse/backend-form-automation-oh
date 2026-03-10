@@ -4,30 +4,56 @@
 .form-grid{display:grid;gap:8px;margin-top:10px}
 .form-link{display:flex;align-items:center;gap:12px;padding:14px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);text-decoration:none;color:var(--tx);transition:.15s;box-shadow:var(--sh)}
 .form-link:hover{border-color:var(--ac);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.form-link:active{transform:translateY(0)}
 .fl-num{width:32px;height:32px;border-radius:50%;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
-.fl-body{flex:1}
-.fl-title{font-size:13px;font-weight:700}.fl-desc{font-size:10px;color:var(--tx3);margin-top:1px}
+.fl-body{flex:1}.fl-title{font-size:13px;font-weight:700}.fl-desc{font-size:10px;color:var(--tx3);margin-top:1px}
 .fl-arrow{color:var(--tx3);font-size:16px}
 .admin-link{margin-top:14px;display:block;text-align:center;padding:12px;background:var(--ac);color:#fff;border-radius:var(--r);text-decoration:none;font-size:13px;font-weight:700}
 .admin-link:hover{background:#1f2937}
-</style>
-</head>
+.user-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;box-shadow:var(--sh)}
+.user-info{font-size:12px;color:var(--tx2)}.user-info strong{color:var(--tx)}
+.logout-btn{font-size:11px;color:var(--red);text-decoration:none;font-weight:600;padding:4px 10px;border:1px solid #fecaca;border-radius:var(--r)}
+.logout-btn:hover{background:var(--rbg)}
+</style></head>
 <body>
 <header class="hdr centered"><div class="logo">OPENHOUSE</div><div class="logo-sub">Property Management System</div></header>
 <div class="ctn">
-  <div class="card">
-    <div class="card-t">Forms</div>
-    <div class="card-d">Select a form to get started.</div>
-    <div class="form-grid">
-      <a href="/schedule" class="form-link"><div class="fl-num">1</div><div class="fl-body"><div class="fl-title">Visit Schedule</div><div class="fl-desc">Create a new visit schedule & UID</div></div><div class="fl-arrow">→</div></a>
-      <a href="/visit" class="form-link"><div class="fl-num">2</div><div class="fl-body"><div class="fl-title">Visit Form (Audit)</div><div class="fl-desc">Property inspection & room details</div></div><div class="fl-arrow">→</div></a>
-      <a href="/token-request" class="form-link"><div class="fl-num">3</div><div class="fl-body"><div class="fl-title">Token Request</div><div class="fl-desc">Token amount, deal terms & documents</div></div><div class="fl-arrow">→</div></a>
-      <a href="/token-deal" class="form-link"><div class="fl-num">4</div><div class="fl-body"><div class="fl-title">Deal Terms (for Owner)</div><div class="fl-desc">Confirm token & preview deal</div></div><div class="fl-arrow">→</div></a>
-      <a href="/final" class="form-link"><div class="fl-num">5</div><div class="fl-body"><div class="fl-title">Pending Security Deposit</div><div class="fl-desc">Remaining amount, NEFT & invoice</div></div><div class="fl-arrow">→</div></a>
-      <a href="/listing" class="form-link"><div class="fl-num">6</div><div class="fl-body"><div class="fl-title">Listing Details</div><div class="fl-desc">Prepare property for listing</div></div><div class="fl-arrow">→</div></a>
-    </div>
+  <div class="user-bar">
+    <div class="user-info">Signed in as <strong id="userName">...</strong></div>
+    <a href="/auth/logout" class="logout-btn">Logout</a>
   </div>
-  <a href="/admin" class="admin-link">📊 Admin Dashboard</a>
+
+  <div class="card">
+    <div class="card-t">Your Forms</div>
+    <div class="card-d">Forms you have access to.</div>
+    <div class="form-grid" id="formGrid"></div>
+    <div id="noForms" style="display:none;text-align:center;padding:20px;color:var(--tx3);font-size:13px">No forms assigned. Contact your admin.</div>
+  </div>
+  <a href="/admin" class="admin-link" id="adminLink" style="display:none">Admin Dashboard</a>
 </div>
+
+<script>
+const FORMS=[
+  {key:'schedule',num:1,title:'Visit Schedule',desc:'Create a new visit schedule & UID',href:'/schedule'},
+  {key:'visit',num:2,title:'Visit Form (Audit)',desc:'Property inspection & room details',href:'/visit'},
+  {key:'token-request',num:3,title:'Token Request',desc:'Token amount, deal terms & documents',href:'/token-request'},
+  {key:'token-deal',num:4,title:'Deal Terms (for Owner)',desc:'Confirm token & preview deal',href:'/token-deal'},
+  {key:'final',num:5,title:'Pending Security Deposit',desc:'Remaining amount, NEFT & invoice',href:'/final'},
+  {key:'listing',num:6,title:'Listing Details',desc:'Prepare property for listing',href:'/listing'}
+];
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const r=await fetch('/auth/me');if(!r.ok){window.location.href='/login';return}
+    const user=await r.json();
+    document.getElementById('userName').textContent=user.name||user.email;
+    const grid=document.getElementById('formGrid');
+    const allowed=user.allowed_forms||[];const hasAll=allowed.includes('*')||user.is_admin;
+    const visible=FORMS.filter(f=>hasAll||allowed.includes(f.key));
+    if(!visible.length){document.getElementById('noForms').style.display='block';return}
+    visible.forEach(f=>{
+      grid.innerHTML+=`<a href="${f.href}" class="form-link"><div class="fl-num">${f.num}</div><div class="fl-body"><div class="fl-title">${f.title}</div><div class="fl-desc">${f.desc}</div></div><div class="fl-arrow">→</div></a>`;
+    });
+    if(user.is_admin)document.getElementById('adminLink').style.display='block';
+  }catch(e){window.location.href='/login'}
+});
+</script>
 </body></html>

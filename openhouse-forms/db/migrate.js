@@ -17,6 +17,24 @@ CREATE TABLE IF NOT EXISTS master_areas (
 );
 CREATE INDEX IF NOT EXISTS idx_ma_soc ON master_areas(society_name);
 
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  allowed_forms TEXT[] DEFAULT '{}',
+  is_admin BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" VARCHAR NOT NULL COLLATE "default",
+  "sess" JSON NOT NULL,
+  "expire" TIMESTAMP(6) NOT NULL,
+  CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+);
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session"("expire");
+
 CREATE TABLE IF NOT EXISTS properties (
   uid TEXT PRIMARY KEY,
 

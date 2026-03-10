@@ -2,59 +2,130 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('./db/pool');
 const { MIGRATION_SQL, COMPAT_SQL } = require('./db/migrate');
 const { SOCIETIES } = require('./db/seed');
+const { isAuthenticated, hasFormAccess, isAdmin } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors()); app.use(express.json({limit:'10mb'})); app.use(express.urlencoded({extended:true}));
-app.use(express.static(path.join(__dirname,'public')));
 
-app.use('/api/config', require('./routes/config')(pool));
-app.use('/api/schedule', require('./routes/schedule')(pool));
-app.use('/api/visit', require('./routes/visit')(pool));
-app.use('/api/token-request', require('./routes/token-request')(pool));
-app.use('/api/token-deal', require('./routes/token-deal')(pool));
-app.use('/api/final', require('./routes/final')(pool));
-app.use('/api/listing', require('./routes/listing')(pool));
-app.use('/api/ocr', require('./routes/ocr')());
+// ── Sessions (stored in PostgreSQL) ──
+app.set('trust proxy', 1);
+app.use(session({
+  store: new PgSession({ pool, tableName: 'session', createTableIfMissing: true }),
+  secret: process.env.SESSION_SECRET || 'openhouse-secret-change-me',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' || process.env.APP_URL?.startsWith('https'), maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax' }
+}));
 
-app.get('/api/properties', async(req,res)=>{
+// ── Passport (Google OAuth) ──
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser(async (id, done) => {
+  try { const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [id]); done(null, rows[0] || null); }
+  catch (e) { done(e, null); }
+});
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  const callbackURL = (process.env.APP_URL || `http://localhost:${PORT}`) + '/auth/google/callback';
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = (profile.emails && profile.emails[0] && profile.emails[0].value || '').toLowerCase();
+      if (!email) return done(null, false);
+      // Check if user exists in our approved list
+      const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email)=$1 AND is_active=TRUE', [email]);
+      if (!rows.length) return done(null, false);
+      // Update name from Google profile if blank
+      if (!rows[0].name && profile.displayName) {
+        await pool.query('UPDATE users SET name=$1 WHERE id=$2', [profile.displayName, rows[0].id]);
+        rows[0].name = profile.displayName;
+      }
+      return done(null, rows[0]);
+    } catch (e) { return done(e, null); }
+  }));
+}
+
+// ── Static files (CSS, JS, images — public, no auth needed) ──
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
+app.use('/js', express.static(path.join(__dirname, 'public/js')));
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
+// ── Auth routes (no auth needed) ──
+app.use('/auth', require('./routes/auth')(pool));
+app.get('/login', (_, r) => r.sendFile(path.join(__dirname, 'public/login.html')));
+
+// ── API routes that need auth ──
+app.use('/api/config', isAuthenticated, require('./routes/config')(pool));
+app.use('/api/schedule', isAuthenticated, hasFormAccess, require('./routes/schedule')(pool));
+app.use('/api/visit', isAuthenticated, hasFormAccess, require('./routes/visit')(pool));
+app.use('/api/token-request', isAuthenticated, hasFormAccess, require('./routes/token-request')(pool));
+app.use('/api/token-deal', isAuthenticated, hasFormAccess, require('./routes/token-deal')(pool));
+app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(pool));
+app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
+app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
+
+// ── Admin API ──
+app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
   try{const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
     assigned_by,field_exec,token_requested_by,
     schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,listing_submitted_at,created_at
     FROM properties ORDER BY created_at DESC`);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
 });
 
-const send=(f)=>(_,r)=>r.sendFile(path.join(__dirname,'public',f));
-app.get('/schedule',send('schedule.html'));
-app.get('/visit',send('visit.html'));
-app.get('/token-request',send('token-request.html'));
-app.get('/token-deal',send('token-deal.html'));
-app.get('/final',send('final.html'));
-app.get('/listing',send('listing.html'));
-app.get('/admin',send('admin.html'));
-app.get('/',send('index.html'));
+// ── Protected page routes ──
+const sendForm = (f) => [isAuthenticated, hasFormAccess, (_, r) => r.sendFile(path.join(__dirname, 'public', f))];
+app.get('/schedule', ...sendForm('schedule.html'));
+app.get('/visit', ...sendForm('visit.html'));
+app.get('/token-request', ...sendForm('token-request.html'));
+app.get('/token-deal', ...sendForm('token-deal.html'));
+app.get('/final', ...sendForm('final.html'));
+app.get('/listing', ...sendForm('listing.html'));
+app.get('/admin', isAuthenticated, isAdmin, (_, r) => r.sendFile(path.join(__dirname, 'public/admin.html')));
 
-async function start(){
-  try{
-    await pool.query(MIGRATION_SQL);await pool.query(COMPAT_SQL);console.log('✓ DB ready');
-    const{rows}=await pool.query('SELECT COUNT(*)as c FROM master_societies');
-    if(parseInt(rows[0].c)===0){for(const[c,l,s]of SOCIETIES)await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING',[c,l,s]);console.log(`✓ Seeded ${SOCIETIES.length} societies`)}
-    app.listen(PORT,()=>console.log(`
-  ┌────────────────────────────────────────┐
-  │  OPENHOUSE FORMS v5.0 — 6-Form System │
-  ├────────────────────────────────────────┤
-  │  1. Visit Schedule  → /schedule       │
-  │  2. Visit (Audit)   → /visit          │
-  │  3. Token Request   → /token-request   │
-  │  4. Deal Terms      → /token-deal      │
-  │  5. Final Form      → /final           │
-  │  6. Listing Details → /listing         │
-  │  Admin Dashboard    → /admin           │
-  │  Port: ${PORT}                            │
-  └────────────────────────────────────────┘`));
-  }catch(e){console.error('Startup failed:',e.message);process.exit(1)}
+// ── Home (needs auth, shows forms user can access) ──
+app.get('/', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/index.html')));
+
+async function start() {
+  try {
+    await pool.query(MIGRATION_SQL); await pool.query(COMPAT_SQL); console.log('DB ready');
+    const { rows } = await pool.query('SELECT COUNT(*)as c FROM master_societies');
+    if (parseInt(rows[0].c) === 0) {
+      for (const [c, l, s] of SOCIETIES) await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING', [c, l, s]);
+      console.log(`Seeded ${SOCIETIES.length} societies`);
+    }
+    // Seed first admin if no users exist
+    const uc = await pool.query('SELECT COUNT(*)as c FROM users');
+    if (parseInt(uc.rows[0].c) === 0) {
+      console.log('\n  ⚠  No users found. Add your first admin via Render Shell:');
+      console.log('  node -e "require(\'dotenv\').config();require(\'./db/pool\').query(\\"INSERT INTO users(email,name,allowed_forms,is_admin) VALUES(\'your@email.com\',\'Admin\',\'{*}\',true)\\").then(()=>{console.log(\'Done\');process.exit()})"\n');
+    }
+    app.listen(PORT, () => console.log(`
+  ┌──────────────────────────────────────────┐
+  │  OPENHOUSE v6.0 — Google Auth Enabled    │
+  ├──────────────────────────────────────────┤
+  │  Login         → /login                  │
+  │  1. Schedule   → /schedule               │
+  │  2. Visit      → /visit                  │
+  │  3. Token Req  → /token-request          │
+  │  4. Deal Terms → /token-deal             │
+  │  5. PSD        → /final                  │
+  │  6. Listing    → /listing                │
+  │  Admin         → /admin                  │
+  │  Port: ${PORT}                               │
+  └──────────────────────────────────────────┘`));
+  } catch (e) { console.error('Startup failed:', e.message); process.exit(1); }
 }
 start();
