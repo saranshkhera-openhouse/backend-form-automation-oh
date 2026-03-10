@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Security Deposit</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr">
+  <div class="hdr-logo"><svg viewBox="0 0 32 32" width="28" height="28"><circle cx="16" cy="16" r="15" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M16 6L8 14v12h5v-7h6v7h5V14L16 6z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="logo-text"><b>Open</b><span>house</span></span></div>
+  <div class="hdr-center"><div class="form-name">Pending Security Deposit</div></div>
+</header>
+<div class="ctn">
+  <div class="card"><div class="card-t">Load Property</div>
+    <div class="load-row"><div class="fg"><label>UID</label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button></div>
+    <div class="pf-st" id="pfSt"></div></div>
+
+  <form id="finalForm" style="display:none"><input type="hidden" name="uid" id="fUid">
+    <div class="card"><div class="card-t">Amount Summary</div>
+      <div class="r3">
+        <div class="fg"><label>Performance Guarantee</label><input type="text" id="pgAmt" class="pre" readonly></div>
+        <div class="fg"><label>Token Paid</label><input type="text" id="tkAmt" class="pre" readonly></div>
+        <div class="fg"><label>Remaining Amount</label><input type="text" id="remAmt" class="pre" readonly style="font-weight:700;color:var(--ac)"></div>
+      </div>
+      <input type="hidden" name="remaining_amount" id="remHidden">
+    </div>
+
+    <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Payment Details</div>
+      <div class="r2">
+        <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="bank_account_number" id="neftAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bank Name <span class="req">*</span></label><input type="text" name="bank_name" id="neftBank" required><div class="err-msg">Required</div></div>
+      </div>
+      <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="ifsc_code" id="neftIfsc" class="input-md" required><div class="err-msg">Required</div></div>
+      <div class="r2">
+        <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="token_transfer_date" id="fDate" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="neft_reference" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
+      </div></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
+      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Invoice PDF</button>
+    </div>
+  </form>
+</div>
+
+<div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
+  <div class="pdf-hdr"><h3>Performance Guarantee Invoice</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
+  <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
+  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open in New Tab</a></div>
+</div></div>
+
+<script src="/js/shared.js"></script>
+<script>
+let currentUid,propData=null;
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const ur=await fetch(`${API}/api/final/uids`);const uids=await ur.json();
+    fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
+    noFutureDate('fDate');
+    const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
+  }catch(e){toast('Failed','err')}
+});
+
+document.getElementById('loadBtn').addEventListener('click',loadData);
+async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{const r=await fetch(`${API}/api/final/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
+    document.getElementById('fUid').value=propData.uid;currentUid=uid;
+    // Calculate remaining = performance guarantee - token paid
+    const pg=Number(propData.performance_guarantee)||0;
+    const tk=Number(propData.deal_token_amount)||0;
+    const rem=pg-tk;
+    document.getElementById('pgAmt').value=pg?'₹ '+pg.toLocaleString('en-IN'):'—';
+    document.getElementById('tkAmt').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';
+    document.getElementById('remAmt').value=rem>0?'₹ '+rem.toLocaleString('en-IN'):'₹ 0';
+    document.getElementById('remHidden').value=rem>0?rem:0;
+    // Prefill bank from Form 4 deal NEFT
+    document.getElementById('neftAc').value=propData.bank_account_number||propData.deal_bank_account_number||propData.cheque_account_number||'';
+    document.getElementById('neftBank').value=propData.bank_name||propData.deal_bank_name||propData.cheque_bank_name||'';
+    document.getElementById('neftIfsc').value=propData.ifsc_code||propData.deal_ifsc_code||propData.cheque_ifsc||'';
+    const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
+    if(propData.token_transfer_date)sv('token_transfer_date',propData.token_transfer_date.split('T')[0]);
+    sv('neft_reference',propData.neft_reference);
+    document.getElementById('pdfBtn').disabled=!propData.final_submitted_at;
+    document.getElementById('finalForm').style.display='block';
+    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${propData.final_submitted_at?' (Submitted)':''}`;
+  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('finalForm').style.display='none'}}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  const{valid,missing}=validateForm('finalForm');if(!valid){toast(`Missing: ${missing.slice(0,4).join(', ')}`,'err');return}
+  const fd=new FormData(document.getElementById('finalForm'));const body=Object.fromEntries(fd.entries());
+  for(const k of Object.keys(body)){if(typeof body[k]==='string')body[k]=body[k].replace(/,/g,'')}
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/final/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    document.getElementById('pdfBtn').disabled=false;toast('Submitted! Invoice ready.','ok',5000)});
+});
+
+document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
+  const url=`${API}/api/final/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
+  document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
+function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
+document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
+</script>
+</body></html>

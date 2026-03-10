@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Visit Schedule</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr">
+  <div class="hdr-logo"><svg viewBox="0 0 32 32" width="28" height="28"><circle cx="16" cy="16" r="15" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M16 6L8 14v12h5v-7h6v7h5V14L16 6z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="logo-text"><b>Open</b><span>house</span></span></div>
+  <div class="hdr-center"><div class="form-name">Visit Schedule Form</div></div>
+</header>
+<div class="ctn">
+  <form id="form">
+    <div class="card">
+      <div class="card-t">UID Generator</div>
+      <div class="r2">
+        <div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Source <span class="req">*</span></label><div class="radios" id="srcGroup"></div><div class="err-msg">Required</div></div>
+      </div>
+      <div class="uid-display empty" id="uidBox">Select city & source above</div>
+      <input type="hidden" name="uid" id="fUid">
+    </div>
+
+    <div class="card">
+      <div class="card-t">Schedule</div>
+      <div class="fg"><label>Lead ID</label><input type="text" name="lead_id"></div>
+      <div class="r2">
+        <div class="fg"><label>Date <span class="req">*</span></label><input type="date" name="schedule_date" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Time <span class="req">*</span></label><input type="time" name="schedule_time" required><div class="err-msg">Required</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Owner / Broker</div>
+      <div class="r2">
+        <div class="fg"><label>First Name <span class="req">*</span></label><input type="text" name="first_name" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Last Name</label><input type="text" name="last_name"></div>
+      </div>
+      <div class="fg"><label>Contact No. <span class="req">*</span></label><input type="tel" name="contact_no" id="phone" maxlength="10" required><div class="inline-err" id="phoneErr"></div><div class="err-msg">Required</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Property Info</div>
+      <div class="r2">
+        <div class="fg"><label>Society <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled><option value="">City first</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Society first</option></select><div class="err-msg">Required</div></div>
+      </div>
+      <div class="r3">
+        <div class="fg"><label>Unit No. <span class="req">*</span></label><input type="text" name="unit_no" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Tower No.</label><input type="text" name="tower_no"></div>
+        <div class="fg"><label>Floor <span class="req">*</span></label><select name="floor" id="selFloor" required></select><div class="err-msg">Required</div></div>
+      </div>
+      <div class="r3">
+        <div class="fg" id="areaFg">
+          <label>Area (sqft) <span class="req">*</span></label>
+          <select name="area_sqft" id="selArea" required><option value="">Society first</option></select>
+          <input type="number" id="areaManual" name="area_manual" min="1" style="display:none;margin-top:4px">
+          <div class="err-msg">Required</div>
+        </div>
+        <div class="fg"><label>Config <span class="req">*</span></label><select name="configuration" id="selConfig" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Ask (Lakhs)</label><input type="number" name="demand_price" step="0.01"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Assignment</div>
+      <div class="r2">
+        <div class="fg"><label>Assigned By</label><select name="assigned_by" id="selAB"><option value="">Select...</option></select></div>
+        <div class="fg"><label>Assigned To</label><select name="field_exec" id="selAT"><option value="">Select...</option></select></div>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Create Visit Schedule</button>
+  </form>
+</div>
+<script src="/js/shared.js"></script>
+<script>
+let opts;
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;
+    fillRadios(document.getElementById('srcGroup'),'source',opts.sources,true);
+    fillSelect(document.getElementById('selConfig'),opts.configurations,'Config');
+    fillNumSelect(document.getElementById('selFloor'),1,50,'Floor');
+    fillSelect(document.getElementById('selAB'),opts.assignedByList,'Select...');
+    fillSelect(document.getElementById('selAT'),opts.assignedToList,'Select...');
+    await loadCities(document.getElementById('selCity'));
+    const cityEl=document.getElementById('selCity'),socEl=document.getElementById('selSoc'),locEl=document.getElementById('selLoc');
+    cityEl.addEventListener('change',()=>{loadSocieties(cityEl.value,socEl,locEl);genUID()});
+    socEl.addEventListener('change',()=>{loadLocalities(cityEl.value,socEl.value,locEl);loadAreas(socEl.value)});
+    makeSearchable(socEl);
+    document.getElementById('srcGroup').addEventListener('change',genUID);
+    setupContactValidation('phone','phoneErr');
+    document.getElementById('selArea').addEventListener('change',function(){
+      const m=document.getElementById('areaManual');
+      if(this.value==='other'){m.style.display='block';m.required=true;m.focus()}else{m.style.display='none';m.required=false;m.value=''}
+    });
+  }catch(e){toast('Config failed','err')}
+});
+async function loadAreas(soc){
+  const sel=document.getElementById('selArea'),man=document.getElementById('areaManual');
+  man.style.display='none';man.required=false;man.value='';sel.style.display='';
+  sel.innerHTML='<option value="">Loading...</option>';
+  if(!soc){sel.innerHTML='<option value="">Society first</option>';return}
+  try{const r=await fetch(`${API}/api/config/areas?society=${encodeURIComponent(soc)}`);const a=await r.json();
+    sel.innerHTML='<option value="">Select sqft</option>';
+    a.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)});
+    const ot=document.createElement('option');ot.value='other';ot.textContent='Other (type manually)';sel.appendChild(ot);
+  }catch(e){sel.innerHTML='<option value="">Failed</option>'}}
+async function genUID(){const city=document.getElementById('selCity').value;const src=getRadio('source');const box=document.getElementById('uidBox'),h=document.getElementById('fUid');
+  if(!city||!src){box.textContent='Select city & source above';box.classList.add('empty');h.value='';return}
+  try{const r=await fetch(`${API}/api/schedule/next-uid?city=${encodeURIComponent(city)}&source=${encodeURIComponent(src)}`);const d=await r.json();if(!r.ok)throw new Error(d.error);box.textContent=d.uid;box.classList.remove('empty');h.value=d.uid}catch(e){box.textContent='Error';box.classList.add('empty');h.value=''}}
+document.getElementById('submitBtn').addEventListener('click',()=>{const uid=document.getElementById('fUid').value;
+  if(!uid){toast('Select city & source to generate UID','err');return}
+  const{valid,missing}=validateForm('form');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  const ph=document.getElementById('phone').value.replace(/\D/g,'');
+  if(ph.length!==10){toast('Contact must be 10 digits','err');return}
+  if(ph[0]==='0'){toast('Contact cannot start with 0','err');return}
+  const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());body.source=getRadio('source');body.uid=uid;
+  if(body.area_sqft==='other'){body.area_sqft=body.area_manual}delete body.area_manual;
+  if(!body.area_sqft||parseFloat(body.area_sqft)<=0){toast('Enter valid area','err');return}
+  submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/schedule/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    showThankYou(res.uid,`<a href="/schedule" class="ty-back">Schedule New Visit</a><a href="/" class="ty-back">Home</a>`)})});
+</script>
+</body></html>
