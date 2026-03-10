@@ -38,7 +38,12 @@
         <div class="fg"><label>Floor <span class="req">*</span></label><select name="floor" id="selFloor" required></select><div class="err-msg">Required</div></div>
       </div>
       <div class="r3">
-        <div class="fg"><label>Area (sqft) <span class="req">*</span></label><select name="area_sqft" id="selArea" required><option value="">Society first</option></select><div class="err-msg">Required</div></div>
+        <div class="fg" id="areaFg">
+          <label>Area (sqft) <span class="req">*</span></label>
+          <select name="area_sqft" id="selArea" required><option value="">Society first</option></select>
+          <input type="number" id="areaManual" name="area_manual" placeholder="Enter sqft manually" min="1" style="display:none;margin-top:4px">
+          <div class="err-msg">Required</div>
+        </div>
         <div class="fg"><label>Config <span class="req">*</span></label><select name="configuration" id="selConfig" required></select><div class="err-msg">Required</div></div>
         <div class="fg"><label>Ask (₹ Lakhs)</label><input type="number" name="demand_price" step="0.01"></div>
       </div>
@@ -70,14 +75,23 @@ document.addEventListener('DOMContentLoaded',async()=>{
     makeSearchable(socEl);
     document.getElementById('srcGroup').addEventListener('change',genUID);
     setupContactValidation('phone','phoneErr');
+    // Area dropdown: when "Other" selected, show manual input
+    document.getElementById('selArea').addEventListener('change',function(){
+      const m=document.getElementById('areaManual');
+      if(this.value==='other'){m.style.display='block';m.required=true;m.focus()}else{m.style.display='none';m.required=false;m.value=''}
+    });
   }catch(e){toast('Config failed','err')}
 });
-async function loadAreas(soc){const sel=document.getElementById('selArea');sel.innerHTML='<option value="">Loading...</option>';
+async function loadAreas(soc){
+  const sel=document.getElementById('selArea'),man=document.getElementById('areaManual');
+  man.style.display='none';man.required=false;man.value='';sel.style.display='';
+  sel.innerHTML='<option value="">Loading...</option>';
   if(!soc){sel.innerHTML='<option value="">Society first</option>';return}
   try{const r=await fetch(`${API}/api/config/areas?society=${encodeURIComponent(soc)}`);const a=await r.json();
-    if(a.length){fillSelect(sel,a.map(String),'Select sqft')}else{sel.innerHTML='<option value="">Type manually</option>';
-      const e=sel.parentNode.querySelector('.area-manual');if(!e){const i=document.createElement('input');i.type='number';i.name='area_sqft';i.placeholder='Enter sqft';i.className='area-manual';i.style.marginTop='4px';i.required=true;sel.style.display='none';sel.parentNode.appendChild(i)}}}
-  catch(e){sel.innerHTML='<option value="">Failed</option>'}}
+    sel.innerHTML='<option value="">Select sqft</option>';
+    a.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)});
+    const ot=document.createElement('option');ot.value='other';ot.textContent='Other (type manually)';sel.appendChild(ot);
+  }catch(e){sel.innerHTML='<option value="">Failed</option>'}}
 async function genUID(){const city=document.getElementById('selCity').value;const src=getRadio('source');const box=document.getElementById('uidBox'),h=document.getElementById('fUid');
   if(!city||!src){box.textContent='Select city & source above';box.classList.add('empty');h.value='';return}
   try{const r=await fetch(`${API}/api/schedule/next-uid?city=${encodeURIComponent(city)}&source=${encodeURIComponent(src)}`);const d=await r.json();if(!r.ok)throw new Error(d.error);box.textContent=d.uid;box.classList.remove('empty');h.value=d.uid}catch(e){box.textContent='Error';box.classList.add('empty');h.value=''}}
@@ -86,6 +100,10 @@ document.getElementById('submitBtn').addEventListener('click',()=>{const uid=doc
   const{valid,missing}=validateForm('form');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const ph=document.getElementById('phone').value.replace(/\D/g,'');if(ph.length!==10){toast('Contact must be 10 digits','err');return}
   const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());body.source=getRadio('source');body.uid=uid;
+  // If "Other" was selected, use the manual input value
+  if(body.area_sqft==='other'){body.area_sqft=body.area_manual}
+  delete body.area_manual;
+  if(!body.area_sqft||parseFloat(body.area_sqft)<=0){toast('Enter valid area','err');return}
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/schedule/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(res.uid)})});
 </script>

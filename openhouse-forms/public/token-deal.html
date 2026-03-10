@@ -9,20 +9,18 @@
     <div class="pf-st" id="pfSt"></div></div>
 
   <form id="dealForm" style="display:none"><input type="hidden" name="uid" id="fUid">
-    <!-- Token Amount -->
     <div class="card"><div class="card-t">Token Amount</div>
       <div class="fg"><label>Token (₹) <span class="req">*</span></label><input type="number" name="deal_token_amount" id="dealAmt" required><div class="err-msg">Required</div></div></div>
 
-    <!-- NEFT Details -->
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">NEFT Details</div>
       <div class="r2">
-        <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="deal_bank_account_number" id="dAc" inputmode="numeric" pattern="[0-9]*" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="deal_bank_account_number" id="dAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Bank Name <span class="req">*</span></label><input type="text" name="deal_bank_name" id="dBank" required><div class="err-msg">Required</div></div>
       </div>
       <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="deal_ifsc_code" id="dIfsc" class="input-md" required><div class="err-msg">Required</div></div>
       <div class="r2">
         <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="deal_transfer_date" id="dDate" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
       </div></div>
 
     <div class="btn-row">
@@ -31,7 +29,6 @@
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
     </div>
 
-    <!-- Preview Section -->
     <div class="preview-section" id="previewSection">
       <div class="preview-card"><div class="pc-t">Property Details</div><div id="pcProp"></div></div>
       <div class="preview-card"><div class="pc-t">Financial Agreements</div><div id="pcMoney"></div></div>
@@ -41,7 +38,6 @@
   </form>
 </div>
 
-<!-- PDF Modal -->
 <div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
   <div class="pdf-hdr"><h3>Deal Terms Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
   <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
@@ -67,7 +63,6 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
   try{const r=await fetch(`${API}/api/token-deal/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
     document.getElementById('fUid').value=propData.uid;currentUid=uid;
     if(propData.deal_token_amount)document.getElementById('dealAmt').value=propData.deal_token_amount;
-    // Prefill NEFT from cheque OCR if deal NEFT not yet filled
     document.getElementById('dAc').value=propData.deal_bank_account_number||propData.cheque_account_number||'';
     document.getElementById('dBank').value=propData.deal_bank_name||propData.cheque_bank_name||'';
     document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';

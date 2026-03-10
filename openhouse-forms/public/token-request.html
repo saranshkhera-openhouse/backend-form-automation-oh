@@ -36,7 +36,7 @@
           <div class="img-single-preview" id="chequePrev"><img></div><input type="hidden" name="cheque_image_url" id="chequeUrl">
           <button type="button" class="btn btn-sm btn-out" id="ocrBtn" style="display:none;margin-left:4px">Extract</button>
         </div><div id="ocrStatus" style="font-size:10px;color:var(--tx3);margin-top:3px"></div></div>
-      <div class="r2"><div class="fg"><label>Bank A/C No.</label><input type="text" name="cheque_account_number" id="ocrAc" inputmode="numeric" pattern="[0-9]*"></div>
+      <div class="r2"><div class="fg"><label>Bank A/C No.</label><input type="text" name="cheque_account_number" id="ocrAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
         <div class="fg"><label>Bank Name</label><select name="cheque_bank_name" id="ocrBank"><option value="">Select bank...</option></select></div></div>
       <div class="fg"><label>IFSC Code</label><input type="text" name="cheque_ifsc" id="ocrIfsc" class="input-md"></div></div>
 
@@ -65,7 +65,7 @@
       <div class="fg"><label>Bank Name</label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
         <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
       <div class="r2"><div class="fg"><label>Outstanding Loan (₹)</label><input type="number" name="outstanding_loan"></div>
-        <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*"></div></div>
+        <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div></div>
       <div class="fg"><label>Willing to pay loan?</label>
         <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div></div>
 

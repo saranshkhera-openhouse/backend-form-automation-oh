@@ -9,7 +9,6 @@
     <div class="pf-st" id="pfSt"></div></div>
 
   <form id="listForm" style="display:none"><input type="hidden" name="uid" id="fUid">
-    <!-- Prefilled property card -->
     <div class="card" id="prevCard"><div class="card-t">Property Details</div><div class="card-d">From previous forms. Double-tap to edit.</div>
       <div class="r2"><div class="fg"><label>UID</label><input type="text" id="l_uid" class="pre" readonly></div>
         <div class="fg"><label>City</label><input type="text" id="l_city" class="pre" readonly></div></div>
@@ -21,7 +20,6 @@
       <div class="r2"><div class="fg"><label>Area</label><input type="text" id="l_area" class="pre" readonly></div>
         <div class="fg"><label>Config</label><input type="text" id="l_cfg" class="pre" readonly></div></div></div>
 
-    <!-- Rooms & Amenities (prefilled if exist) -->
     <div class="card"><div class="card-t">Room & Amenities</div>
       <div class="fg"><label>Acquisition By</label><input type="text" id="l_acq" class="pre" readonly></div>
       <div class="r3">
@@ -42,7 +40,6 @@
       <div class="fg" id="furnWrap"><label>Furnishing Items</label><div class="pills" id="furnP"></div></div>
     </div>
 
-    <!-- Building Details -->
     <div class="card"><div class="card-t">Building Details</div>
       <div class="r3">
         <div class="fg"><label>Total No of Floors</label><select name="total_floors_tower" id="selTFloor"></select></div>
@@ -59,7 +56,6 @@
       </div>
     </div>
 
-    <!-- Financial & Charges -->
     <div class="card"><div class="card-t">Charges & Financial</div>
       <div class="r2">
         <div class="fg"><label>Maintenance (₹/sqft)</label><input type="number" name="maintenance_charges" step="0.01"></div>
@@ -75,22 +71,18 @@
       </div>
     </div>
 
-    <!-- Status -->
     <div class="card"><div class="card-t">Status & Classification</div>
       <div class="r2">
         <div class="fg"><label>Loan Status</label><select name="loan_status"><option value="">Select...</option><option>Clear</option><option>Under Loan</option><option>Pre-approved</option></select></div>
         <div class="fg"><label>Seller Location</label><input type="text" name="seller_location"></div>
       </div>
+      <div class="fg"><label>Current Occupancy (%)</label><input type="number" name="current_occupancy_pct" min="0" max="100" step="1"></div>
       <div class="r2">
-        <div class="fg"><label>Current Occupancy (%)</label><input type="number" name="current_occupancy_pct" min="0" max="100" step="1"></div>
         <div class="fg"><label>Alpha (%)</label><input type="number" name="alpha_beta" min="0" max="100" step="0.1" placeholder="e.g. 60"></div>
-        </div>
-        <div class="r2">
         <div class="fg"><label>Beta (%)</label><input type="number" name="beta_pct" min="0" max="100" step="0.1" placeholder="e.g. 40"></div>
       </div>
     </div>
 
-    <!-- Listing Specifics -->
     <div class="card"><div class="card-t">Listing</div>
       <div class="r2">
         <div class="fg"><label>Asking Price (₹ Lakhs) <span class="req">*</span></label><input type="number" name="listing_asking_price" step="0.01" required><div class="err-msg">Required</div></div>
@@ -134,20 +126,18 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('l_floor').value=d.floor??'';document.getElementById('l_area').value=d.area_sqft??'';
     document.getElementById('l_cfg').value=configDisplay(d.configuration,d.extra_area);
     document.getElementById('l_acq').value=d.assigned_by||'';
-    // Bedrooms from config
     const cfg=d.configuration||'';const match=cfg.match(/(\d+)/);
     document.getElementById('l_bed').value=match?match[1]:'';
-    // Prefill from visit data
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
     sv('bathrooms',d.bathrooms);sv('balconies',d.balconies);sr('gas_pipeline',d.gas_pipeline);
-    sv('possession_status',d.possession_status||d.occupancy_status);sr('club_facility',d.club_facility);
+    sr('club_facility',d.club_facility);
+    sv('possession_status',d.possession_status||d.occupancy_status);
     sv('parking',d.parking);sv('parking_number',d.parking_number);
     sv('furnishing',d.furnishing);if(d.furnishing==='Unfurnished')document.getElementById('furnWrap').style.display='none';
     if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
     sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);sv('total_units',d.total_units);
     document.getElementById('l_exit').value=d.exit_facing||'';
-    // Balcony facing from first balcony
     let bf='';try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details||[];if(bd.length)bf=bd[0].facing||''}catch(e){}
     document.getElementById('l_balf').value=bf;
     document.getElementById('l_sun').value=d.sunlight?d.sunlight+'/10':'';
@@ -166,7 +156,6 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('listForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const fd=new FormData(document.getElementById('listForm'));const body=Object.fromEntries(fd.entries());
   body.gas_pipeline=getRadio('gas_pipeline');body.club_facility=getRadio('club_facility');body.furnishing_details=getCheckedJSON('furnishing_details');
-
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/listing/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(body.uid)})});
