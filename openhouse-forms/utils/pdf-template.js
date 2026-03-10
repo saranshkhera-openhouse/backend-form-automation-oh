@@ -211,7 +211,7 @@ function generateReceiptHTML(p, mode='final'){
     <div class="field"><div class="f-label">IFSC Code</div>${fval(p.cheque_ifsc||p.ifsc_code,'mono')}</div>
   </div>
 
-  <!-- TOKEN TRANSACTION (only if NEFT data exists) -->
+  <!-- TOKEN TRANSACTION -->
   ${(mode==='deal'&&p.deal_neft_reference)||(mode==='final'&&hasNEFT)?`
   <div class="section-label">Token Transaction</div>
   <div class="token-strip">
@@ -225,7 +225,6 @@ function generateReceiptHTML(p, mode='final'){
       <div class="td-val">${fmtDate(mode==='deal'?p.deal_transfer_date:p.token_transfer_date)}</div>
     </div>
   </div>`:''}
-
   <!-- TERMS & CONDITIONS -->
   <div class="section-label">Terms &amp; Conditions</div>
   <div class="terms-wrap">

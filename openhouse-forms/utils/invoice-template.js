@@ -160,8 +160,6 @@ function generateInvoiceHTML(p){
     </div>
   </div>
 
-  
-
   <!-- Status -->
   <div style="text-align:center;margin-top:16px">
     <span class="inv-status">PAID — Both payments received</span>
