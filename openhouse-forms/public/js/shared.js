@@ -177,6 +177,7 @@ function showThankYou(uid){
   ov.innerHTML=`<div class="ty-icon">✓</div><div class="ty-title">Thank you!</div><div class="ty-sub">Your response has been submitted.</div>${uid?`<div class="ty-uid">${uid}</div>`:''}<a href="${window.location.pathname}" class="ty-back">← Back to Form</a>`;
   ov.classList.add('show');
 }
+
 // ══════ POPULATE UID SELECT WITH RICH LABELS ══════
 function fillUidSelect(sel,uids){
   sel.innerHTML='<option value="">Select UID...</option>';
