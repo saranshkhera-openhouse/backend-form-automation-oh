@@ -30,7 +30,7 @@
         </div>
         <div class="fg">
             <label>Floor</label>
-            <select name="floor" id="v_floor"></select>
+            <select name="floor" id="selFloor"></select>
         </div>
       </div>  
       <div class="r3"><div class="fg"><label>Area (sqft)</label><input type="number" name="area_sqft_edit" id="v_area" step="0.01"></div>
@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fillNumSelect(document.getElementById('selBath'),1,10,'Select');fillNumSelect(document.getElementById('selBal'),1,10,'Select');
     fillRadios(document.getElementById('gasGrp'),'gas_pipeline',opts.yesNo);
     fillSelect(document.getElementById('selPark'),opts.parkingOptions,'Select');
+    fillNumSelect(document.getElementById('selFloor'),1,50,'Floor');
     fillSelect(document.getElementById('selFurn'),opts.furnishingLevels,'Select');
     fillPills(document.getElementById('furnP'),'furnishing_details',opts.furnishingDetails,'No Items');
     fillNumSelect(document.getElementById('selLift'),1,10,'Select');fillNumSelect(document.getElementById('selTFloor'),1,50,'Select');fillNumSelect(document.getElementById('selFlat'),1,10,'Select');
