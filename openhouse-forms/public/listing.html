@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Listing Details</title><link rel="stylesheet" href="/css/styles.css"></head>
 <body>
 <header class="hdr">
-  <div class="hdr-logo"><svg viewBox="0 0 32 32" width="28" height="28"><circle cx="16" cy="16" r="15" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M16 6L8 14v12h5v-7h6v7h5V14L16 6z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="logo-text"><b>Open</b><span>house</span></span></div>
+  <div class="hdr-logo"><img src="/images/logo.png" alt="Openhouse" style="height:32px"></div>
   <div class="hdr-center"><div class="form-name">Listing Details</div></div>
 </header>
 <div class="ctn">
@@ -156,7 +156,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('listForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const fd=new FormData(document.getElementById('listForm'));const body=Object.fromEntries(fd.entries());
   body.gas_pipeline=getRadio('gas_pipeline');body.club_facility=getRadio('club_facility');body.furnishing_details=getCheckedJSON('furnishing_details');
-  for(const k of Object.keys(body)){if(typeof body[k]==='string')body[k]=body[k].replace(/,/g,'')}
+  // Strip commas from amount fields
+  ['listing_asking_price','maintenance_charges','society_move_in_charges','electricity_charges','dg_charges','circle_rate'].forEach(k=>{if(body[k])body[k]=body[k].replace(/,/g,'')})
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/listing/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(body.uid)})});

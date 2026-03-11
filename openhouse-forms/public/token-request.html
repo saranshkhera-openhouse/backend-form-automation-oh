@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request Internal</title><link rel="stylesheet" href="/css/styles.css"></head>
 <body>
 <header class="hdr">
-  <div class="hdr-logo"><svg viewBox="0 0 32 32" width="28" height="28"><circle cx="16" cy="16" r="15" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M16 6L8 14v12h5v-7h6v7h5V14L16 6z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="logo-text"><b>Open</b><span>house</span></span></div>
+  <div class="hdr-logo"><img src="/images/logo.png" alt="Openhouse" style="height:32px"></div>
   <div class="hdr-center"><div class="form-name">Token Request Internal</div></div>
 </header>
 <div class="ctn">
@@ -63,12 +63,12 @@
 
     <div class="card"><div class="card-t">Loan Details</div>
       <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details above</span></label>
-      <div id="loanFields">
+      <div id="loanBankFields">
         <div class="fg"><label>Bank Name</label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
           <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
-        <div class="r2"><div class="fg"><label>Outstanding Loan (₹)</label><input type="number" name="outstanding_loan"></div>
-          <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div></div>
+        <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
       </div>
+      <div class="fg"><label>Outstanding Loan (₹)</label><input type="number" name="outstanding_loan"></div>
       <div class="fg"><label>Willing to pay loan?</label>
         <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div></div>
 
@@ -80,9 +80,16 @@
     <div class="btn-row">
       <button type="button" class="btn btn-amb" id="draftBtn">Save Draft</button>
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
+      <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
     </div>
   </form>
 </div>
+
+<div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
+  <div class="pdf-hdr"><h3>Token Request Preview</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
+  <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
+  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open in New Tab</a></div>
+</div></div>
 <script src="/js/shared.js"></script>
 <script>
 let docsMsel,currentUid,chequeUploader,allOpts;
@@ -106,11 +113,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
     gsp.addEventListener('input',calcPG);pgPct.addEventListener('input',calcPG);
     // Loan copy checkbox
     document.getElementById('loanCopy').addEventListener('change',function(){
-      if(this.checked){document.getElementById('loanFields').style.display='none';
+      if(this.checked){document.getElementById('loanBankFields').style.display='none';
         const bk=document.getElementById('ocrBank').value;const ac=document.getElementById('ocrAc').value;
         if(bk)document.getElementById('selBankLoan').value=bk;
         if(ac)document.querySelector('[name="loan_account_number"]').value=ac;
-      }else{document.getElementById('loanFields').style.display='block'}});
+      }else{document.getElementById('loanBankFields').style.display='block'}});
     // Other documents typable
     const docsObs=new MutationObserver(()=>{const has=[...document.querySelectorAll('#docsSelect input:checked')].some(c=>c.value.includes('Other'));
       document.getElementById('otherDocWrap').style.display=has?'block':'none'});
@@ -152,7 +159,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('registry_status',d.registry_status);sv('occupancy_status',d.occupancy_status);
     if(d.occupancy_status==='Tenant'){document.getElementById('hdWrap').style.display='block';document.getElementById('hdDate').required=true;if(d.key_handover_date)sv('key_handover_date',d.key_handover_date.split('T')[0])}
     sv('guaranteed_sale_price',d.guaranteed_sale_price);
-    if(d.performance_guarantee&&d.guaranteed_sale_price){const pct=Math.round(d.performance_guarantee/(d.guaranteed_sale_price*1000)*100*10)/10;document.getElementById('pgPct').value=pct;document.getElementById('pgCalc').textContent=`= ₹${Number(d.performance_guarantee).toLocaleString('en-IN')}`}
+    if(d.performance_guarantee&&d.guaranteed_sale_price){const pct=Math.round(d.performance_guarantee/(d.guaranteed_sale_price*100000)*100*10)/10;document.getElementById('pgPct').value=pct;document.getElementById('pgCalc').textContent=`= ₹${Number(d.performance_guarantee).toLocaleString('en-IN')}`}
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
     if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent')}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
     if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent')}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
@@ -161,6 +168,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('token_remarks',d.token_remarks);
     if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
     document.getElementById('tokenForm').style.display='block';enableDoubleTapEdit(document.getElementById('prevCard'));
+    document.getElementById('pdfBtn').disabled=!d.token_submitted_at;
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.token_is_draft?' (Draft)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('tokenForm').style.display='none'}}
 function collectBody(){const fd=new FormData(document.getElementById('tokenForm'));const body=Object.fromEntries(fd.entries());
@@ -168,11 +176,12 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
+  // Strip commas from amount fields FIRST (before calc)
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text'];
+  for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
   // Calculate performance guarantee amount from %
   const gsp=parseFloat(body.guaranteed_sale_price)||0;const pct=parseFloat(body.performance_guarantee_pct)||0;
   body.performance_guarantee=Math.round(gsp*100000*pct/100);delete body.performance_guarantee_pct;
-  // Strip commas from amount fields
-  for(const k of Object.keys(body)){if(typeof body[k]==='string')body[k]=body[k].replace(/,/g,'')}
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
   submitBtn(document.getElementById('draftBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -181,6 +190,12 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(currentUid)})});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;showThankYou(currentUid)})});
+
+document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
+  const url=`${API}/api/token-request/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
+  document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
+function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
+document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
 </script>
 </body></html>
