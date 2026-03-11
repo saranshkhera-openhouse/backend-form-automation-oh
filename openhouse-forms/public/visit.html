@@ -129,7 +129,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('v_soc').value=d.society_name||'';document.getElementById('v_loc').value=d.locality||'';
     document.getElementById('v_owner').value=d.owner_broker_name||'';document.getElementById('v_phone').value=d.contact_no||'';
     document.getElementById('v_date').value=d.schedule_date?new Date(d.schedule_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
-    document.getElementById('v_time').value=d.schedule_time||'';
+    document.getElementById('v_time').value=d.schedule_time?((h,m)=>{const hr=parseInt(h);return `${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`})(...d.schedule_time.split(':')):'';
     document.getElementById('v_ab').value=d.assigned_by||'';document.getElementById('v_at').value=d.field_exec||'';
     document.getElementById('v_unit').value=d.unit_no||'';document.getElementById('v_tower').value=d.tower_no||'';
     document.getElementById('selFloor').value=d.floor??'';document.getElementById('v_area').value=d.area_sqft??'';
