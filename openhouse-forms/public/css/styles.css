@@ -41,8 +41,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 
 /* ── Form Group ── */
 .fg{margin-bottom:10px}
-.fg label{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx2);margin-bottom:3px}
-.req{color:var(--red)}
+.fg label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx2);margin-bottom:3px}.req{color:var(--red)}
 
 /* font-size 16px prevents iOS zoom */
 input[type="text"],input[type="number"],input[type="tel"],input[type="url"],input[type="date"],input[type="email"],input[type="time"],select,textarea{
