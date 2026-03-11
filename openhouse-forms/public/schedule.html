@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fillSelect(document.getElementById('selAB'),opts.assignedByList,'Select...');
     fillSelect(document.getElementById('selAT'),opts.assignedToList,'Select...');
     await loadCities(document.getElementById('selCity'));
+    document.getElementById('schedDate').min=new Date().toISOString().split('T')[0];
     const cityEl=document.getElementById('selCity'),socEl=document.getElementById('selSoc'),locEl=document.getElementById('selLoc');
     cityEl.addEventListener('change',()=>{loadSocieties(cityEl.value,socEl,locEl);genUID()});
     socEl.addEventListener('change',()=>{loadLocalities(cityEl.value,socEl.value,locEl);loadAreas(socEl.value)});
