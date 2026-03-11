@@ -1,9 +1,6 @@
 // ── Openhouse v6 — Shared Utilities ──
 const API=window.location.origin;
 
-// ══════ LOGO HEADER HTML ══════
-const LOGO_SVG=`<svg viewBox="0 0 32 32" width="28" height="28"><circle cx="16" cy="16" r="15" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M16 6L8 14v12h5v-7h6v7h5V14L16 6z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
-
 // ══════ TOAST ══════
 function toast(msg,type='ok',ms=3500){document.querySelectorAll('.toast').forEach(t=>t.remove());
   const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;document.body.appendChild(el);
@@ -196,20 +193,24 @@ function configDisplay(config,extraArea){
   return extras.length?`${config} (${extras.join(', ')})`:config;
 }
 
-// ══════ AUTO COMMAS IN AMOUNT FIELDS ══════
-function setupAutoComma(inputId){
-  const inp=document.getElementById(inputId);if(!inp)return;
-  inp.addEventListener('focus',()=>{inp.value=inp.value.replace(/,/g,'')});
-  inp.addEventListener('blur',()=>{const v=inp.value.replace(/,/g,'');if(v&&!isNaN(v))inp.value=Number(v).toLocaleString('en-IN')});
+// ══════ LIVE COMMA FORMATTING ══════
+function commaFormat(v){if(!v)return '';const n=v.replace(/[^0-9.]/g,'');if(!n)return '';const parts=n.split('.');const int=parts[0];const dec=parts.length>1?'.'+parts[1]:'';
+  const last3=int.slice(-3);const rest=int.slice(0,-3);const formatted=rest.replace(/\B(?=(\d{2})+(?!\d))/g,',')+((rest?',':'')+last3);return formatted+dec}
+function setupCommaField(inp){
+  inp.addEventListener('input',function(){const pos=this.selectionStart;const old=this.value;const stripped=old.replace(/,/g,'');
+    const formatted=commaFormat(stripped);this.value=formatted;
+    // Maintain cursor position
+    const diff=formatted.length-old.length;this.setSelectionRange(pos+diff,pos+diff)});
 }
-// Auto-apply to all number inputs with 'amount' or 'price' or 'loan' or 'charges' or 'guarantee' in name
+// Get raw number from comma-formatted field
+function getCommaValue(inp){return(inp.value||'').replace(/,/g,'')}
+
+// Apply to amount fields on page load
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('input[type="number"]').forEach(inp=>{
     const n=(inp.name||'').toLowerCase();
-    if(n.includes('amount')||n.includes('price')||n.includes('loan')||n.includes('charges')||n.includes('guarantee')||n.includes('rate'))
-    {inp.type='text';inp.inputMode='numeric';
-      inp.addEventListener('focus',()=>{inp.value=inp.value.replace(/,/g,'')});
-      inp.addEventListener('blur',()=>{const v=inp.value.replace(/,/g,'');if(v&&!isNaN(v))inp.value=Number(v).toLocaleString('en-IN')})}
+    if(n.includes('amount')||n.includes('price')||n.includes('loan')||n.includes('guarantee')||n.includes('outstanding')){
+      inp.type='text';inp.inputMode='decimal';setupCommaField(inp)}
   });
 });
 
