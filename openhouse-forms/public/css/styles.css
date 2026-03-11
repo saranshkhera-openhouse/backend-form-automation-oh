@@ -8,14 +8,12 @@ html{font-size:14px;-webkit-text-size-adjust:100%;touch-action:manipulation}
 body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100vh;touch-action:manipulation;overscroll-behavior:none}
 
 /* ── Header with logo left, form name center ── */
-.hdr{background:var(--ac);color:#fff;padding:10px 14px;display:flex;align-items:center;position:sticky;top:0;z-index:100;min-height:48px}
-.hdr-logo{display:flex;align-items:center;gap:6px;flex-shrink:0;position:absolute;left:14px}
-.hdr-logo svg{width:28px;height:28px}
-.hdr-logo .logo-text{font-size:13px;font-weight:700;letter-spacing:.5px;color:#fff}
-.hdr-logo .logo-text span{font-weight:300}
+.hdr{background:var(--ac);color:#fff;padding:10px 14px;display:flex;align-items:center;position:sticky;top:0;z-index:100;min-height:48px;gap:10px}
+.hdr-logo{display:flex;align-items:center;flex-shrink:0}
+.hdr-logo img{height:32px;width:auto}
 .hdr-center{flex:1;text-align:center}
 .hdr-center .form-name{font-size:12px;font-weight:600;letter-spacing:.3px}
-.hdr-right{position:absolute;right:14px;display:flex;gap:4px}
+.hdr-right{display:flex;gap:4px;flex-shrink:0}
 .hdr a{color:rgba(255,255,255,.7);text-decoration:none;font-size:11px}
 
 /* ── Container ── */
@@ -162,7 +160,7 @@ hr.div{border:none;border-top:1px solid var(--bd);margin:10px 0}
 .msel{border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;background:var(--sf)}
 .msel-search{width:100%;padding:6px 8px;border:none;border-bottom:1px solid var(--bd);font-size:13px;outline:none;font-family:var(--font)}
 .msel-opts{max-height:200px;overflow-y:auto}
-.msel-opt{padding:8px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0}
+.msel-opt{padding:10px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e8e8e8}
 .msel-opt:hover{background:var(--bg)}.msel-opt:last-child{border:none}
 .msel-opt input{width:14px;height:14px;accent-color:var(--ac)}
 .msel-opt.checked{background:#f0f4ff}
@@ -227,5 +225,4 @@ hr.div{border:none;border-top:1px solid var(--bd);margin:10px 0}
   .stats{grid-template-columns:repeat(3,1fr)}
   .tbl{font-size:10px}.tbl th,.tbl td{padding:4px 5px}
   .input-sm{max-width:100%}.input-md{max-width:100%}
-  .hdr-logo .logo-text{display:none}
 }
