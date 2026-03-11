@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const{generateReceiptHTML}=require('../utils/pdf-template');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -33,6 +34,13 @@ module.exports=function(pool){
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
+  });
+  router.get('/pdf/:uid',async(req,res)=>{
+    try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'Not found'});
+      const html=generateReceiptHTML(rows[0],'deal');
+      res.setHeader('Content-Type','text/html');res.send(html);
+    }catch(e){console.error('TokenReqPDF:',e);res.status(500).json({error:'PDF failed'})}
   });
   return router;
 };
