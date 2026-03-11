@@ -30,10 +30,10 @@
         </div>
         <div class="fg">
             <label>Floor</label>
-            <select name="floor" id="selTFloor"></select>
+            <select name="v_floor" id="selFloor"></select>
         </div>
       </div>  
-      <div class="r3"><div class="fg"><label>Area (sqft)</label><input type="number" name="area_sqft_edit" id="v_area" step="0.01"></div>
+      <div class="r3"><div class="fg"><label>Area (in sqft)</label><input type="number" name="area_sqft_edit" id="v_area" step="0.01"></div>
         <div class="fg"><label>Config</label><input type="text" id="v_cfg" class="pre" readonly></div>
         <div class="fg"><label>Ask (In Lakhs)</label><input type="number" name="demand_price" id="v_ask" step="0.01"></div></div>
       <div class="r2"><div class="fg"><label>Assigned By</label><input type="text" id="v_ab" class="pre" readonly></div>
@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fillSelect(document.getElementById('selFurn'),opts.furnishingLevels,'Select');
     fillPills(document.getElementById('furnP'),'furnishing_details',opts.furnishingDetails,'No Items');
     fillNumSelect(document.getElementById('selLift'),1,10,'Select');fillNumSelect(document.getElementById('selTFloor'),1,50,'Select');fillNumSelect(document.getElementById('selFlat'),1,10,'Select');
+    fillNumSelect(document.getElementById('selFloor'),1,50,'Select');
     fillSelect(document.getElementById('selExit'),opts.directions,'Select');
     exitC=initSingleUpload('exitCBtn','exitCPrev','exitCUrl');
     document.getElementById('selFurn').addEventListener('change',e=>{document.getElementById('furnWrap').style.display=e.target.value==='Unfurnished'?'none':'block'});
