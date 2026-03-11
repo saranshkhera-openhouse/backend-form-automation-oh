@@ -4,7 +4,7 @@
 <header class="hdr">
   <div class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></div>
   <div class="hdr-center"><div class="form-name">Pending Security Deposit</div></div>
-  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>  
+  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
 </header>
 <div class="ctn">
   <div class="card"><div class="card-t">Load Property</div>
@@ -24,10 +24,10 @@
 
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Payment Details</div>
       <div class="r2">
-        <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="bank_account_number" id="neftAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Bank Name <span class="req">*</span></label><input type="text" name="bank_name" id="neftBank" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bank A/C No.</label><input type="text" name="bank_account_number" id="neftAc" class="pre" readonly></div>
+        <div class="fg"><label>Bank Name</label><input type="text" name="bank_name" id="neftBank" class="pre" readonly></div>
       </div>
-      <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="ifsc_code" id="neftIfsc" class="input-md" required><div class="err-msg">Required</div></div>
+      <div class="fg"><label>IFSC Code</label><input type="text" name="ifsc_code" id="neftIfsc" class="pre" readonly></div>
       <div class="r2">
         <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="token_transfer_date" id="fDate" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="neft_reference" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
@@ -35,13 +35,13 @@
 
     <div class="btn-row">
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
-      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Invoice PDF</button>
+      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>PG Receipt</button>
     </div>
   </form>
 </div>
 
 <div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
-  <div class="pdf-hdr"><h3>Performance Guarantee Invoice</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
+  <div class="pdf-hdr"><h3>Performance Guarantee Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
   <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
   <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open in New Tab</a></div>
 </div></div>
@@ -71,7 +71,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('tkAmt').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';
     document.getElementById('remAmt').value=rem>0?'₹ '+rem.toLocaleString('en-IN'):'₹ 0';
     document.getElementById('remHidden').value=rem>0?rem:0;
-    // Prefill bank from Form 4 deal NEFT
+    // Prefill bank from Form 4 deal NEFT (readonly)
     document.getElementById('neftAc').value=propData.bank_account_number||propData.deal_bank_account_number||propData.cheque_account_number||'';
     document.getElementById('neftBank').value=propData.bank_name||propData.deal_bank_name||propData.cheque_bank_name||'';
     document.getElementById('neftIfsc').value=propData.ifsc_code||propData.deal_ifsc_code||propData.cheque_ifsc||'';
@@ -86,11 +86,11 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('finalForm');if(!valid){toast(`Missing: ${missing.slice(0,4).join(', ')}`,'err');return}
   const fd=new FormData(document.getElementById('finalForm'));const body=Object.fromEntries(fd.entries());
-  ['remaining_amount'].forEach(k=>{if(body[k])body[k]=body[k].replace(/,/g,'')})
+  ['remaining_amount'].forEach(k=>{if(body[k])body[k]=body[k].replace(/,/g,'')});
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/final/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    document.getElementById('pdfBtn').disabled=false;toast('Submitted! Invoice ready.','ok',5000)});
+    document.getElementById('pdfBtn').disabled=false;toast('Submitted! PG Receipt ready.','ok',5000)});
 });
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
