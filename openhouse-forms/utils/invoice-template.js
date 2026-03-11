@@ -67,7 +67,7 @@ function generateInvoiceHTML(p){
 
   <div class="inv-header">
     <div>
-      <div class="inv-brand"><div class="inv-logo"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21H3V9.5z"/></svg></div><span class="inv-co">Openhouse</span></div>
+      <div class="inv-brand"><img src="/images/logo.png" alt="Openhouse" style="height:40px"><span class="inv-co">Openhouse</span></div>
       <div class="inv-addr">Avano Technologies Private Limited<br>VentureX, Unit No. 202 &amp; 202A, Silverton Tower,<br>Sector 50, Golf Course Extension Road, Gurugram 122018</div>
     </div>
     <div class="inv-title-block"><div class="inv-title">PERFORMANCE<br>GUARANTEE</div></div>

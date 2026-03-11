@@ -108,7 +108,7 @@ function generateReceiptHTML(p, mode='deal'){
   <div class="print-bar"><button onclick="window.print()">Print / Save as PDF</button></div>
 
   <div class="header">
-    <div class="brand"><div class="brand-logo"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21H3V9.5z"/></svg></div><span class="brand-name">Openhouse</span></div>
+    <div class="brand"><img src="/images/logo.png" alt="Openhouse" style="height:36px"><span class="brand-name">Openhouse</span></div>
     <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
   </div>
 
@@ -151,10 +151,10 @@ function generateReceiptHTML(p, mode='deal'){
     <div class="field"><div class="f-label">Guaranteed Sale Price</div><div class="f-value">${p.guaranteed_sale_price?fmtLakhs(p.guaranteed_sale_price):'—'}</div></div>
   </div>
   ${(p.initial_period||p.grace_period)?`<div class="field-grid col2" style="margin-top:6px">
-    ${p.initial_period&&(!p.rent_payable_initial_period||p.rent_payable_initial_period==='N/A')?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days (No rent)</div></div>`
-      :p.initial_period?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days → ${fmtCurrency(p.rent_payable_initial_period)}/mo</div></div>`:'<div></div>'}
-    ${p.grace_period&&(!p.rent_payable_grace_period||p.rent_payable_grace_period==='N/A')?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days (No rent)</div></div>`
-      :p.grace_period?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days → ${fmtCurrency(p.rent_payable_grace_period)}/mo</div></div>`:'<div></div>'}
+    ${p.initial_period&&p.rent_payable_initial_period&&p.rent_payable_initial_period!=='N/A'?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days → ${fmtCurrency(p.rent_payable_initial_period)}/mo</div></div>`
+      :p.initial_period?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days</div></div>`:'<div></div>'}
+    ${p.grace_period&&p.rent_payable_grace_period&&p.rent_payable_grace_period!=='N/A'?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days → ${fmtCurrency(p.rent_payable_grace_period)}/mo</div></div>`
+      :p.grace_period?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days</div></div>`:'<div></div>'}
   </div>`:''}
 
   <div class="section-label">Loan Details</div>
