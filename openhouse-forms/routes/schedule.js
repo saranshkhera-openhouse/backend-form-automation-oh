@@ -27,6 +27,9 @@ module.exports=function(pool){
       const uid=d.uid.trim().toUpperCase();
       const ex=await pool.query('SELECT uid FROM properties WHERE uid=$1',[uid]);
       if(ex.rows.length)return res.status(400).json({error:'UID already exists'});
+      // Reject past dates
+      if(d.schedule_date){const today=new Date().toISOString().split('T')[0];
+        if(d.schedule_date<today)return res.status(400).json({error:'Schedule date cannot be in the past'})}
       // Combine first+last into owner_broker_name for backward compat
       const ownerName=[d.first_name,d.last_name].filter(Boolean).join(' ');
       await pool.query(`INSERT INTO properties(uid,schedule_date,schedule_time,lead_id,source,first_name,last_name,owner_broker_name,contact_no,
