@@ -100,16 +100,22 @@ async function loadUsers(){
   try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}
 }
 
-function renderUsers(){const tb=document.getElementById('utb');
-  tb.innerHTML=allUsers.map(u=>{
-    const forms=(u.allowed_forms||[]).includes('*')?'<span class="badge ok">ALL</span>':
-      (u.allowed_forms||[]).map(f=>`<span class="badge ok">${FORM_LABELS[f]||f}</span>`).join(' ')||'<span class="badge wait">None</span>';
-    return`<tr><td>${u.email}</td><td>${u.name||'—'}</td><td>${forms}</td>
-      <td>${u.is_admin?'<span class="badge ok">Admin</span>':'—'}</td>
-      <td>${u.is_active?'<span class="badge ok">Active</span>':'<span class="badge draft">Disabled</span>'}</td>
+function renderUsers() {
+  const tb = document.getElementById('utb');
+  
+  // ADD THIS LINE: Sorts by name, falling back to email if name is missing
+  allUsers.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
+  tb.innerHTML = allUsers.map(u => {
+    const forms = (u.allowed_forms || []).includes('*') ? '<span class="badge ok">ALL</span>' :
+      (u.allowed_forms || []).map(f => `<span class="badge ok">${FORM_LABELS[f] || f}</span>`).join(' ') || '<span class="badge wait">None</span>';
+    
+    return `<tr><td>${u.email}</td><td>${u.name || '—'}</td><td>${forms}</td>
+      <td>${u.is_admin ? '<span class="badge ok">Admin</span>' : '—'}</td>
+      <td>${u.is_active ? '<span class="badge ok">Active</span>' : '<span class="badge draft">Disabled</span>'}</td>
       <td><button class="btn btn-sm btn-out" onclick="editUser(${u.id})">Edit</button>
-          <button class="btn btn-sm btn-out" style="color:var(--red)" onclick="toggleUser(${u.id},${!u.is_active})">${u.is_active?'Disable':'Enable'}</button></td></tr>`
-  }).join('')}
+          <button class="btn btn-sm btn-out" style="color:var(--red)" onclick="toggleUser(${u.id},${!u.is_active})">${u.is_active ? 'Disable' : 'Enable'}</button></td></tr>`
+  }).join('')
+}
 
 async function addUser(){
   const email=prompt('Enter email address:');if(!email)return;
