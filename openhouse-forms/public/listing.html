@@ -21,7 +21,7 @@
       <div class="r3"><div class="fg"><label>Unit</label><input type="text" id="l_unit" class="pre" readonly></div>
         <div class="fg"><label>Tower</label><input type="text" id="l_tower" class="pre" readonly></div>
         <div class="fg"><label>Floor</label><input type="text" id="l_floor" class="pre" readonly></div></div>
-      <div class="r2"><div class="fg"><label>Area (sqft)</label><input type="text" id="l_area" class="pre" readonly></div>
+      <div class="r2"><div class="fg"><label>Area (in sqft)</label><input type="text" id="l_area" class="pre" readonly></div>
         <div class="fg"><label>Config</label><input type="text" id="l_cfg" class="pre" readonly></div></div></div>
 
     <div class="card"><div class="card-t">Room & Amenities</div>
@@ -58,7 +58,7 @@
     <div class="card"><div class="card-t">Charges & Financial</div>
       <div class="r2">
         <div class="fg"><label>Maintenance (₹/sqft) <span class="req">*</span></label><input type="number" name="maintenance_charges" step="0.01" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Society Move-in Charges (₹) <span class="req">*</span></label><input type="number" name="society_move_in_charges" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Society Move-in Charges (in ₹) <span class="req">*</span></label><input type="number" name="society_move_in_charges" required><div class="err-msg">Required</div></div>
       </div>
       <div class="r2">
         <div class="fg"><label>Electricity (₹/unit) <span class="req">*</span></label><input type="number" name="electricity_charges" step="0.01" required><div class="err-msg">Required</div></div>
@@ -66,7 +66,7 @@
       </div>
       <div class="r2">
         <div class="fg"><label>Water Supply <span class="req">*</span></label><select name="water_supply" required><option value="">Select...</option><option>Corporation</option><option>Borewell</option><option>Both</option><option>Tanker</option></select><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Circle Rate (₹) <span class="req">*</span></label><input type="number" name="circle_rate" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Circle Rate (in ₹) <span class="req">*</span></label><input type="number" name="circle_rate" required><div class="err-msg">Required</div></div>
       </div>
     </div>
 
@@ -74,7 +74,7 @@
       <div class="r2">
         <div class="fg"><label>Loan Status <span class="req">*</span></label>
           <select name="loan_status" id="selLoanSt" required><option value="">Select...</option><option value="N/A">N/A</option><option value="Yes">Yes</option></select><div class="err-msg">Required</div></div>
-        <div class="fg" id="loanAmtWrap" style="display:none"><label>Loan Amount (₹) <span class="req">*</span></label><input type="number" name="loan_amount" id="loanAmt"><div class="err-msg">Required</div></div>
+        <div class="fg" id="loanAmtWrap" style="display:none"><label>Loan Amount (in ₹) <span class="req">*</span></label><input type="number" name="loan_amount" id="loanAmt"><div class="err-msg">Required</div></div>
       </div>
       <div class="fg"><label>Seller Location</label><input type="text" name="seller_location"></div>
       <div class="r2">
