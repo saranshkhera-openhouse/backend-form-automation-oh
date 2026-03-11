@@ -4,8 +4,7 @@
 <header class="hdr">
   <div class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></div>
   <div class="hdr-center"><div class="form-name">Token Request Internal</div></div>
-  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>  
-
+  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
 </header>
 <div class="ctn">
   <div class="card"><div class="card-t">Load Property</div>
@@ -38,9 +37,9 @@
           <div class="img-single-preview" id="chequePrev"><img></div><input type="hidden" name="cheque_image_url" id="chequeUrl">
           <button type="button" class="btn btn-sm btn-out" id="ocrBtn" style="display:none;margin-left:4px">Extract</button>
         </div><div id="ocrStatus" style="font-size:10px;color:var(--tx3);margin-top:3px"></div></div>
-      <div class="r2"><div class="fg"><label>Bank A/C No.</label><input type="text" name="cheque_account_number" id="ocrAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
-        <div class="fg"><label>Bank Name</label><select name="cheque_bank_name" id="ocrBank"><option value="">Select bank...</option></select></div></div>
-      <div class="fg"><label>IFSC Code</label><input type="text" name="cheque_ifsc" id="ocrIfsc" class="input-md" oninput="autoFillBank(this.value)"></div>
+      <div class="r2"><div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="cheque_account_number" id="ocrAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="cheque_bank_name" id="ocrBank" required><option value="">Select bank...</option></select><div class="err-msg">Required</div></div></div>
+      <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="cheque_ifsc" id="ocrIfsc" class="input-md" oninput="autoFillBank(this.value)" required><div class="err-msg">Required</div></div>
     </div>
 
     <div class="card"><div class="card-t">Deal Terms</div>
@@ -50,28 +49,28 @@
       </div>
       <div class="fg" id="hdWrap" style="display:none"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate"><div class="err-msg">Required</div></div>
       <div class="r2">
-        <div class="fg"><label>Guaranteed Sale Price (Lakhs)</label><input type="number" name="guaranteed_sale_price" id="gsp" step="0.01"></div>
-        <div class="fg"><label>Performance Guarantee (%)</label><input type="number" name="performance_guarantee_pct" id="pgPct" min="0" max="100" step="0.1">
+        <div class="fg"><label>Guaranteed Sale Price (Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Performance Guarantee (%)</label><input type="text" name="performance_guarantee_pct" id="pgPct" inputmode="decimal">
           <div style="font-size:10px;color:var(--tx3);margin-top:2px" id="pgCalc"></div></div>
       </div><hr class="div">
       <div class="arrow-row"><div class="fg"><label>Initial Period (in days) <span class="req">*</span></label><input type="number" name="initial_period" required><div class="err-msg">Required</div></div>
         <div class="arrow-sym">→</div>
-        <div class="fg"><label>Rent Payable (₹)</label><input type="number" name="rent_payable_initial_period" id="rip"></div></div>
-      <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="rip_na" onchange="toggleNA('rip','No rent')"><span>No rent payable during initial period</span></label>
+        <div class="fg"><label>Rent Payable (₹) <span class="req">*</span></label><input type="number" name="rent_payable_initial_period" id="rip" required><div class="err-msg">Required</div></div></div>
+      <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="rip_na" onchange="toggleNA('rip','No rent');document.getElementById('rip').required=!this.checked"><span>No rent payable during initial period</span></label>
       <div class="arrow-row"><div class="fg"><label>Grace Period (in days) <span class="req">*</span></label><input type="number" name="grace_period" required><div class="err-msg">Required</div></div>
         <div class="arrow-sym">→</div>
-        <div class="fg"><label>Rent Payable (₹)</label><input type="number" name="rent_payable_grace_period" id="rgp"></div></div>
-      <label class="na-toggle"><input type="checkbox" id="rgp_na" onchange="toggleNA('rgp','No rent')"><span>No rent payable during grace period</span></label></div>
+        <div class="fg"><label>Rent Payable (₹) <span class="req">*</span></label><input type="number" name="rent_payable_grace_period" id="rgp" required><div class="err-msg">Required</div></div></div>
+      <label class="na-toggle"><input type="checkbox" id="rgp_na" onchange="toggleNA('rgp','No rent');document.getElementById('rgp').required=!this.checked"><span>No rent payable during grace period</span></label></div>
 
     <div class="card"><div class="card-t">Loan Details</div>
       <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details above</span></label>
       <div id="loanBankFields">
-        <div class="fg"><label>Bank Name</label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
+        <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan" required><option value="">Select bank...</option></select><div class="err-msg">Required</div>
           <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
-        <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+        <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
       </div>
-      <div class="fg"><label>Outstanding Loan (₹)</label><input type="number" name="outstanding_loan"></div>
-      <div class="fg"><label>Willing to pay loan?</label>
+      <div class="fg"><label>Outstanding Loan (₹) <span class="req">*</span></label><input type="number" name="outstanding_loan" required><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Willing to pay loan? <span class="req">*</span></label>
         <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div></div>
 
     <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available</div>
@@ -113,17 +112,23 @@ document.addEventListener('DOMContentLoaded',async()=>{
     function calcPG(){const g=parseFloat(gsp.value)||0;const p=parseFloat(pgPct.value)||0;const amt=Math.round(g*100000*p/100);
       pgCalc.textContent=p>0&&g>0?`= ₹${amt.toLocaleString('en-IN')}`:''};
     gsp.addEventListener('input',calcPG);pgPct.addEventListener('input',calcPG);
+    // Auto-tick no rent when 0 entered
+    document.getElementById('rip').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');this.required=false}});
+    document.getElementById('rgp').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');this.required=false}});
     // Loan copy checkbox
     document.getElementById('loanCopy').addEventListener('change',function(){
       if(this.checked){document.getElementById('loanBankFields').style.display='none';
         const bk=document.getElementById('ocrBank').value;const ac=document.getElementById('ocrAc').value;
         if(bk)document.getElementById('selBankLoan').value=bk;
         if(ac)document.querySelector('[name="loan_account_number"]').value=ac;
-      }else{document.getElementById('loanBankFields').style.display='block'}});
+        // Remove required from hidden fields
+        document.getElementById('selBankLoan').required=false;
+        document.querySelector('[name="loan_account_number"]').required=false;
+      }else{document.getElementById('loanBankFields').style.display='block';
+        document.getElementById('selBankLoan').required=true;
+        document.querySelector('[name="loan_account_number"]').required=true;
+      }});
     // Other documents typable
-    const docsObs=new MutationObserver(()=>{const has=[...document.querySelectorAll('#docsSelect input:checked')].some(c=>c.value.includes('Other'));
-      document.getElementById('otherDocWrap').style.display=has?'block':'none'});
-    docsObs.observe(document.getElementById('docsSelect'),{subtree:true,attributes:true});
     setInterval(()=>{const has=[...document.querySelectorAll('#docsSelect input:checked')].some(c=>c.value.includes('Other'));
       document.getElementById('otherDocWrap').style.display=has?'block':'none'},500);
     // UIDs
@@ -163,8 +168,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('guaranteed_sale_price',d.guaranteed_sale_price);
     if(d.performance_guarantee&&d.guaranteed_sale_price){const pct=Math.round(d.performance_guarantee/(d.guaranteed_sale_price*100000)*100*10)/10;document.getElementById('pgPct').value=pct;document.getElementById('pgCalc').textContent=`= ₹${Number(d.performance_guarantee).toLocaleString('en-IN')}`}
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
-    if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent')}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
-    if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent')}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
+    if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');document.getElementById('rip').required=false}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
+    if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');document.getElementById('rgp').required=false}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
     if(d.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=d.bank_name_loan;if(d.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
     sv('outstanding_loan',d.outstanding_loan);sv('loan_account_number',d.loan_account_number);sr('loan_pay_willingness',d.loan_pay_willingness);
     sv('token_remarks',d.token_remarks);
@@ -190,6 +195,10 @@ document.getElementById('draftBtn').addEventListener('click',()=>{const body=col
     const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Draft saved!','ok')})});
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  // Validate documents
+  const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
+  // Validate loan willingness
+  if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;showThankYou(currentUid)})});

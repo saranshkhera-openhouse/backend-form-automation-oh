@@ -124,7 +124,7 @@ async function start() {
   │  5. PSD        → /final                  │
   │  6. Listing    → /listing                │
   │  Admin         → /admin                  │
-  │  Port: ${PORT}                           │
+  │  Port: ${PORT}                             │
   └──────────────────────────────────────────┘`));
   } catch (e) { console.error('Startup failed:', e.message); process.exit(1); }
 }
