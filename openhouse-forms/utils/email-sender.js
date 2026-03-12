@@ -109,7 +109,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Greetings of the day!</p>
 <p>Dear Accounts Team,</p>
-<p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
+<p>TESTING Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
 <p>Rahool Sureka ji, please approve the same.</p>
 <br>
 <p>Regards,<br><strong>${senderName}</strong></p>
@@ -120,7 +120,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   console.log('Building MIME email...');
   const raw = buildMimeEmail({
     from: fromEmail,
-    to: 'saransh.khera@openhouse.in , durejasahaj@gmail.com',
+    to: 'saransh.khera@openhouse.in , durejasahaj@gmail.com , rahool@openhouse.in',
     cc: 'sahaj.dureja@openhouse.in',
     subject,
     bodyHtml,
