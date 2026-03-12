@@ -172,11 +172,9 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
     sv('bathrooms',d.bathrooms);sv('balconies',d.balconies);
-    if(d.extra_area){try{JSON.parse(d.extra_area).forEach(v=>{const cb=document.querySelector(`input[name="extra_area"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
-    sr('gas_pipeline',d.gas_pipeline);sv('parking',d.parking);sv('furnishing',d.furnishing);
+    if(d.extra_area){try{JSON.parse(d.extra_area).forEach(v=>{const cb=document.querySelector(`input[name="extra_area"][value="${v}"]`);if(cb){cb.checked=true;cb.closest('label').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}})}catch(e){}}    sr('gas_pipeline',d.gas_pipeline);sv('parking',d.parking);sv('furnishing',d.furnishing);
     if(d.furnishing==='Unfurnished')document.getElementById('furnWrap').style.display='none';
-    if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb)cb.checked=true})}catch(e){}}
-    sv('total_lifts',d.total_lifts);sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);
+    if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb){cb.checked=true;cb.closest('label').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}})}catch(e){}}    sv('total_lifts',d.total_lifts);sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);
     sv('exit_facing',d.exit_facing);if(d.exit_compass_image)exitC.setUrl(d.exit_compass_image);sv('video_link',d.video_link);
     if(d.balconies){document.getElementById('selBal').value=d.balconies;buildBalconyCards()}
     if(d.balcony_details){try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details;
