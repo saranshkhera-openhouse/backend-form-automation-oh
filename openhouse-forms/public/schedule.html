@@ -132,24 +132,29 @@ document.getElementById('submitBtn').addEventListener('click',()=>{const uid=doc
     const res=await r.json();if(!r.ok)throw new Error(res.error);
     const dt=body.schedule_date||'';const tm=body.schedule_time||'';
     const tw=body.tower_no||'';const un=body.unit_no||'';const soc=body.society_name||'';
+    const ab=body.assigned_by||'';const at=body.field_exec||'';
     const dtFmt=dt?new Date(dt+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
     const tmFmt=tm?((h,m)=>{const hr=parseInt(h);return`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`})(...tm.split(':')):'';
     let ov=document.getElementById('tyOverlay');
     if(!ov){ov=document.createElement('div');ov.id='tyOverlay';ov.className='ty-overlay';document.body.appendChild(ov)}
-    ov.innerHTML=`<div class="ty-icon">✓</div><div class="ty-title">Visit Scheduled!</div>
+    ov.innerHTML=`<div class="ty-icon">✓</div><div class="ty-title">Your visit has been scheduled for :</div>
       <div class="ty-uid">${res.uid}</div>
       <div style="margin-top:16px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 18px;width:100%;max-width:340px">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:11px;color:var(--tx3)">DATE</div><div style="font-size:11px;color:var(--tx3)">TIME</div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:14px">
-          <div style="font-size:14px;font-weight:600">${dtFmt||'—'}</div><div style="font-size:14px;font-weight:600">${tmFmt||'—'}</div>
+          <div style="font-size:18px;font-weight:700">${dtFmt||'—'}</div><div style="font-size:18px;font-weight:700">${tmFmt||'—'}</div>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:8px">
           <div style="flex:1"><div style="font-size:11px;color:var(--tx3)">TOWER</div><div style="font-size:14px;font-weight:600">${tw||'—'}</div></div>
           <div style="flex:1"><div style="font-size:11px;color:var(--tx3)">UNIT</div><div style="font-size:14px;font-weight:600">${un||'—'}</div></div>
         </div>
-        <div><div style="font-size:11px;color:var(--tx3)">SOCIETY</div><div style="font-size:14px;font-weight:600">${soc||'—'}</div></div>
+        <div style="margin-bottom:8px"><div style="font-size:11px;color:var(--tx3)">SOCIETY</div><div style="font-size:14px;font-weight:600">${soc||'—'}</div></div>
+        <div style="border-top:1px solid var(--bd);padding-top:8px;display:flex;gap:12px">
+          <div style="flex:1"><div style="font-size:11px;color:var(--tx3)">ASSIGNED BY</div><div style="font-size:13px;font-weight:600">${ab||'—'}</div></div>
+          <div style="flex:1"><div style="font-size:11px;color:var(--tx3)">ASSIGNED TO</div><div style="font-size:13px;font-weight:600">${at||'—'}</div></div>
+        </div>
       </div>
       <div class="ty-actions"><a href="/schedule" class="ty-back">Schedule New Visit</a><a href="/" class="ty-back">Home</a></div>`;
     ov.classList.add('show')})});
