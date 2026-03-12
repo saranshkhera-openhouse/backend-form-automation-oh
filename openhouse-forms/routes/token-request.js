@@ -1,5 +1,7 @@
 const express=require('express'),router=express.Router();
 const{generateReceiptHTML}=require('../utils/pdf-template');
+const{sendTokenRequestEmail}=require('../utils/email-sender');
+
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -35,6 +37,8 @@ module.exports=function(pool){
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
+
+  // PDF preview
   router.get('/pdf/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
@@ -42,5 +46,48 @@ module.exports=function(pool){
       res.setHeader('Content-Type','text/html');res.send(html);
     }catch(e){console.error('TokenReqPDF:',e);res.status(500).json({error:'PDF failed'})}
   });
+
+  // ── Send Token Request Email ──
+  router.post('/send-email/:uid',async(req,res)=>{
+    try{
+      // Get logged-in user's tokens
+      const userId=req.user?.id;
+      if(!userId)return res.status(401).json({error:'Not authenticated'});
+      const{rows:uRows}=await pool.query('SELECT email,google_access_token,google_refresh_token FROM users WHERE id=$1',[userId]);
+      if(!uRows.length)return res.status(401).json({error:'User not found'});
+      const user=uRows[0];
+      if(!user.google_access_token&&!user.google_refresh_token){
+        return res.status(400).json({error:'Gmail not authorized. Please log out and log in again to grant email permission.'});
+      }
+
+      // Get property data
+      const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!pRows.length)return res.status(404).json({error:'Property not found'});
+      if(!pRows[0].token_submitted_at)return res.status(400).json({error:'Token request must be submitted first'});
+
+      // Generate PDF HTML
+      const pdfHtml=generateReceiptHTML(pRows[0],'deal');
+
+      // Send email
+      const result=await sendTokenRequestEmail({
+        accessToken:user.google_access_token,
+        refreshToken:user.google_refresh_token,
+        fromEmail:user.email,
+        property:pRows[0],
+        pdfHtml
+      });
+
+      console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
+      res.json({success:true,messageId:result.messageId});
+    }catch(e){
+      console.error('SendEmail:',e);
+      // If token expired, suggest re-login
+      if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
+        return res.status(401).json({error:'Gmail token expired. Please log out and log in again.'});
+      }
+      res.status(500).json({error:e.message||'Failed to send email'});
+    }
+  });
+
   return router;
 };

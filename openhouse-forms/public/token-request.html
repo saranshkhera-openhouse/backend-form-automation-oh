@@ -96,6 +96,9 @@
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
     </div>
+    <div style="margin-bottom:14px">
+      <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;border-color:var(--ac2);color:var(--ac2)">✉ Send Token Request Mail</button>
+    </div>
   </form>
 </div>
 
@@ -116,7 +119,6 @@ function pLink(l,url,label){return url?`<div class="pc-row"><span class="pc-l">$
 function parseJSON(v){try{return typeof v==='string'?JSON.parse(v):v||[]}catch(e){return[]}}
 
 function buildHistory(d){
-  // Schedule (Form 1)
   document.getElementById('hcSchedule').innerHTML=
     pRow('Lead ID',d.lead_id)+
     pRow('Schedule Date',fmtDt(d.schedule_date))+
@@ -127,16 +129,12 @@ function buildHistory(d){
     pRow('Assigned By',d.assigned_by)+
     pRow('Assigned To',d.field_exec)+
     pRow('Scheduled On',fmtDt(d.schedule_submitted_at));
-
-  // Rooms
   const extras=parseJSON(d.extra_area).filter(x=>x!=='No Extra Room');
   document.getElementById('hcRooms').innerHTML=
     pRow('Configuration',configDisplay(d.configuration,d.extra_area))+
     pRow('Extra Area',extras.length?extras.join(', '):'No Extra Room')+
     pRow('Bathrooms',d.bathrooms)+
     pRow('Balconies',d.balconies);
-
-  // Amenities
   const furnItems=parseJSON(d.furnishing_details).filter(x=>x!=='No Items');
   document.getElementById('hcAmenities').innerHTML=
     pRow('Gas Pipeline',d.gas_pipeline)+
@@ -144,15 +142,11 @@ function buildHistory(d){
     pRow('Furnishing',d.furnishing)+
     (furnItems.length?pRow('Furnishing Items',furnItems.join(', ')):'')+
     pRow('Visit Submitted',fmtDt(d.visit_submitted_at));
-
-  // Structure
   document.getElementById('hcStructure').innerHTML=
     pRow('Total Lifts',d.total_lifts)+
     pRow('Total Floors',d.total_floors_tower)+
     pRow('Flats per Floor',d.total_flats_floor)+
     pRow('Exit Facing',d.exit_facing);
-
-  // Balconies
   const bals=parseJSON(d.balcony_details);
   let balHtml='';
   if(bals.length){bals.forEach((b,i)=>{
@@ -162,8 +156,6 @@ function buildHistory(d){
     if(b.view_image)balHtml+=pLink('View Photo',b.view_image,'View Photo');
   })}else{balHtml='<div class="pc-row"><span class="pc-l" style="color:var(--tx3)">No balcony data</span></div>'}
   document.getElementById('hcBalconies').innerHTML=balHtml;
-
-  // Photos & Media
   let photosHtml='';
   if(d.exit_compass_image)photosHtml+=pLink('Exit Compass',d.exit_compass_image,'View Photo');
   if(d.video_link)photosHtml+=pLink('Video Link',d.video_link,'Watch Video');
@@ -227,7 +219,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
 document.getElementById('loadBtn').addEventListener('click',loadData);
 async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
   const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
-  // Collapse history on new load
   document.getElementById('historySection').classList.remove('show');
   document.getElementById('historyBtn').textContent='Show Schedule & Visit Details ▼';
   try{const r=await fetch(`${API}/api/token-request/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
@@ -258,6 +249,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
     document.getElementById('tokenForm').style.display='block';enableDoubleTapEdit(document.getElementById('prevCard'));
     document.getElementById('pdfBtn').disabled=!d.token_submitted_at;
+    document.getElementById('emailBtn').disabled=!d.token_submitted_at;
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.token_is_draft?' (Draft)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('tokenForm').style.display='none'}}
 function collectBody(){const fd=new FormData(document.getElementById('tokenForm'));const body=Object.fromEntries(fd.entries());
@@ -279,12 +271,30 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
   const url=`${API}/api/token-request/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
   document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
+
+// ── Send Token Request Email ──
+document.getElementById('emailBtn').addEventListener('click',async()=>{
+  if(!currentUid){toast('Load a property first','warn');return}
+  if(!confirm('Send token request email to saransh.khera@openhouse.in (CC: sahaj.dureja@openhouse.in)?'))return;
+  const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
+  try{
+    const r=await fetch(`${API}/api/token-request/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error);
+    toast('Email sent successfully!','ok',5000);btn.innerHTML='✓ Email Sent';btn.style.borderColor='var(--grn)';btn.style.color='var(--grn)';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
+  }catch(e){
+    toast(e.message||'Failed to send email','err');btn.innerHTML=orig;btn.disabled=false;
+    if(e.message&&e.message.includes('log out')){toast('Please logout and login again to authorize Gmail','warn',8000)}
+  }
+});
 </script>
 </body></html>

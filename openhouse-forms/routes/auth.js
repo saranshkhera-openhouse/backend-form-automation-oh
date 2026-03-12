@@ -5,11 +5,14 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
 module.exports = function(pool) {
 
-  // ── Google OAuth ──
+  // ── Google OAuth — includes Gmail send scope ──
   router.get('/google', (req, res, next) => {
-    // Save return URL before redirecting to Google
     if (req.query.returnTo) req.session.returnTo = req.query.returnTo;
-    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+    passport.authenticate('google', {
+      scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.send'],
+      accessType: 'offline',
+      prompt: 'consent'
+    })(req, res, next);
   });
 
   router.get('/google/callback',

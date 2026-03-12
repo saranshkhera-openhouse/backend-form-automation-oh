@@ -36,7 +36,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  const callbackURL = (process.env.APP_URL || `http://localhost:${PORT}`) + 'auth/google/callback';
+  const callbackURL = (process.env.APP_URL || `http://localhost:${PORT}`) + '/auth/google/callback';
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -49,9 +49,19 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email)=$1 AND is_active=TRUE', [email]);
       if (!rows.length) return done(null, false);
       // Update name from Google profile if blank
-      if (!rows[0].name && profile.displayName) {
-        await pool.query('UPDATE users SET name=$1 WHERE id=$2', [profile.displayName, rows[0].id]);
-        rows[0].name = profile.displayName;
+      const updates = [];
+      const vals = [];
+      let idx = 1;
+      if (!rows[0].name && profile.displayName) { updates.push(`name=$${idx++}`); vals.push(profile.displayName); }
+      // Always store access token; store refresh token if provided (only comes on first consent)
+      if (accessToken) { updates.push(`google_access_token=$${idx++}`); vals.push(accessToken); }
+      if (refreshToken) { updates.push(`google_refresh_token=$${idx++}`); vals.push(refreshToken); }
+      if (updates.length) {
+        vals.push(rows[0].id);
+        await pool.query(`UPDATE users SET ${updates.join(',')} WHERE id=$${idx}`, vals);
+        if (accessToken) rows[0].google_access_token = accessToken;
+        if (refreshToken) rows[0].google_refresh_token = refreshToken;
+        if (!rows[0].name && profile.displayName) rows[0].name = profile.displayName;
       }
       return done(null, rows[0]);
     } catch (e) { return done(e, null); }
@@ -106,7 +116,6 @@ async function start() {
       for (const [c, l, s] of SOCIETIES) await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING', [c, l, s]);
       console.log(`Seeded ${SOCIETIES.length} societies`);
     }
-    // Seed first admin if no users exist
     const uc = await pool.query('SELECT COUNT(*)as c FROM users');
     if (parseInt(uc.rows[0].c) === 0) {
       console.log('\n  ⚠  No users found. Add your first admin via Render Shell:');
@@ -114,7 +123,7 @@ async function start() {
     }
     app.listen(PORT, () => console.log(`
   ┌──────────────────────────────────────────┐
-  │  OPENHOUSE v6.0 — Google Auth Enabled    │
+  │  OPENHOUSE v6.1 — Gmail Send Enabled     │
   ├──────────────────────────────────────────┤
   │  Login         → /login                  │
   │  1. Schedule   → /schedule               │
