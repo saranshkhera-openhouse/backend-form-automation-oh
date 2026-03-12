@@ -82,14 +82,15 @@
         <div class="r2">
           <div class="fg"><label>Exit Facing <span class="req">*</span></label><select name="exit_facing" id="selExit" required></select><div class="err-msg">Required</div></div>
           <div class="fg"><label>Compass Photo <span class="req">*</span></label><div class="img-single"><button type="button" class="img-single-btn" id="exitCBtn">Upload</button><div class="img-single-preview" id="exitCPrev"><img></div><input type="hidden" name="exit_compass_image" id="exitCUrl"></div></div>
-        </div><hr class="div">
-        <div class="fg"><label>Video Link <span class="req">*</span></label><input type="url" name="video_link" pattern="https?://.+" required><div class="err-msg">Required</div></div>
+        </div>
       </div>
       <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
 
-      <!-- P4: Balconies -->
       <div class="page" id="p4"><div class="card"><div class="card-t">Balcony Details</div>
-        <div id="balCards"></div></div>
+        <div id="balCards"></div>
+        <hr class="div">
+        <div class="fg"><label>Video Link <span class="req">*</span></label><input type="url" name="video_link" pattern="https?://.+" required><div class="err-msg">Required</div></div>
+      </div>
       <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" id="submitBtn">Submit Visit</button></div></div>
     </div>
   </form>
@@ -99,7 +100,6 @@
 let S,opts,exitC;const pages=['p1','p2','p3','p4'];
 function goStep(n){if(n<S.current){S.show(n);return}for(let i=S.current;i<n;i++){if(!validateStep(i)){return}}S.show(n)}
 function nextStep(){if(validateStep(S.current))S.next()}
-// Per-step validation with custom checks for pills/photos
 function validateStep(step){
   const pid=pages[step-1];
   if(!validatePage(pid))return false;
@@ -136,7 +136,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
     const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
     document.getElementById('selBal').addEventListener('change',buildBalconyCards);
-    // Start audit — validate property summary first
     document.getElementById('startBtn').addEventListener('click',()=>{
       const unit=document.getElementById('v_unit').value.trim();
       const tower=document.getElementById('v_tower').value.trim();
@@ -148,7 +147,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
       if(!floor)missing.push('Floor');
       if(!area)missing.push('Area');
       if(missing.length){toast(`Fill required: ${missing.join(', ')}`,'err');
-        // Highlight invalid fields
         if(!unit){const fg=document.getElementById('v_unit').closest('.fg');if(fg)fg.classList.add('invalid')}
         if(!tower){const fg=document.getElementById('v_tower').closest('.fg');if(fg)fg.classList.add('invalid')}
         if(!floor){const fg=document.getElementById('selFloor').closest('.fg');if(fg)fg.classList.add('invalid')}
@@ -203,15 +201,12 @@ function getBalconyDetails(){const items=[];document.querySelectorAll('.ba').for
     compass_image:document.getElementById(`bc${i}Url`)?.value||'',view:document.querySelector(`.bv[data-i="${i}"]`)?.value||'',
     view_image:document.getElementById(`bv${i}Url`)?.value||''})});return JSON.stringify(items)}
 document.getElementById('submitBtn').addEventListener('click',()=>{
-  // Validate step 4 (balconies) first
   if(!validateStep(4))return;
-  // Validate balcony photos
   const balCount=parseInt(document.getElementById('selBal').value)||0;
   for(let i=1;i<=balCount;i++){
     if(!document.getElementById(`bc${i}Url`).value){toast(`Upload Compass Photo for Balcony ${i}`,'err');return}
     if(!document.getElementById(`bv${i}Url`).value){toast(`Upload View Photo for Balcony ${i}`,'err');return}}
   const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());
-  // Video link validation
   if(body.video_link&&!body.video_link.match(/^https?:\/\/.+/)){toast('Video link must be a valid URL starting with http','err');return}
   body.gas_pipeline=getRadio('gas_pipeline');body.extra_area=getCheckedJSON('extra_area');body.furnishing_details=getCheckedJSON('furnishing_details');
   body.balcony_details=getBalconyDetails();body.additional_images='[]';
