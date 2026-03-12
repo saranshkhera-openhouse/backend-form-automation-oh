@@ -23,8 +23,21 @@
         <div class="fg"><label>Tower</label><input type="text" id="d_tower" class="pre" readonly></div>
         <div class="fg"><label>Floor</label><input type="text" id="d_floor" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Area (in sqft)</label><input type="text" id="d_area" class="pre" readonly></div>
-        <div class="fg"><label>configuration</label><input type="text" id="d_cfg" class="pre" readonly></div></div>
+        <div class="fg"><label>Configuration</label><input type="text" id="d_cfg" class="pre" readonly></div></div>
       <div class="fg"><label>Assigned By</label><input type="text" id="d_ab" class="pre" readonly></div>
+    </div>
+
+    <!-- Toggle button for Form 1+2 data -->
+    <div style="text-align:center;margin-bottom:14px">
+      <button type="button" class="btn btn-out btn-sm" id="historyBtn" style="width:100%">Show Schedule & Visit Details ▼</button>
+    </div>
+    <div class="preview-section" id="historySection">
+      <div class="preview-card"><div class="pc-t">Schedule Details (Form 1)</div><div id="hcSchedule"></div></div>
+      <div class="preview-card"><div class="pc-t">Rooms & Extra Area</div><div id="hcRooms"></div></div>
+      <div class="preview-card"><div class="pc-t">Amenities & Furnishing</div><div id="hcAmenities"></div></div>
+      <div class="preview-card"><div class="pc-t">Structure & Facing</div><div id="hcStructure"></div></div>
+      <div class="preview-card"><div class="pc-t">Balcony Details</div><div id="hcBalconies"></div></div>
+      <div class="preview-card"><div class="pc-t">Photos & Media</div><div id="hcPhotos"></div></div>
     </div>
 
     <div class="card"><div class="card-t">Token Request</div>
@@ -93,45 +106,110 @@
 </div></div>
 <script src="/js/shared.js"></script>
 <script>
-let docsMsel,currentUid,chequeUploader,allOpts;
+let docsMsel,currentUid,chequeUploader,allOpts,loadedData=null;
 function autoFillBank(ifsc){const bank=bankFromIFSC(ifsc);if(bank){const sel=document.getElementById('ocrBank');for(const o of sel.options){if(o.value===bank){sel.value=bank;return}}}}
+
+function fmtDt(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function fmtTime12(t){if(!t)return'—';const[h,m]=t.split(':');const hr=parseInt(h);return`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`}
+function pRow(l,v){return v&&v!=='—'&&v!==''&&v!==null&&v!==undefined?`<div class="pc-row"><span class="pc-l">${l}</span><span class="pc-v">${v}</span></div>`:''}
+function pLink(l,url,label){return url?`<div class="pc-row"><span class="pc-l">${l}</span><span class="pc-v"><a href="${url}" target="_blank" style="color:var(--ac2);text-decoration:underline;font-size:11px">${label||'View'}</a></span></div>`:''}
+function parseJSON(v){try{return typeof v==='string'?JSON.parse(v):v||[]}catch(e){return[]}}
+
+function buildHistory(d){
+  // Schedule (Form 1)
+  document.getElementById('hcSchedule').innerHTML=
+    pRow('Lead ID',d.lead_id)+
+    pRow('Schedule Date',fmtDt(d.schedule_date))+
+    pRow('Schedule Time',fmtTime12(d.schedule_time))+
+    pRow('Source',d.source)+
+    pRow('Owner/Broker',d.owner_broker_name)+
+    pRow('Contact',d.contact_no)+
+    pRow('Assigned By',d.assigned_by)+
+    pRow('Assigned To',d.field_exec)+
+    pRow('Scheduled On',fmtDt(d.schedule_submitted_at));
+
+  // Rooms
+  const extras=parseJSON(d.extra_area).filter(x=>x!=='No Extra Room');
+  document.getElementById('hcRooms').innerHTML=
+    pRow('Configuration',configDisplay(d.configuration,d.extra_area))+
+    pRow('Extra Area',extras.length?extras.join(', '):'No Extra Room')+
+    pRow('Bathrooms',d.bathrooms)+
+    pRow('Balconies',d.balconies);
+
+  // Amenities
+  const furnItems=parseJSON(d.furnishing_details).filter(x=>x!=='No Items');
+  document.getElementById('hcAmenities').innerHTML=
+    pRow('Gas Pipeline',d.gas_pipeline)+
+    pRow('Parking',d.parking)+
+    pRow('Furnishing',d.furnishing)+
+    (furnItems.length?pRow('Furnishing Items',furnItems.join(', ')):'')+
+    pRow('Visit Submitted',fmtDt(d.visit_submitted_at));
+
+  // Structure
+  document.getElementById('hcStructure').innerHTML=
+    pRow('Total Lifts',d.total_lifts)+
+    pRow('Total Floors',d.total_floors_tower)+
+    pRow('Flats per Floor',d.total_flats_floor)+
+    pRow('Exit Facing',d.exit_facing);
+
+  // Balconies
+  const bals=parseJSON(d.balcony_details);
+  let balHtml='';
+  if(bals.length){bals.forEach((b,i)=>{
+    balHtml+=`<div style="font-size:11px;font-weight:600;color:var(--ac);margin:${i?'8px':'0'} 0 4px">Balcony ${b.index||i+1}</div>`;
+    balHtml+=pRow('Attached To',b.attached_to)+pRow('Facing',b.facing)+pRow('View',b.view);
+    if(b.compass_image)balHtml+=pLink('Compass Photo',b.compass_image,'View Photo');
+    if(b.view_image)balHtml+=pLink('View Photo',b.view_image,'View Photo');
+  })}else{balHtml='<div class="pc-row"><span class="pc-l" style="color:var(--tx3)">No balcony data</span></div>'}
+  document.getElementById('hcBalconies').innerHTML=balHtml;
+
+  // Photos & Media
+  let photosHtml='';
+  if(d.exit_compass_image)photosHtml+=pLink('Exit Compass',d.exit_compass_image,'View Photo');
+  if(d.video_link)photosHtml+=pLink('Video Link',d.video_link,'Watch Video');
+  if(d.cheque_image_url)photosHtml+=pLink('Cancelled Cheque',d.cheque_image_url,'View Photo');
+  const addImgs=parseJSON(d.additional_images);
+  addImgs.forEach((url,i)=>{photosHtml+=pLink(`Additional Photo ${i+1}`,url,'View Photo')});
+  if(!photosHtml)photosHtml='<div class="pc-row"><span class="pc-l" style="color:var(--tx3)">No photos uploaded</span></div>';
+  document.getElementById('hcPhotos').innerHTML=photosHtml;
+}
+
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
     const r=await fetch(`${API}/api/config`);allOpts=(await r.json()).options;
     docsMsel=makeMultiSelect(document.getElementById('docsSelect'),'documents_available',allOpts.documentsAvailable);
     chequeUploader=initSingleUpload('chequeBtn','chequePrev','chequeUrl');
-    // Requested By dropdown = same as Assigned By
     fillSelect(document.getElementById('selReqBy'),allOpts.assignedByList,'Select...');
     const bankSel=document.getElementById('selBankLoan');const ocrBankSel=document.getElementById('ocrBank');
     allOpts.banks.forEach(b=>{bankSel.innerHTML+=`<option value="${b}">${b}</option>`;ocrBankSel.innerHTML+=`<option value="${b}">${b}</option>`});
     bankSel.addEventListener('change',()=>{document.getElementById('bankOther').style.display=bankSel.value==='Others'?'block':'none'});
     document.getElementById('selOcc').addEventListener('change',e=>{const w=document.getElementById('hdWrap'),d=document.getElementById('hdDate');
       if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
-    // Performance guarantee calc
     const gsp=document.getElementById('gsp'),pgPct=document.getElementById('pgPct'),pgCalc=document.getElementById('pgCalc');
     function calcPG(){const g=parseFloat(gsp.value)||0;const p=parseFloat(pgPct.value)||0;const amt=Math.round(g*100000*p/100);
       pgCalc.textContent=p>0&&g>0?`= ₹${amt.toLocaleString('en-IN')}`:''};
     gsp.addEventListener('input',calcPG);pgPct.addEventListener('input',calcPG);
-    // Auto-tick no rent when 0 entered
     document.getElementById('rip').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');this.required=false}});
     document.getElementById('rgp').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');this.required=false}});
-    // Loan copy checkbox
     document.getElementById('loanCopy').addEventListener('change',function(){
       if(this.checked){document.getElementById('loanBankFields').style.display='none';
         const bk=document.getElementById('ocrBank').value;const ac=document.getElementById('ocrAc').value;
         if(bk)document.getElementById('selBankLoan').value=bk;
         if(ac)document.querySelector('[name="loan_account_number"]').value=ac;
-        // Remove required from hidden fields
         document.getElementById('selBankLoan').required=false;
         document.querySelector('[name="loan_account_number"]').required=false;
       }else{document.getElementById('loanBankFields').style.display='block';
         document.getElementById('selBankLoan').required=true;
         document.querySelector('[name="loan_account_number"]').required=true;
       }});
-    // Other documents typable
     setInterval(()=>{const has=[...document.querySelectorAll('#docsSelect input:checked')].some(c=>c.value.includes('Other'));
       document.getElementById('otherDocWrap').style.display=has?'block':'none'},500);
-    // UIDs
+    // History toggle
+    document.getElementById('historyBtn').addEventListener('click',()=>{
+      const sec=document.getElementById('historySection');
+      if(sec.classList.contains('show')){sec.classList.remove('show');document.getElementById('historyBtn').textContent='Show Schedule & Visit Details ▼'}
+      else{if(loadedData)buildHistory(loadedData);sec.classList.add('show');document.getElementById('historyBtn').textContent='Hide Schedule & Visit Details ▲'}
+    });
     const ur=await fetch(`${API}/api/token-request/uids`);const uids=await ur.json();
     fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
     const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
@@ -149,7 +227,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
 document.getElementById('loadBtn').addEventListener('click',loadData);
 async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
   const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  // Collapse history on new load
+  document.getElementById('historySection').classList.remove('show');
+  document.getElementById('historyBtn').textContent='Show Schedule & Visit Details ▼';
   try{const r=await fetch(`${API}/api/token-request/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
+    loadedData=d;
     document.getElementById('fUid').value=d.uid;currentUid=uid;
     document.getElementById('d_uid').value=d.uid;document.getElementById('d_src').value=d.source||'';
     document.getElementById('d_soc').value=d.society_name||'';document.getElementById('d_loc').value=d.locality||'';
@@ -183,10 +265,8 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  // Strip commas from amount fields FIRST (before calc)
   const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
-  // Calculate performance guarantee amount from %
   const gsp=parseFloat(body.guaranteed_sale_price)||0;const pct=parseFloat(body.performance_guarantee_pct)||0;
   body.performance_guarantee=Math.round(gsp*100000*pct/100);delete body.performance_guarantee_pct;
   return body}
@@ -195,9 +275,7 @@ document.getElementById('draftBtn').addEventListener('click',()=>{const body=col
     const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Draft saved!','ok')})});
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
-  // Validate documents
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
-  // Validate loan willingness
   if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
