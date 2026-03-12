@@ -38,7 +38,7 @@ module.exports=function(pool){
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
 
-  // PDF preview
+  // PDF preview (browser) — no baseUrl needed, relative URLs work
   router.get('/pdf/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
@@ -47,10 +47,9 @@ module.exports=function(pool){
     }catch(e){console.error('TokenReqPDF:',e);res.status(500).json({error:'PDF failed'})}
   });
 
-  // ── Send Token Request Email ──
+  // Send Token Request Email — uses baseUrl for Puppeteer logo
   router.post('/send-email/:uid',async(req,res)=>{
     try{
-      // Get logged-in user's tokens
       const userId=req.user?.id;
       if(!userId)return res.status(401).json({error:'Not authenticated'});
       const{rows:uRows}=await pool.query('SELECT email,google_access_token,google_refresh_token FROM users WHERE id=$1',[userId]);
@@ -60,15 +59,14 @@ module.exports=function(pool){
         return res.status(400).json({error:'Gmail not authorized. Please log out and log in again to grant email permission.'});
       }
 
-      // Get property data
       const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!pRows.length)return res.status(404).json({error:'Property not found'});
       if(!pRows[0].token_submitted_at)return res.status(400).json({error:'Token request must be submitted first'});
 
-      // Generate PDF HTML
-      const pdfHtml=generateReceiptHTML(pRows[0],'deal');
+      // Generate PDF HTML with absolute URL for logo (Puppeteer needs it)
+      const baseUrl=process.env.APP_URL||'';
+      const pdfHtml=generateReceiptHTML(pRows[0],'deal',baseUrl);
 
-      // Send email
       const result=await sendTokenRequestEmail({
         accessToken:user.google_access_token,
         refreshToken:user.google_refresh_token,
@@ -81,7 +79,6 @@ module.exports=function(pool){
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('SendEmail:',e);
-      // If token expired, suggest re-login
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
         return res.status(401).json({error:'Gmail token expired. Please log out and log in again.'});
       }

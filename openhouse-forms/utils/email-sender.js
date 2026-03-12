@@ -2,7 +2,6 @@
 const { google } = require('googleapis');
 const puppeteer = require('puppeteer');
 
-// Generate real PDF buffer from HTML using Puppeteer
 async function htmlToPdf(html) {
   let browser;
   try {
@@ -12,19 +11,17 @@ async function htmlToPdf(html) {
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 });
-    const pdfUint8 = await page.pdf({
+    const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: { top: '10mm', bottom: '10mm', left: '12mm', right: '12mm' }
     });
-    // CRITICAL: Puppeteer returns Uint8Array, must convert to proper Node Buffer
-    return Buffer.from(pdfUint8);
+    return pdfBuffer;
   } finally {
     if (browser) await browser.close();
   }
 }
 
-// Split base64 into 76-char lines (MIME requirement)
 function chunkBase64(base64str) {
   const lines = [];
   for (let i = 0; i < base64str.length; i += 76) {
@@ -33,44 +30,38 @@ function chunkBase64(base64str) {
   return lines.join('\r\n');
 }
 
-// Build RFC 2822 MIME email with PDF attachment
 function buildMimeEmail({ from, to, cc, subject, bodyHtml, pdfBuffer, pdfFilename }) {
   const boundary = 'boundary_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
-  const pdfBase64 = chunkBase64(Buffer.from(pdfBuffer).toString('base64'));
+  const pdfBase64 = chunkBase64(pdfBuffer.toString('base64'));
 
-  const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
+  const parts = [];
+  parts.push(`From: ${from}`);
+  parts.push(`To: ${to}`);
+  if (cc) parts.push(`Cc: ${cc}`);
+  parts.push(`Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`);
+  parts.push('MIME-Version: 1.0');
+  parts.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+  parts.push('');
+  parts.push(`--${boundary}`);
+  parts.push('Content-Type: text/html; charset="UTF-8"');
+  parts.push('Content-Transfer-Encoding: 7bit');
+  parts.push('');
+  parts.push(bodyHtml);
+  parts.push('');
+  parts.push(`--${boundary}`);
+  parts.push(`Content-Type: application/pdf; name="${pdfFilename}"`);
+  parts.push('Content-Transfer-Encoding: base64');
+  parts.push(`Content-Disposition: attachment; filename="${pdfFilename}"`);
+  parts.push('');
+  parts.push(pdfBase64);
+  parts.push('');
+  parts.push(`--${boundary}--`);
 
-  const mime = [
-    'MIME-Version: 1.0',
-    `From: ${from}`,
-    `To: ${to}`,
-    cc ? `Cc: ${cc}` : null,
-    `Subject: ${encodedSubject}`,
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
-    '',
-    `--${boundary}`,
-    'Content-Type: text/html; charset="UTF-8"',
-    'Content-Transfer-Encoding: quoted-printable',
-    '',
-    bodyHtml,
-    '',
-    `--${boundary}`,
-    `Content-Type: application/pdf; name="${pdfFilename}"`,
-    'Content-Transfer-Encoding: base64',
-    `Content-Disposition: attachment; filename="${pdfFilename}"`,
-    '',
-    pdfBase64,
-    '',
-    `--${boundary}--`,
-    ''
-  ].filter(line => line !== null).join('\r\n');
-
-  // Gmail API needs URL-safe base64
-  return Buffer.from(mime, 'utf-8').toString('base64')
+  const rawEmail = parts.join('\r\n');
+  return Buffer.from(rawEmail).toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// Send email via Gmail API using user's OAuth tokens
 async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -83,34 +74,29 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
 
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-  // Generate PDF
-  console.log('Generating PDF via Puppeteer...');
+  console.log('Generating PDF...');
   const pdfBuffer = await htmlToPdf(pdfHtml);
-  console.log(`PDF generated: ${pdfBuffer.length} bytes, isBuffer: ${Buffer.isBuffer(pdfBuffer)}`);
-
-  // Verify PDF starts with %PDF
-  const pdfHeader = pdfBuffer.slice(0, 5).toString('ascii');
-  console.log(`PDF header: ${pdfHeader}`);
-  if (!pdfHeader.startsWith('%PDF')) {
-    throw new Error('Generated file is not a valid PDF');
-  }
+  console.log(`PDF generated: ${pdfBuffer.length} bytes`);
 
   const p = property;
-  const ownerName = p.owner_broker_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Owner';
-  const tower = p.tower_no || '';
-  const unit = p.unit_no || '';
-  const society = p.society_name || 'Property';
-  const tokenAmt = p.token_amount_requested ? '₹ ' + Number(p.token_amount_requested).toLocaleString('en-IN') : '';
-
-  const subject = `Token Request ${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
-
+  const ownerFirst = p.first_name || (p.owner_broker_name || '').split(' ')[0] || 'Owner';
+  const subject = `Token request for ${p.society_name || 'Property'} | ${ownerFirst} ${p.tower_no || ''} ${p.unit_no || ''}`.trim();
   const senderName = fromEmail.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-  const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
-<p>Greetings of the day!</p>
-<p>Dear Accounts Team,</p>
-<p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
-<p>Rahool Sureka ji, please approve the same.</p>
+  const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.6">
+<p>Hi Rahool,</p>
+<p>Kindly approve the token for the below mentioned property.</p>
+<p>Please find the major details of the transaction below:</p>
+<table style="border-collapse:collapse;margin:16px 0;font-size:13px">
+  <tr><td style="padding:4px 16px 4px 0;color:#666">UID</td><td style="padding:4px 0;font-weight:600">${p.uid || ''}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#666">Society</td><td style="padding:4px 0;font-weight:600">${p.society_name || ''}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#666">Unit / Tower</td><td style="padding:4px 0;font-weight:600">${p.unit_no || ''} / ${p.tower_no || ''}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#666">Config</td><td style="padding:4px 0;font-weight:600">${p.configuration || ''}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#666">Owner</td><td style="padding:4px 0;font-weight:600">${p.owner_broker_name || ''}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#666">Token Amount</td><td style="padding:4px 0;font-weight:600">${p.token_amount_requested ? 'Rs. ' + Number(p.token_amount_requested).toLocaleString('en-IN') : ''}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#666">GSP</td><td style="padding:4px 0;font-weight:600">${p.guaranteed_sale_price ? 'Rs. ' + p.guaranteed_sale_price + ' Lakhs' : ''}</td></tr>
+</table>
+<p>Token Request PDF is attached for your reference.</p>
 <br>
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
@@ -128,7 +114,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
     pdfFilename
   });
 
-  console.log(`MIME raw length: ${raw.length} chars. Sending via Gmail API...`);
+  console.log('Sending via Gmail API...');
   const result = await gmail.users.messages.send({
     userId: 'me',
     requestBody: { raw }
