@@ -201,7 +201,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;showThankYou(currentUid)})});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
   const url=`${API}/api/token-request/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
