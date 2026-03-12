@@ -14,7 +14,7 @@ module.exports=function(pool){
       if(!ci||!si)return res.status(400).json({error:'Invalid city or source'});
       const prefix=`OH${ci}${si}`;
       // Count existing UIDs with this prefix
-      const{rows}=await pool.query(`SELECT MAX(CAST(SUBSTRING(uid FROM $2) AS INTEGER)) as max_num FROM properties WHERE uid LIKE $1`,[prefix+'%', String(prefix.length+1)]);
+      const{rows}=await pool.query(`SELECT MAX(CAST(REPLACE(uid,$1,'') AS INTEGER)) as max_num FROM properties WHERE uid LIKE $2`,[prefix, prefix+'%']);
       const next=(rows[0].max_num||1000)+1;
       const uid=prefix+String(next);
       res.json({uid,prefix,next});
