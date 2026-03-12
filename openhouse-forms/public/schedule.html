@@ -4,7 +4,7 @@
 <header class="hdr">
   <div class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></div>
   <div class="hdr-center"><div class="form-name">Visit Schedule Form</div></div>
-    <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>  
+  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
 </header>
 <div class="ctn">
   <form id="form">
@@ -47,12 +47,10 @@
             <label>Unit No.</label>
             <input type="text" name="unit_no">
         </div>
-
         <div class="fg">
             <label>Tower No.</label>
             <input type="text" name="tower_no">
         </div>
-
         <div class="fg">
             <label>Floor</label>
             <select name="floor" id="selFloor"></select>
@@ -65,7 +63,7 @@
           <input type="number" id="areaManual" name="area_manual" min="1" style="display:none;margin-top:4px">
           <div class="err-msg">Required</div>
         </div>
-        <div class="fg"><label>configuration<span class="req">*</span></label><select name="configuration" id="selConfig" required></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Configuration <span class="req">*</span></label><select name="configuration" id="selConfig" required></select><div class="err-msg">Required</div></div>
         <div class="fg"><label>Ask (in Lakhs)</label><input type="number" name="demand_price" step="0.01"></div>
       </div>
     </div>
@@ -93,7 +91,9 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fillSelect(document.getElementById('selAB'),opts.assignedByList,'Select...');
     fillSelect(document.getElementById('selAT'),opts.assignedToList,'Select...');
     await loadCities(document.getElementById('selCity'));
-    document.getElementById('schedDate').min=new Date().toISOString().split('T')[0];
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('schedDate').min=today;
+    document.getElementById('schedDate').addEventListener('change',function(){if(this.value<today){this.value='';toast('Past dates not allowed','warn')}});
     const cityEl=document.getElementById('selCity'),socEl=document.getElementById('selSoc'),locEl=document.getElementById('selLoc');
     cityEl.addEventListener('change',()=>{loadSocieties(cityEl.value,socEl,locEl);genUID()});
     socEl.addEventListener('change',()=>{loadLocalities(cityEl.value,socEl.value,locEl);loadAreas(socEl.value)});
@@ -130,6 +130,28 @@ document.getElementById('submitBtn').addEventListener('click',()=>{const uid=doc
   if(!body.area_sqft||parseFloat(body.area_sqft)<=0){toast('Enter valid area','err');return}
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/schedule/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    showThankYou(res.uid,`<a href="/schedule" class="ty-back">Schedule New Visit</a><a href="/" class="ty-back">Home</a>`)})});
+    const dt=body.schedule_date||'';const tm=body.schedule_time||'';
+    const tw=body.tower_no||'';const un=body.unit_no||'';const soc=body.society_name||'';
+    const dtFmt=dt?new Date(dt+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
+    const tmFmt=tm?((h,m)=>{const hr=parseInt(h);return`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`})(...tm.split(':')):'';
+    let ov=document.getElementById('tyOverlay');
+    if(!ov){ov=document.createElement('div');ov.id='tyOverlay';ov.className='ty-overlay';document.body.appendChild(ov)}
+    ov.innerHTML=`<div class="ty-icon">✓</div><div class="ty-title">Visit Scheduled!</div>
+      <div class="ty-uid">${res.uid}</div>
+      <div style="margin-top:16px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 18px;width:100%;max-width:340px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:11px;color:var(--tx3)">DATE</div><div style="font-size:11px;color:var(--tx3)">TIME</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:14px;font-weight:600">${dtFmt||'—'}</div><div style="font-size:14px;font-weight:600">${tmFmt||'—'}</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:8px">
+          <div style="flex:1"><div style="font-size:11px;color:var(--tx3)">TOWER</div><div style="font-size:14px;font-weight:600">${tw||'—'}</div></div>
+          <div style="flex:1"><div style="font-size:11px;color:var(--tx3)">UNIT</div><div style="font-size:14px;font-weight:600">${un||'—'}</div></div>
+        </div>
+        <div><div style="font-size:11px;color:var(--tx3)">SOCIETY</div><div style="font-size:14px;font-weight:600">${soc||'—'}</div></div>
+      </div>
+      <div class="ty-actions"><a href="/schedule" class="ty-back">Schedule New Visit</a><a href="/" class="ty-back">Home</a></div>`;
+    ov.classList.add('show')})});
 </script>
 </body></html>
