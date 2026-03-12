@@ -38,16 +38,19 @@ module.exports=function(pool){
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
 
-  // PDF preview (browser) — no baseUrl needed, relative URLs work
+  // PDF preview — always fresh from DB, no cache
   router.get('/pdf/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
       const html=generateReceiptHTML(rows[0],'deal');
-      res.setHeader('Content-Type','text/html');res.send(html);
+      res.setHeader('Content-Type','text/html');
+      res.setHeader('Cache-Control','no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma','no-cache');
+      res.send(html);
     }catch(e){console.error('TokenReqPDF:',e);res.status(500).json({error:'PDF failed'})}
   });
 
-  // Send Token Request Email — uses baseUrl for Puppeteer logo
+  // Send Token Request Email
   router.post('/send-email/:uid',async(req,res)=>{
     try{
       const userId=req.user?.id;
@@ -63,7 +66,6 @@ module.exports=function(pool){
       if(!pRows.length)return res.status(404).json({error:'Property not found'});
       if(!pRows[0].token_submitted_at)return res.status(400).json({error:'Token request must be submitted first'});
 
-      // Generate PDF HTML with absolute URL for logo (Puppeteer needs it)
       const baseUrl=process.env.APP_URL||'';
       const pdfHtml=generateReceiptHTML(pRows[0],'deal',baseUrl);
 

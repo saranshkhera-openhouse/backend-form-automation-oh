@@ -106,7 +106,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
 <body><div class="page">
   <div class="print-bar"><button onclick="window.print()">Print / Save as PDF</button></div>
   <div class="header">
-    <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name">Openhouse</span></div>
+    <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
     <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
   </div>
   <div class="greeting-strip">
