@@ -106,7 +106,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   console.log('Building MIME email...');
   const raw = buildMimeEmail({
     from: fromEmail,
-    to: 'saransh.khera@openhouse.in , ashish@openhouse.in',
+    to: 'saransh.khera@openhouse.in , durejasahaj@gmail.com',
     cc: 'sahaj.dureja@openhouse.in',
     subject,
     bodyHtml,
