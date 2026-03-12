@@ -4,7 +4,7 @@
 <header class="hdr">
   <div class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></div>
   <div class="hdr-center"><div class="form-name">Visit Form — Audit</div></div>
-  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>  
+  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
 </header>
 <div class="ctn">
   <div class="card"><div class="card-t">Load Scheduled Visit</div>
@@ -26,20 +26,20 @@
         <div class="fg"><label>Assigned To</label><input type="text" id="v_at" class="pre" readonly></div></div>
       <div class="r3">
         <div class="fg">
-          <label>Unit No</label>
-          <input type="text" name="v_unit" id="v_unit">
+          <label>Unit No <span class="req">*</span></label>
+          <input type="text" name="v_unit" id="v_unit" required><div class="err-msg">Required</div>
         </div>
         <div class="fg">
-          <label>Tower No</label>
-          <input type="text" name="v_tower" id="v_tower">
+          <label>Tower No <span class="req">*</span></label>
+          <input type="text" name="v_tower" id="v_tower" required><div class="err-msg">Required</div>
         </div>
         <div class="fg">
-            <label>Floor</label>
-            <select name="v_floor" id="selFloor"></select>
+            <label>Floor <span class="req">*</span></label>
+            <select name="v_floor" id="selFloor" required></select><div class="err-msg">Required</div>
         </div>
       </div>
-      <div class="r3"><div class="fg"><label>Area (in sqft)</label><input type="number" name="area_sqft_edit" id="v_area" step="0.01"></div>
-        <div class="fg"><label>configuration</label><input type="text" id="v_cfg" class="pre" readonly></div>
+      <div class="r3"><div class="fg"><label>Area (in sqft) <span class="req">*</span></label><input type="number" name="area_sqft_edit" id="v_area" step="0.01" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Configuration</label><input type="text" id="v_cfg" class="pre" readonly></div>
         <div class="fg"><label>Ask (In Lakhs)</label><input type="number" name="demand_price" id="v_ask" step="0.01"></div></div>
     </div>
     <div id="startWrap"><button type="button" class="btn btn-dark" id="startBtn" style="width:100%">Start Audit Form</button></div>
@@ -97,8 +97,26 @@
 <script src="/js/shared.js"></script>
 <script>
 let S,opts,exitC;const pages=['p1','p2','p3','p4'];
-function goStep(n){if(n<S.current){S.show(n);return}for(let i=S.current;i<n;i++)if(!validatePage(pages[i-1]))return;S.show(n)}
-function nextStep(){if(validatePage(pages[S.current-1]))S.next()}
+function goStep(n){if(n<S.current){S.show(n);return}for(let i=S.current;i<n;i++){if(!validateStep(i)){return}}S.show(n)}
+function nextStep(){if(validateStep(S.current))S.next()}
+// Per-step validation with custom checks for pills/photos
+function validateStep(step){
+  const pid=pages[step-1];
+  if(!validatePage(pid))return false;
+  if(step===1){
+    const ea=document.querySelectorAll('input[name="extra_area"]:checked');
+    if(!ea.length){toast('Select at least one Extra Area option','err');return false}
+  }
+  if(step===2){
+    if(document.getElementById('selFurn').value!=='Unfurnished'){
+      const fd2=document.querySelectorAll('input[name="furnishing_details"]:checked');
+      if(!fd2.length){toast('Select at least one Furnishing Detail','err');return false}}
+  }
+  if(step===3){
+    if(!document.getElementById('exitCUrl').value){toast('Upload Compass Photo','err');return false}
+  }
+  return true;
+}
 document.addEventListener('DOMContentLoaded',async()=>{
   S=makeStepper(4,document.getElementById('prog'));
   try{
@@ -118,7 +136,25 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
     const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
     document.getElementById('selBal').addEventListener('change',buildBalconyCards);
-    document.getElementById('startBtn').addEventListener('click',()=>{document.getElementById('startWrap').style.display='none';document.getElementById('prevCard').style.display='none';document.getElementById('stepperWrap').style.display='block'});
+    // Start audit — validate property summary first
+    document.getElementById('startBtn').addEventListener('click',()=>{
+      const unit=document.getElementById('v_unit').value.trim();
+      const tower=document.getElementById('v_tower').value.trim();
+      const floor=document.getElementById('selFloor').value;
+      const area=document.getElementById('v_area').value;
+      const missing=[];
+      if(!unit)missing.push('Unit No');
+      if(!tower)missing.push('Tower No');
+      if(!floor)missing.push('Floor');
+      if(!area)missing.push('Area');
+      if(missing.length){toast(`Fill required: ${missing.join(', ')}`,'err');
+        // Highlight invalid fields
+        if(!unit){const fg=document.getElementById('v_unit').closest('.fg');if(fg)fg.classList.add('invalid')}
+        if(!tower){const fg=document.getElementById('v_tower').closest('.fg');if(fg)fg.classList.add('invalid')}
+        if(!floor){const fg=document.getElementById('selFloor').closest('.fg');if(fg)fg.classList.add('invalid')}
+        if(!area){const fg=document.getElementById('v_area').closest('.fg');if(fg)fg.classList.add('invalid')}
+        return}
+      document.getElementById('startWrap').style.display='none';document.getElementById('prevCard').style.display='none';document.getElementById('stepperWrap').style.display='block'});
   }catch(e){toast('Config failed','err')}
 });
 document.getElementById('loadBtn').addEventListener('click',loadData);
@@ -166,16 +202,9 @@ function getBalconyDetails(){const items=[];document.querySelectorAll('.ba').for
   items.push({index:parseInt(i),attached_to:el.value,facing:document.querySelector(`.bf[data-i="${i}"]`)?.value||'',
     compass_image:document.getElementById(`bc${i}Url`)?.value||'',view:document.querySelector(`.bv[data-i="${i}"]`)?.value||'',
     view_image:document.getElementById(`bv${i}Url`)?.value||''})});return JSON.stringify(items)}
-document.getElementById('submitBtn').addEventListener('click',()=>{if(!validatePage('p4'))return;
-  // Validate extra area
-  const ea=document.querySelectorAll('input[name="extra_area"]:checked');
-  if(!ea.length){toast('Select at least one Extra Area option','err');return}
-  // Validate furnishing details (if not unfurnished)
-  if(document.getElementById('selFurn').value!=='Unfurnished'){
-    const fd2=document.querySelectorAll('input[name="furnishing_details"]:checked');
-    if(!fd2.length){toast('Select at least one Furnishing Detail','err');return}}
-  // Validate compass photo
-  if(!document.getElementById('exitCUrl').value){toast('Upload Compass Photo','err');return}
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  // Validate step 4 (balconies) first
+  if(!validateStep(4))return;
   // Validate balcony photos
   const balCount=parseInt(document.getElementById('selBal').value)||0;
   for(let i=1;i<=balCount;i++){
