@@ -38,19 +38,20 @@ function makeSearchable(sel){
   return{pick,refresh};
 }
 
-// ══════ MULTI-SELECT ══════
+// ══════ MULTI-SELECT (trimmed values) ══════
 function makeMultiSelect(container,name,options){
   const selected=new Set();
   container.innerHTML=`<div class="msel"><input type="text" class="msel-search" placeholder="Search..."><div class="msel-opts"></div><div class="msel-count">0 selected</div></div>`;
   const optsEl=container.querySelector('.msel-opts'),search=container.querySelector('.msel-search'),countEl=container.querySelector('.msel-count');
   function renderOpts(q=''){optsEl.innerHTML='';options.filter(o=>o.toLowerCase().includes(q.toLowerCase())).forEach(o=>{
-    const label=document.createElement('label');label.className=`msel-opt${selected.has(o)?' checked':''}`;
-    label.innerHTML=`<input type="checkbox" value="${o.trim()}" ${selected.has(o)?'checked':''}><span>${o}</span>`;
-    label.querySelector('input').addEventListener('change',function(){if(this.checked)selected.add(o);else selected.delete(o);updateCount();label.classList.toggle('checked',this.checked)});
+    const trimmed=o.trim();
+    const label=document.createElement('label');label.className=`msel-opt${selected.has(trimmed)?' checked':''}`;
+    label.innerHTML=`<input type="checkbox" value="${trimmed}" ${selected.has(trimmed)?'checked':''}><span>${o}</span>`;
+    label.querySelector('input').addEventListener('change',function(){if(this.checked)selected.add(trimmed);else selected.delete(trimmed);updateCount();label.classList.toggle('checked',this.checked)});
     optsEl.appendChild(label)})}
   function updateCount(){countEl.textContent=`${selected.size} selected`}
   search.addEventListener('input',()=>renderOpts(search.value));renderOpts();
-  return{getSelected:()=>JSON.stringify([...selected]),setSelected(arr){arr.forEach(v=>{if(options.includes(v))selected.add(v)});updateCount();renderOpts(search.value)}};
+  return{getSelected:()=>JSON.stringify([...selected]),setSelected(arr){arr.forEach(v=>{const t=typeof v==='string'?v.trim():v;if(options.map(o=>o.trim()).includes(t))selected.add(t)});updateCount();renderOpts(search.value)}};
 }
 
 // ══════ CASCADE ══════
@@ -113,20 +114,47 @@ function initImageUpload(zoneId,previewsId,max=10){
   return{getUrls:()=>JSON.stringify(urls),setUrls(arr){arr.forEach(u=>{urls.push(u);addThumb(u)})}};
 }
 
-// ══════ SINGLE IMAGE UPLOAD ══════
+// ══════ SINGLE IMAGE UPLOAD — Camera + Gallery chooser ══════
 function initSingleUpload(btnId,previewId,urlInputId){
   let cfg=null,currentUrl='';
   fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cfg=c).catch(()=>{});
   const btn=document.getElementById(btnId),prev=document.getElementById(previewId),urlInp=document.getElementById(urlInputId);
-  const fi=document.createElement('input');fi.type='file';fi.accept='image/*';
-  btn.addEventListener('click',()=>fi.click());
-  fi.addEventListener('change',async()=>{if(!fi.files.length)return;if(!cfg||!cfg.cloudName){toast('Cloudinary not configured','warn');return}
+
+  // Two hidden file inputs: one for camera, one for gallery
+  const fiCam=document.createElement('input');fiCam.type='file';fiCam.accept='image/*';fiCam.setAttribute('capture','environment');
+  const fiGal=document.createElement('input');fiGal.type='file';fiGal.accept='image/*';
+
+  // Popup chooser
+  function showChooser(){
+    // Remove any existing chooser
+    document.querySelectorAll('.img-chooser').forEach(c=>c.remove());
+    const chooser=document.createElement('div');chooser.className='img-chooser';
+    chooser.innerHTML=`<button type="button" class="img-chooser-btn" data-mode="cam">📷 Camera</button><button type="button" class="img-chooser-btn" data-mode="gal">🖼 Gallery</button>`;
+    chooser.style.cssText='display:flex;gap:6px;margin-top:6px';
+    chooser.querySelectorAll('.img-chooser-btn').forEach(b=>{
+      b.style.cssText='flex:1;padding:8px;border:1px solid var(--bd);border-radius:var(--r);background:var(--sf);font-size:12px;cursor:pointer';
+      b.addEventListener('click',e=>{e.stopPropagation();if(b.dataset.mode==='cam')fiCam.click();else fiGal.click();chooser.remove()})
+    });
+    btn.parentNode.insertBefore(chooser,btn.nextSibling);
+    // Auto-close after 5s
+    setTimeout(()=>chooser.remove(),5000);
+  }
+
+  btn.addEventListener('click',showChooser);
+
+  async function handleFile(file){
+    if(!file)return;if(!cfg||!cfg.cloudName){toast('Cloudinary not configured','warn');return}
     btn.textContent='Uploading...';btn.disabled=true;
-    try{const fd=new FormData();fd.append('file',fi.files[0]);fd.append('upload_preset',cfg.uploadPreset);
+    try{const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cfg.uploadPreset);
       const r=await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloudName}/image/upload`,{method:'POST',body:fd});if(!r.ok)throw new Error();
       const d=await r.json();currentUrl=d.secure_url;urlInp.value=currentUrl;
       prev.querySelector('img').src=currentUrl;prev.classList.add('show');toast('Uploaded!','ok')}
-    catch(e){toast('Upload failed','err')}finally{btn.textContent='Upload';btn.disabled=false;fi.value=''}});
+    catch(e){toast('Upload failed','err')}finally{btn.textContent='Upload';btn.disabled=false}
+  }
+
+  fiCam.addEventListener('change',()=>{if(fiCam.files.length)handleFile(fiCam.files[0]);fiCam.value=''});
+  fiGal.addEventListener('change',()=>{if(fiGal.files.length)handleFile(fiGal.files[0]);fiGal.value=''});
+
   return{getUrl:()=>currentUrl,setUrl(u){if(u){currentUrl=u;urlInp.value=u;prev.querySelector('img').src=u;prev.classList.add('show')}}};
 }
 
@@ -199,10 +227,8 @@ function commaFormat(v){if(!v)return '';const n=v.replace(/[^0-9.]/g,'');if(!n)r
 function setupCommaField(inp){
   inp.addEventListener('input',function(){const pos=this.selectionStart;const old=this.value;const stripped=old.replace(/,/g,'');
     const formatted=commaFormat(stripped);this.value=formatted;
-    // Maintain cursor position
     const diff=formatted.length-old.length;this.setSelectionRange(pos+diff,pos+diff)});
 }
-// Get raw number from comma-formatted field
 function getCommaValue(inp){return(inp.value||'').replace(/,/g,'')}
 
 // Apply to amount fields on page load

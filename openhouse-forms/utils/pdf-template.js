@@ -8,7 +8,7 @@ function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function pill(val,type){return val?`<span class="pill ${type}">${esc(val)}</span>`:'—'}
 function fval(v,cls=''){if(!v||v==='null')return `<div class="f-value empty">—</div>`;return `<div class="f-value ${cls}">${esc(String(v))}</div>`}
 
-// Robust document parser — handles string, array, double-encoded, null
+// Robust document parser — trims leading/trailing spaces from each doc name
 function parseDocs(raw){
   if(!raw) return [];
   if(Array.isArray(raw)) return raw.map(s=>typeof s==='string'?s.trim():s);
