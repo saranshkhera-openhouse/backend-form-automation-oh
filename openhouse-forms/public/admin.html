@@ -108,6 +108,7 @@ async function loadData(){try{const r=await fetch(`${API}/api/properties`);allDa
   render()}catch(e){console.error(e)}}
 
 function render(){let d=[...allData];const q=document.getElementById('fQ').value.toLowerCase();const city=document.getElementById('fCity').value;const st=document.getElementById('fSt').value;
+  document.getElementById('btnClearDate').style.display=(q||city||st||dateFilterStart)?'inline-flex':'none';
   if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q)||(p.assigned_by||'').toLowerCase().includes(q)||(p.token_requested_by||'').toLowerCase().includes(q));
   if(city)d=d.filter(p=>p.city===city);
   if(st==='scheduled')d=d.filter(p=>p.schedule_submitted_at&&!p.visit_submitted_at);
@@ -153,7 +154,7 @@ function setDateFilter(mode){
   const clearBtn=document.getElementById('btnClearDate');
   const customInput=document.getElementById('fCustomDate');
   document.querySelectorAll('.date-btn').forEach(b=>b.style.cssText='');
-  if(mode==='clear'){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';customInput.value='';render();return}
+  if(mode==='clear'){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';customInput.value='';document.getElementById('fQ').value='';document.getElementById('fCity').value='';document.getElementById('fSt').value='';render();return}
   const today=new Date();today.setHours(0,0,0,0);
   if(mode==='yesterday'){
     const yday=new Date(today);yday.setDate(yday.getDate()-1);
