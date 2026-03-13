@@ -88,11 +88,9 @@ app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listin
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
 
 // ── Admin API ──
-app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
-  try{const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
-    assigned_by,field_exec,token_requested_by,
-    schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,listing_submitted_at,created_at
-    FROM properties ORDER BY created_at DESC`);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+app.get('/api/properties/:uid', isAuthenticated, isAdmin, async(req,res)=>{
+  try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+    if(!rows.length)return res.status(404).json({error:'Not found'});res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
 });
 
 // ── Protected page routes ──
