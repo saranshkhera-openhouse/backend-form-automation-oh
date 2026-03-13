@@ -45,7 +45,7 @@ function makeMultiSelect(container,name,options){
   const optsEl=container.querySelector('.msel-opts'),search=container.querySelector('.msel-search'),countEl=container.querySelector('.msel-count');
   function renderOpts(q=''){optsEl.innerHTML='';options.filter(o=>o.toLowerCase().includes(q.toLowerCase())).forEach(o=>{
     const label=document.createElement('label');label.className=`msel-opt${selected.has(o)?' checked':''}`;
-    label.innerHTML=`<input type="checkbox" value="${o}" ${selected.has(o)?'checked':''}><span>${o}</span>`;
+    label.innerHTML=`<input type="checkbox" value="${o.trim()}" ${selected.has(o)?'checked':''}><span>${o}</span>`;
     label.querySelector('input').addEventListener('change',function(){if(this.checked)selected.add(o);else selected.delete(o);updateCount();label.classList.toggle('checked',this.checked)});
     optsEl.appendChild(label)})}
   function updateCount(){countEl.textContent=`${selected.size} selected`}
