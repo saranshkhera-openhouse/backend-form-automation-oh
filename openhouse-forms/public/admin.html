@@ -55,6 +55,13 @@
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()">↻</button>
       </div>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-out btn-sm date-btn" id="btnYday" onclick="setDateFilter('yesterday')">Yesterday</button>
+        <button class="btn btn-out btn-sm date-btn" id="btn30d" onclick="setDateFilter('30days')">Last 30 Days</button>
+        <input type="date" id="fCustomDate" style="font-size:13px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx)" onchange="setDateFilter('custom')">
+        <button class="btn btn-out btn-sm" id="btnClearDate" onclick="setDateFilter('clear')" style="display:none;color:var(--red);border-color:#fecaca">✕ Clear</button>
+        <span id="dateLbl" style="font-size:10px;color:var(--tx3);margin-left:4px"></span>
+      </div>
     </div>
     <div style="overflow-x:auto">
       <table class="tbl"><thead><tr>
@@ -76,6 +83,7 @@
 
 <script>
 const API=window.location.origin;let allData=[],sortCol='',sortDir='desc';
+let dateFilterStart=null,dateFilterEnd=null;
 
 function fmtDt(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
 function fmtDtFull(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}
@@ -109,6 +117,8 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   if(st==='deal')d=d.filter(p=>p.token_deal_submitted_at&&!p.final_submitted_at);
   if(st==='final')d=d.filter(p=>p.final_submitted_at&&!p.listing_submitted_at);
   if(st==='listed')d=d.filter(p=>p.listing_submitted_at);
+  // Date filter on last_activity
+  if(dateFilterStart){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();return t>=dateFilterStart.getTime()&&t<dateFilterEnd.getTime()})}
   if(sortCol)d.sort((a,b)=>{let va=(a[sortCol]||'').toString().toLowerCase(),vb=(b[sortCol]||'').toString().toLowerCase();
     if(sortCol==='last_activity'){va=new Date(a[sortCol]||0).getTime();vb=new Date(b[sortCol]||0).getTime();return sortDir==='asc'?va-vb:vb-va}
     return va<vb?(sortDir==='asc'?-1:1):va>vb?(sortDir==='asc'?1:-1):0});
@@ -135,6 +145,36 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   tb.querySelectorAll('.person-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.getElementById('fQ').value=a.dataset.name;render()}));
   // Clickable UIDs
   tb.querySelectorAll('.uid-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();openModal(a.dataset.uid)}));
+}
+
+// ═══ DATE FILTERS ═══
+function setDateFilter(mode){
+  const lbl=document.getElementById('dateLbl');
+  const clearBtn=document.getElementById('btnClearDate');
+  const customInput=document.getElementById('fCustomDate');
+  document.querySelectorAll('.date-btn').forEach(b=>b.style.cssText='');
+  if(mode==='clear'){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';customInput.value='';render();return}
+  const today=new Date();today.setHours(0,0,0,0);
+  if(mode==='yesterday'){
+    const yday=new Date(today);yday.setDate(yday.getDate()-1);
+    dateFilterStart=yday;dateFilterEnd=today;
+    lbl.textContent='Showing: '+fmtDt(yday);
+    document.getElementById('btnYday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';
+    customInput.value='';
+  }else if(mode==='30days'){
+    const d30=new Date(today);d30.setDate(d30.getDate()-30);
+    dateFilterStart=d30;dateFilterEnd=new Date(today.getTime()+86400000);
+    lbl.textContent='Showing: '+fmtDt(d30)+' → Today';
+    document.getElementById('btn30d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';
+    customInput.value='';
+  }else if(mode==='custom'){
+    const val=customInput.value;if(!val){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';render();return}
+    const picked=new Date(val+'T00:00:00');
+    dateFilterStart=picked;dateFilterEnd=new Date(picked.getTime()+86400000);
+    lbl.textContent='Showing: '+fmtDt(picked);
+  }
+  clearBtn.style.display='inline-flex';
+  render();
 }
 
 // ═══ UID DETAIL MODAL ═══
@@ -272,7 +312,10 @@ function buildModal(p){
 
 document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.s;if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=c;sortDir='asc'}render()})});
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
-document.addEventListener('DOMContentLoaded',loadData);
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];
+  loadData();
+});
 
 // ═══ USER MANAGEMENT ═══
 const FORM_KEYS=['schedule','visit','token-request','token-deal','final','listing'];
