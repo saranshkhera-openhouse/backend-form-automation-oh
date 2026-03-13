@@ -11,12 +11,12 @@ function fval(v,cls=''){if(!v||v==='null')return `<div class="f-value empty">—
 // Robust document parser — handles string, array, double-encoded, null
 function parseDocs(raw){
   if(!raw) return [];
-  if(Array.isArray(raw)) return raw;
+  if(Array.isArray(raw)) return raw.map(s=>typeof s==='string'?s.trim():s);
   if(typeof raw==='string'){
     try{
       const parsed=JSON.parse(raw);
-      if(Array.isArray(parsed)) return parsed;
-      if(typeof parsed==='string'){try{return JSON.parse(parsed)}catch(e2){}}
+      if(Array.isArray(parsed)) return parsed.map(s=>typeof s==='string'?s.trim():s);
+      if(typeof parsed==='string'){try{const p2=JSON.parse(parsed);return Array.isArray(p2)?p2.map(s=>typeof s==='string'?s.trim():s):[]}catch(e2){}}
       return [];
     }catch(e){return []}
   }
