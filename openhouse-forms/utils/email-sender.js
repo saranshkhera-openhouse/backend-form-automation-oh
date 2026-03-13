@@ -102,15 +102,14 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const society = p.society_name || 'Property';
   const tokenAmt = p.token_amount_requested ? '₹ ' + Number(p.token_amount_requested).toLocaleString('en-IN') : '';
 
-  const subject = `Token Request ${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `TESTING Token Request ${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
 
   const senderName = fromEmail.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Greetings of the day!</p>
 <p>Dear Accounts Team,</p>
-<p>TESTING Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
-<p>Rahool Sureka ji, please approve the same.</p>
+<p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
 <br>
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
@@ -120,8 +119,8 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   console.log('Building MIME email...');
   const raw = buildMimeEmail({
     from: fromEmail,
-    to: 'saransh.khera@openhouse.in , durejasahaj@gmail.com , rahool@openhouse.in',
-    cc: 'sahaj.dureja@openhouse.in',
+    to: 'accounts@openhouse.in, rahool@openhouse.in',
+    cc: 'supply@openhouse.in, akash.teotia@openhouse.in',
     subject,
     bodyHtml,
     pdfBuffer,
