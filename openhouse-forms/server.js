@@ -45,15 +45,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     try {
       const email = (profile.emails && profile.emails[0] && profile.emails[0].value || '').toLowerCase();
       if (!email) return done(null, false);
-      // Check if user exists in our approved list
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email)=$1 AND is_active=TRUE', [email]);
       if (!rows.length) return done(null, false);
-      // Update name from Google profile if blank
+      // Update name + store OAuth tokens
       const updates = [];
       const vals = [];
       let idx = 1;
       if (!rows[0].name && profile.displayName) { updates.push(`name=$${idx++}`); vals.push(profile.displayName); }
-      // Always store access token; store refresh token if provided (only comes on first consent)
       if (accessToken) { updates.push(`google_access_token=$${idx++}`); vals.push(accessToken); }
       if (refreshToken) { updates.push(`google_refresh_token=$${idx++}`); vals.push(refreshToken); }
       if (updates.length) {
@@ -68,16 +66,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   }));
 }
 
-// ── Static files (CSS, JS, images — public, no auth needed) ──
+// ── Static files ──
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 app.use('/js', express.static(path.join(__dirname, 'public/js')));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// ── Auth routes (no auth needed) ──
+// ── Auth routes ──
 app.use('/auth', require('./routes/auth')(pool));
 app.get('/login', (_, r) => r.sendFile(path.join(__dirname, 'public/login.html')));
 
-// ── API routes that need auth ──
+// ── API routes ──
 app.use('/api/config', isAuthenticated, require('./routes/config')(pool));
 app.use('/api/schedule', isAuthenticated, hasFormAccess, require('./routes/schedule')(pool));
 app.use('/api/visit', isAuthenticated, hasFormAccess, require('./routes/visit')(pool));
@@ -87,10 +85,18 @@ app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(
 app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
 
-// ── Admin API ──
-app.get('/api/properties/:uid', isAuthenticated, isAdmin, async(req,res)=>{
+// ── Admin API — list all properties ──
+app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
+  try{const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
+    assigned_by,field_exec,token_requested_by,
+    schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,listing_submitted_at,created_at
+    FROM properties ORDER BY created_at DESC`);res.json(rows)}catch(e){console.error('Properties list error:',e.message);res.status(500).json({error:e.message})}
+});
+
+// ── Admin API — single property (full detail for modal) ──
+app.get('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
   try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
-    if(!rows.length)return res.status(404).json({error:'Not found'});res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
+    if(!rows.length)return res.status(404).json({error:'Not found'});res.json(rows[0])}catch(e){console.error('Property detail error:',e.message);res.status(500).json({error:e.message})}
 });
 
 // ── Protected page routes ──
@@ -103,12 +109,15 @@ app.get('/final', ...sendForm('final.html'));
 app.get('/listing', ...sendForm('listing.html'));
 app.get('/admin', isAuthenticated, isAdmin, (_, r) => r.sendFile(path.join(__dirname, 'public/admin.html')));
 
-// ── Home (needs auth, shows forms user can access) ──
+// ── Home ──
 app.get('/', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/index.html')));
 
 async function start() {
   try {
-    await pool.query(MIGRATION_SQL); await pool.query(COMPAT_SQL); console.log('DB ready');
+    await pool.query(MIGRATION_SQL);
+    console.log('Migration done');
+    await pool.query(COMPAT_SQL);
+    console.log('Compat done, DB ready');
     const { rows } = await pool.query('SELECT COUNT(*)as c FROM master_societies');
     if (parseInt(rows[0].c) === 0) {
       for (const [c, l, s] of SOCIETIES) await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING', [c, l, s]);
@@ -116,23 +125,9 @@ async function start() {
     }
     const uc = await pool.query('SELECT COUNT(*)as c FROM users');
     if (parseInt(uc.rows[0].c) === 0) {
-      console.log('\n  ⚠  No users found. Add your first admin via Render Shell:');
-      console.log('  node -e "require(\'dotenv\').config();require(\'./db/pool\').query(\\"INSERT INTO users(email,name,allowed_forms,is_admin) VALUES(\'your@email.com\',\'Admin\',\'{*}\',true)\\").then(()=>{console.log(\'Done\');process.exit()})"\n');
+      console.log('\n  ⚠  No users found. Add first admin via Render Shell.');
     }
-    app.listen(PORT, () => console.log(`
-  ┌──────────────────────────────────────────┐
-  │  OPENHOUSE v6.1 — Gmail Send Enabled     │
-  ├──────────────────────────────────────────┤
-  │  Login         → /login                  │
-  │  1. Schedule   → /schedule               │
-  │  2. Visit      → /visit                  │
-  │  3. Token Req  → /token-request          │
-  │  4. Deal Terms → /token-deal             │
-  │  5. PSD        → /final                  │
-  │  6. Listing    → /listing                │
-  │  Admin         → /admin                  │
-  │  Port: ${PORT}                             │
-  └──────────────────────────────────────────┘`));
+    app.listen(PORT, () => console.log(`\n  OPENHOUSE v6.1 running on port ${PORT}\n`));
   } catch (e) { console.error('Startup failed:', e.message); process.exit(1); }
 }
 start();
