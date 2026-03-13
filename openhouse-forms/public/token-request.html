@@ -282,7 +282,7 @@ document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e
 // ── Send Token Request Email ──
 document.getElementById('emailBtn').addEventListener('click',async()=>{
   if(!currentUid){toast('Load a property first','warn');return}
-  if(!confirm('Send token request email to saransh.khera@openhouse.in (CC: sahaj.dureja@openhouse.in)?'))return;
+  if(!confirm('Send token request email?'))return;
   const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
   try{
