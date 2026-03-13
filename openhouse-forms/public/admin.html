@@ -58,7 +58,7 @@
       <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-out btn-sm date-btn" id="btnYday" onclick="setDateFilter('yesterday')">Yesterday</button>
         <button class="btn btn-out btn-sm date-btn" id="btn30d" onclick="setDateFilter('30days')">Last 30 Days</button>
-        <input type="date" id="fCustomDate" style="font-size:13px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx)" onchange="setDateFilter('custom')">
+        <input type="date" id="fCustomDate" style="font-size:11px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);width:120px" onchange="setDateFilter('custom')">
         <button class="btn btn-out btn-sm" id="btnClearDate" onclick="setDateFilter('clear')" style="display:none;color:var(--red);border-color:#fecaca">✕ Clear</button>
         <span id="dateLbl" style="font-size:10px;color:var(--tx3);margin-left:4px"></span>
       </div>
