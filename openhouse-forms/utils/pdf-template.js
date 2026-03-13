@@ -171,7 +171,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
     <div class="token-info"><div class="t-title">Token Paid — ${esc(neftBank||'Bank')}</div><div class="t-ref">NEFT Ref: ${esc(neftRef)}</div></div>
     <div class="token-date"><div class="td-label">Transfer Date</div><div class="td-val">${fmtDate(neftDate)}</div></div>
   </div>`:''}
-  <div class="section-label">Terms &amp; Conditions</div>
+  <div class="section-label" style="page-break-before:always;margin-top:0">Terms &amp; Conditions</div>
   <div class="terms-wrap"><h4>Please read carefully</h4>
     <ul class="terms-list">
       <li>Should any discrepancies or unavailability of required documents arise during the document verification process, Openhouse reserves the right to withhold execution of the agreement. In such an event, the advance token paid will be refunded to Openhouse in full.</li>
