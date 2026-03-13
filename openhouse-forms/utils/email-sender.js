@@ -110,6 +110,8 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
 <p>Greetings of the day!</p>
 <p>Dear Accounts Team,</p>
 <p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
+<p>Rahool Sureka, please approve the same.</p>
+${p.cheque_image_url ? `<p style="margin-top:16px"><strong>Cancelled Cheque Link:</strong> <a href="${p.cheque_image_url}" target="_blank">${p.cheque_image_url}</a></p>` : ''}
 <br>
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
