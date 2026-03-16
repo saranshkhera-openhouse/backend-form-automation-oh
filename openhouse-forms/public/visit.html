@@ -185,7 +185,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message}}
 function buildBalconyCards(){const n=parseInt(document.getElementById('selBal').value)||0;const c=document.getElementById('balCards');c.innerHTML='';
-  const isGurgaon=(document.getElementById('v_uid').value||'').startsWith('OHG');
+  const uid=document.getElementById('v_uid').value||'';const isGurgaon=uid.startsWith('OHGC')||uid.startsWith('OHGD');
   const views=isGurgaon?[...opts.balconyViews,'Aravalli'].sort():opts.balconyViews;
   for(let i=1;i<=n;i++){c.innerHTML+=`<div class="card" style="margin-top:8px;padding:10px"><div class="sub-h">Balcony ${i}</div>
     <div class="fg"><label>Attached To <span class="req">*</span></label><select class="ba" data-i="${i}" required><option value="">Select...</option>${opts.balconyAttach.map(a=>`<option>${a}</option>`).join('')}</select><div class="err-msg">Required</div></div>
