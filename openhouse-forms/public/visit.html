@@ -133,16 +133,16 @@ document.addEventListener('DOMContentLoaded',async()=>{
     // Dead schedule
     document.getElementById('deadBtn').addEventListener('click',async()=>{
       const uid=document.getElementById('fUid').value;if(!uid)return;
-      if(!confirm(`Mark ${uid} as DEAD?\n\nThis will permanently remove it from all form dropdowns. This cannot be undone.`))return;
+      if(!confirm(`Cancel schedule for ${uid}?\n\nThis will permanently remove it from all form dropdowns. This cannot be undone.`))return;
       const btn=document.getElementById('deadBtn');btn.disabled=true;btn.textContent='Marking...';
       try{const r=await fetch(`${API}/api/visit/dead/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
         const d=await r.json();if(!r.ok)throw new Error(d.error);
-        toast('Schedule marked as dead','ok');
-        btn.textContent='✕ Marked Dead';btn.style.background='#b33a2e';btn.style.color='#fff';
-        document.getElementById('startBtn').disabled=true;document.getElementById('startBtn').textContent='Dead Schedule';
+        toast('Schedule cancelled','ok');
+        btn.textContent='✕ Cancelled';btn.style.background='#b33a2e';btn.style.color='#fff';
+        document.getElementById('startBtn').disabled=true;document.getElementById('startBtn').textContent='Cancelled Schedule';
         // Remove from dropdown
         const opt=document.querySelector(`#selUid option[value="${uid}"]`);if(opt)opt.remove();
-      }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='✕ Dead Schedule'}
+      }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='✕ Cancel Schedule'}
     });
   }catch(e){toast('Config failed','err')}
 });

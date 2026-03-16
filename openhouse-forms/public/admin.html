@@ -55,7 +55,7 @@ tr.row-dead td{color:var(--red)!important;opacity:.7}
           <option value="scheduled">Scheduled</option><option value="visited">Visited</option>
           <option value="token">Token Req</option><option value="draft">Draft</option>
           <option value="deal">Deal Done</option><option value="final">Final</option><option value="listed">Listed</option>
-          <option value="dead">Dead</option>
+          <option value="dead">Cancelled</option>
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()">↻</button>
       </div>
@@ -135,12 +135,12 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
       if(p.final_submitted_at)acts.push(`<a href="/api/final/pdf/${p.uid}" class="link" target="_blank">PDF</a>`);
     }
     const lastDt=p.last_activity?fmtDt(p.last_activity):'—';
-    const deadBadge=dead?'<span class="badge dead-badge">DEAD</span>':'';
+    const deadBadge=dead?'<span class="badge dead-badge">Cancelled</span>':'';
     return`<tr class="${dead?'row-dead':''}"><td style="font-family:var(--mono);font-size:10px;font-weight:600"><a href="#" class="link uid-link" data-uid="${p.uid}">${p.uid}</a>${deadBadge}</td><td>${p.city||'—'}</td><td>${p.society_name||'—'}</td><td>${unitCol(p)||'—'}</td><td>${p.owner_broker_name||'—'}</td>
       <td>${clickName(p.assigned_by)}</td><td>${clickName(p.token_requested_by)}</td>
       <td>${ck(p.schedule_submitted_at)}</td><td>${ck(p.visit_submitted_at)}</td><td>${p.token_is_draft?'<span class="badge draft">Draft</span>':ck(p.token_submitted_at)}</td>
       <td>${ck(p.token_deal_submitted_at)}</td><td>${ck(p.final_submitted_at)}</td><td>${ck(p.listing_submitted_at)}</td>
-      <td class="last-dt">${lastDt}</td><td>${dead?'<span style="color:var(--red);font-size:10px">Dead</span>':acts.join(' ')}</td></tr>`}).join('');
+      <td class="last-dt">${lastDt}</td><td>${dead?'<span style="color:var(--red);font-size:10px">Cancelled</span>':acts.join(' ')}</td></tr>`}).join('');
   tb.querySelectorAll('.person-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.getElementById('fQ').value=a.dataset.name;render()}));
   tb.querySelectorAll('.uid-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();openModal(a.dataset.uid)}));
 }
@@ -173,7 +173,7 @@ function fmtAmt(v){if(!v||isNaN(v))return null;const n=Number(v);if(n>=10000000)
 function buildModal(p){
   const mb=document.getElementById('modalBody');
   const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'Final/PSD',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
-  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'DEAD':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
+  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);const bals=parseJ(p.balcony_details);
   let html=`<div class="prev-status">${statusHtml}</div>`;
   html+=`<div class="prev-section"><div class="prev-section-t">Schedule (Form 1)</div><div class="prev-grid">${pv('UID',p.uid)}${pv('City',p.city)}${pv('Society',p.society_name)}${pv('Locality',p.locality)}${pv('Owner/Broker',p.owner_broker_name)}${pv('Contact',p.contact_no)}${pv('Unit',p.unit_no)}${pv('Tower',p.tower_no)}${pv('Floor',p.floor)}${pv('Area',p.area_sqft)}${pv('Config',p.configuration)}${pv('Ask',p.demand_price?p.demand_price+' L':null)}${pv('Source',p.source)}${pv('Schedule Date',fmtDt(p.schedule_date))}${pv('Schedule Time',p.schedule_time)}${pv('Assigned By',p.assigned_by)}${pv('Assigned To',p.field_exec)}${pv('Submitted',fmtDtFull(p.schedule_submitted_at))}</div></div>`;
