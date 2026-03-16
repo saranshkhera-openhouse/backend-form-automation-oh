@@ -40,5 +40,16 @@ module.exports=function(pool){
       res.json({success:true,uid:req.params.uid});
     }catch(e){console.error('Dead:',e);res.status(500).json({error:e.message})}
   });
+  // Re-assign field_exec
+  router.post('/reassign/:uid',async(req,res)=>{
+    try{
+      const{field_exec}=req.body;
+      if(!field_exec)return res.status(400).json({error:'Select a person'});
+      const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      await pool.query('UPDATE properties SET field_exec=$1,updated_at=NOW() WHERE uid=$2',[field_exec,req.params.uid]);
+      res.json({success:true,uid:req.params.uid,field_exec});
+    }catch(e){console.error('Reassign:',e);res.status(500).json({error:e.message})}
+  });
   return router;
 };

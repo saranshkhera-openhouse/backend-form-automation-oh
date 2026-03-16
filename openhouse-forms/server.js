@@ -87,6 +87,19 @@ app.get('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
     if(!rows.length)return res.status(404).json({error:'Not found'});res.json(rows[0])}catch(e){console.error('Property detail error:',e.message);res.status(500).json({error:e.message})}
 });
 
+// ── My Properties — user sees only their linked properties ──
+app.get('/api/my-properties', isAuthenticated, async(req,res)=>{
+  try{const vis=visibilityFilter(req.user);
+    const baseWhere=vis.clause?`WHERE TRUE${vis.clause}`:'';
+    const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,floor,area_sqft,configuration,
+      demand_price,source,owner_broker_name,contact_no,assigned_by,field_exec,
+      schedule_date,schedule_time,is_dead,
+      schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,
+      token_deal_submitted_at,final_submitted_at,listing_submitted_at
+      FROM properties ${baseWhere} ORDER BY created_at DESC`,vis.params);
+    res.json(rows)}catch(e){console.error('MyProps error:',e.message);res.status(500).json({error:e.message})}
+});
+
 const sendForm = (f) => [isAuthenticated, hasFormAccess, (_, r) => r.sendFile(path.join(__dirname, 'public', f))];
 app.get('/schedule', ...sendForm('schedule.html'));
 app.get('/visit', ...sendForm('visit.html'));
@@ -95,6 +108,7 @@ app.get('/token-deal', ...sendForm('token-deal.html'));
 app.get('/final', ...sendForm('final.html'));
 app.get('/listing', ...sendForm('listing.html'));
 app.get('/admin', isAuthenticated, isAdmin, (_, r) => r.sendFile(path.join(__dirname, 'public/admin.html')));
+app.get('/my-properties', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/my-properties.html')));
 app.get('/', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/index.html')));
 
 async function start() {

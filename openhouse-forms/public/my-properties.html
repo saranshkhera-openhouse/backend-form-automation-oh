@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — My Properties</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.prop-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.prop-card.dead{border-color:#f0c4c0;background:#fef8f8}
+.prop-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;gap:8px}
+.prop-hdr:active{background:var(--bg)}
+.prop-uid{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ac)}
+.prop-soc{font-size:12px;color:var(--tx);font-weight:500;flex:1;margin-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prop-arrow{font-size:14px;color:var(--tx3);transition:transform .2s}
+.prop-card.open .prop-arrow{transform:rotate(180deg)}
+.prop-body{display:none;padding:0 14px 14px;border-top:1px solid var(--bd)}
+.prop-card.open .prop-body{display:block}
+.prop-status{display:flex;flex-wrap:wrap;gap:4px;padding:6px 14px;border-top:1px solid var(--bd)}
+.ps{padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600}
+.ps.done{background:#e8f2ec;color:#2d5a3d}
+.ps.pending{background:#f3f4f6;color:#999}
+.ps.draft{background:#fef3c7;color:#92400e}
+.ps.dead{background:#fdecea;color:#b33a2e}
+.pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px}
+.pd-grid.col3{grid-template-columns:1fr 1fr 1fr}
+.pd-item{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 8px}
+.pd-item.full{grid-column:1/-1}
+.pd-label{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:500}
+.pd-value{font-size:11px;font-weight:500;color:var(--tx);margin-top:1px}
+.pd-value.empty{color:#bbb;font-style:italic;font-weight:300}
+.reassign-wrap{margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reassign-wrap label{font-size:11px;font-weight:600;color:var(--tx3);white-space:nowrap}
+.reassign-wrap select{font-size:13px;flex:1;min-width:140px}
+.reassign-wrap button{white-space:nowrap}
+.prop-count{font-size:11px;color:var(--tx3);margin-bottom:10px}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
+  <div class="hdr-center"><div class="form-name">My Properties</div></div>
+  <div class="hdr-right"></div>
+</header>
+<div class="ctn">
+  <div style="margin-bottom:10px">
+    <input type="text" id="fQ" placeholder="🔍 Search UID, society, owner..." style="font-size:16px;width:100%;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r)">
+  </div>
+  <div class="prop-count" id="propCount">Loading...</div>
+  <div id="propList"></div>
+</div>
+<script src="/js/shared.js"></script>
+<script>
+let allProps=[],assignedToList=[];
+
+function fmtDt(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function fmtTime12(t){if(!t)return'—';const[h,m]=t.split(':');const hr=parseInt(h);return`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`}
+
+function pdv(label,val){
+  const isEmpty=val===null||val===undefined||val===''||val==='null';
+  return`<div class="pd-item"><div class="pd-label">${label}</div><div class="pd-value${isEmpty?' empty':''}">${isEmpty?'—':val}</div></div>`;
+}
+
+function renderProps(){
+  const q=document.getElementById('fQ').value.toLowerCase();
+  let d=allProps;
+  if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q));
+  document.getElementById('propCount').textContent=`${d.length} propert${d.length===1?'y':'ies'}`;
+  const list=document.getElementById('propList');
+  if(!d.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--tx3)">No properties found</div>';return}
+
+  const atOpts=assignedToList.map(n=>`<option value="${n}">${n}</option>`).join('');
+
+  list.innerHTML=d.map((p,idx)=>{
+    const dead=p.is_dead;
+    const steps=[
+      {n:'Schedule',ok:!!p.schedule_submitted_at},
+      {n:'Visit',ok:!!p.visit_submitted_at},
+      {n:'Token',ok:!!p.token_submitted_at,draft:p.token_is_draft},
+      {n:'Deal',ok:!!p.token_deal_submitted_at},
+      {n:'Final',ok:!!p.final_submitted_at},
+      {n:'Listing',ok:!!p.listing_submitted_at}
+    ];
+    const statusHtml=dead?'<span class="ps dead">DEAD</span>':steps.map(s=>{
+      const cls=s.draft?'draft':s.ok?'done':'pending';
+      return`<span class="ps ${cls}">${s.n} ${s.draft?'◐':s.ok?'✓':'✗'}</span>`;
+    }).join('');
+
+    const unit=[p.tower_no,p.unit_no].filter(Boolean).join('-');
+    const subtitle=[unit,p.society_name].filter(Boolean).join(' | ');
+
+    const detailHtml=`
+      <div class="pd-grid">
+        ${pdv('UID',p.uid)}${pdv('Source',p.source)}
+        ${pdv('Society',p.society_name)}${pdv('Locality',p.locality)}
+        ${pdv('Owner/Broker',p.owner_broker_name)}${pdv('Phone',p.contact_no)}
+        ${pdv('Unit No',p.unit_no)}${pdv('Tower No',p.tower_no)}
+        ${pdv('Floor',p.floor)}${pdv('Area (sqft)',p.area_sqft)}
+        ${pdv('Configuration',p.configuration)}${pdv('Ask (Lakhs)',p.demand_price)}
+        ${pdv('Schedule Date',fmtDt(p.schedule_date))}${pdv('Schedule Time',fmtTime12(p.schedule_time))}
+        ${pdv('Assigned By',p.assigned_by)}${pdv('Assigned To',p.field_exec)}
+      </div>
+      ${!dead&&p.schedule_submitted_at?`<div class="reassign-wrap">
+        <label>Re-assign To:</label>
+        <select id="ra_${idx}"><option value="">Select...</option>${atOpts}</select>
+        <button class="btn btn-out btn-sm" onclick="reassign('${p.uid}',${idx})">Update</button>
+      </div>`:''}`;
+
+    return`<div class="prop-card${dead?' dead':''}" id="pc_${idx}">
+      <div class="prop-hdr" onclick="toggleCard(${idx})">
+        <span class="prop-uid">${p.uid}</span>
+        <span class="prop-soc">${subtitle}</span>
+        <span class="prop-arrow">▼</span>
+      </div>
+      <div class="prop-status">${statusHtml}</div>
+      <div class="prop-body">${detailHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(idx){document.getElementById('pc_'+idx).classList.toggle('open')}
+
+async function reassign(uid,idx){
+  const sel=document.getElementById('ra_'+idx);
+  const newExec=sel.value;
+  if(!newExec){toast('Select a person','warn');return}
+  if(!confirm(`Re-assign ${uid} to ${newExec}?`))return;
+  try{
+    const r=await fetch(`${API}/api/visit/reassign/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({field_exec:newExec})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    toast(`Re-assigned to ${newExec}`,'ok');
+    // Update local data
+    const p=allProps.find(x=>x.uid===uid);if(p)p.field_exec=newExec;
+    renderProps();
+  }catch(e){toast(e.message||'Failed','err')}
+}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const[cr,pr]=await Promise.all([fetch(`${API}/api/config`),fetch(`${API}/api/my-properties`)]);
+    const opts=(await cr.json()).options;
+    assignedToList=[...opts.assignedToList,...opts.assignedByList].filter((v,i,a)=>a.indexOf(v)===i).sort();
+    allProps=await pr.json();
+    renderProps();
+  }catch(e){toast('Failed to load','err');document.getElementById('propCount').textContent='Failed to load'}
+});
+document.getElementById('fQ').addEventListener('input',renderProps);
+</script>
+</body></html>
