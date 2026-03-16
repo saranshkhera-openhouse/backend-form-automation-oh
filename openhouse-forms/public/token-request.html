@@ -4,7 +4,7 @@
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
   <div class="hdr-center"><div class="form-name">Token Request Internal</div></div>
-  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
+  <div class="hdr-right"></div>
 </header>
 <div class="ctn">
   <div class="card"><div class="card-t">Load Property</div>
@@ -19,15 +19,19 @@
         <div class="fg"><label>Locality</label><input type="text" id="d_loc" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="d_owner" class="pre" readonly></div>
         <div class="fg"><label>Phone</label><input type="text" id="d_phone" class="pre" readonly></div></div>
-      <div class="r3"><div class="fg"><label>Unit</label><input type="text" id="d_unit" class="pre" readonly></div>
-        <div class="fg"><label>Tower</label><input type="text" id="d_tower" class="pre" readonly></div>
-        <div class="fg"><label>Floor</label><input type="text" id="d_floor" class="pre" readonly></div></div>
-      <div class="r2"><div class="fg"><label>Area (in sqft)</label><input type="text" id="d_area" class="pre" readonly></div>
-        <div class="fg"><label>Configuration</label><input type="text" id="d_cfg" class="pre" readonly></div></div>
+      <div class="r3">
+        <div class="fg"><label>Unit No <span class="req">*</span></label><input type="text" name="unit_no" id="d_unit" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Tower No <span class="req">*</span></label><input type="text" name="tower_no" id="d_tower" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Floor <span class="req">*</span></label><input type="text" name="floor" id="d_floor" required><div class="err-msg">Required</div></div>
+      </div>
+      <div class="r3">
+        <div class="fg"><label>Area (in sqft) <span class="req">*</span></label><input type="number" name="area_sqft" id="d_area" step="0.01" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Configuration</label><input type="text" id="d_cfg" class="pre" readonly></div>
+        <div class="fg"><label>Ask (in Lakhs)</label><input type="number" name="demand_price" id="d_ask" step="0.01"></div>
+      </div>
       <div class="fg"><label>Assigned By</label><input type="text" id="d_ab" class="pre" readonly></div>
     </div>
 
-    <!-- Toggle button for Form 1+2 data -->
     <div style="text-align:center;margin-bottom:14px">
       <button type="button" class="btn btn-out btn-sm" id="historyBtn" style="width:100%">Show Schedule & Visit Details ▼</button>
     </div>
@@ -75,17 +79,6 @@
         <div class="fg"><label>Rent Payable (in ₹) <span class="req">*</span></label><input type="number" name="rent_payable_grace_period" id="rgp" required><div class="err-msg">Required</div></div></div>
       <label class="na-toggle"><input type="checkbox" id="rgp_na" onchange="toggleNA('rgp','No rent');document.getElementById('rgp').required=!this.checked"><span>No rent payable during grace period</span></label></div>
 
-    <div class="card"><div class="card-t">Loan Details</div>
-      <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details above</span></label>
-      <div id="loanBankFields">
-        <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan" required><option value="">Select bank...</option></select><div class="err-msg">Required</div>
-          <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
-        <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
-      </div>
-      <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="number" name="outstanding_loan" required><div class="err-msg">Required</div></div>
-      <div class="fg"><label>Willing to pay loan? <span class="req">*</span></label>
-        <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div></div>
-
     <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available</div>
       <div class="fg" style="margin-bottom:0"><div id="docsSelect"></div></div>
       <div class="fg" id="otherDocWrap" style="display:none;margin-top:8px"><label>Specify Other Documents</label><input type="text" name="other_documents_text" id="otherDocText"></div>
@@ -119,49 +112,17 @@ function pLink(l,url,label){return url?`<div class="pc-row"><span class="pc-l">$
 function parseJSON(v){try{return typeof v==='string'?JSON.parse(v):v||[]}catch(e){return[]}}
 
 function buildHistory(d){
-  document.getElementById('hcSchedule').innerHTML=
-    pRow('Lead ID',d.lead_id)+
-    pRow('Schedule Date',fmtDt(d.schedule_date))+
-    pRow('Schedule Time',fmtTime12(d.schedule_time))+
-    pRow('Source',d.source)+
-    pRow('Owner/Broker',d.owner_broker_name)+
-    pRow('Contact',d.contact_no)+
-    pRow('Assigned By',d.assigned_by)+
-    pRow('Assigned To',d.field_exec)+
-    pRow('Scheduled On',fmtDt(d.schedule_submitted_at));
+  document.getElementById('hcSchedule').innerHTML=pRow('Lead ID',d.lead_id)+pRow('Schedule Date',fmtDt(d.schedule_date))+pRow('Schedule Time',fmtTime12(d.schedule_time))+pRow('Source',d.source)+pRow('Owner/Broker',d.owner_broker_name)+pRow('Contact',d.contact_no)+pRow('Assigned By',d.assigned_by)+pRow('Assigned To',d.field_exec)+pRow('Scheduled On',fmtDt(d.schedule_submitted_at));
   const extras=parseJSON(d.extra_area).filter(x=>x!=='No Extra Room');
-  document.getElementById('hcRooms').innerHTML=
-    pRow('Configuration',configDisplay(d.configuration,d.extra_area))+
-    pRow('Extra Area',extras.length?extras.join(', '):'No Extra Room')+
-    pRow('Bathrooms',d.bathrooms)+
-    pRow('Balconies',d.balconies);
+  document.getElementById('hcRooms').innerHTML=pRow('Configuration',configDisplay(d.configuration,d.extra_area))+pRow('Extra Area',extras.length?extras.join(', '):'No Extra Room')+pRow('Bathrooms',d.bathrooms)+pRow('Balconies',d.balconies);
   const furnItems=parseJSON(d.furnishing_details).filter(x=>x!=='No Items');
-  document.getElementById('hcAmenities').innerHTML=
-    pRow('Gas Pipeline',d.gas_pipeline)+
-    pRow('Parking',d.parking)+
-    pRow('Furnishing',d.furnishing)+
-    (furnItems.length?pRow('Furnishing Items',furnItems.join(', ')):'')+
-    pRow('Visit Submitted',fmtDt(d.visit_submitted_at));
-  document.getElementById('hcStructure').innerHTML=
-    pRow('Total Lifts',d.total_lifts)+
-    pRow('Total Floors',d.total_floors_tower)+
-    pRow('Flats per Floor',d.total_flats_floor)+
-    pRow('Exit Facing',d.exit_facing);
-  const bals=parseJSON(d.balcony_details);
-  let balHtml='';
-  if(bals.length){bals.forEach((b,i)=>{
-    balHtml+=`<div style="font-size:11px;font-weight:600;color:var(--ac);margin:${i?'8px':'0'} 0 4px">Balcony ${b.index||i+1}</div>`;
-    balHtml+=pRow('Attached To',b.attached_to)+pRow('Facing',b.facing)+pRow('View',b.view);
-    if(b.compass_image)balHtml+=pLink('Compass Photo',b.compass_image,'View Photo');
-    if(b.view_image)balHtml+=pLink('View Photo',b.view_image,'View Photo');
-  })}else{balHtml='<div class="pc-row"><span class="pc-l" style="color:var(--tx3)">No balcony data</span></div>'}
+  document.getElementById('hcAmenities').innerHTML=pRow('Gas Pipeline',d.gas_pipeline)+pRow('Parking',d.parking)+pRow('Furnishing',d.furnishing)+(furnItems.length?pRow('Furnishing Items',furnItems.join(', ')):'')+pRow('Visit Submitted',fmtDt(d.visit_submitted_at));
+  document.getElementById('hcStructure').innerHTML=pRow('Total Lifts',d.total_lifts)+pRow('Total Floors',d.total_floors_tower)+pRow('Flats per Floor',d.total_flats_floor)+pRow('Exit Facing',d.exit_facing);
+  const bals=parseJSON(d.balcony_details);let balHtml='';
+  if(bals.length){bals.forEach((b,i)=>{balHtml+=`<div style="font-size:11px;font-weight:600;color:var(--ac);margin:${i?'8px':'0'} 0 4px">Balcony ${b.index||i+1}</div>`;balHtml+=pRow('Attached To',b.attached_to)+pRow('Facing',b.facing)+pRow('View',b.view);if(b.compass_image)balHtml+=pLink('Compass Photo',b.compass_image,'View Photo');if(b.view_image)balHtml+=pLink('View Photo',b.view_image,'View Photo')})}else{balHtml='<div class="pc-row"><span class="pc-l" style="color:var(--tx3)">No balcony data</span></div>'}
   document.getElementById('hcBalconies').innerHTML=balHtml;
-  let photosHtml='';
-  if(d.exit_compass_image)photosHtml+=pLink('Exit Compass',d.exit_compass_image,'View Photo');
-  if(d.video_link)photosHtml+=pLink('Video Link',d.video_link,'Watch Video');
-  if(d.cheque_image_url)photosHtml+=pLink('Cancelled Cheque',d.cheque_image_url,'View Photo');
-  const addImgs=parseJSON(d.additional_images);
-  addImgs.forEach((url,i)=>{photosHtml+=pLink(`Additional Photo ${i+1}`,url,'View Photo')});
+  let photosHtml='';if(d.exit_compass_image)photosHtml+=pLink('Exit Compass',d.exit_compass_image,'View Photo');if(d.video_link)photosHtml+=pLink('Video Link',d.video_link,'Watch Video');if(d.cheque_image_url)photosHtml+=pLink('Cancelled Cheque',d.cheque_image_url,'View Photo');
+  const addImgs=parseJSON(d.additional_images);addImgs.forEach((url,i)=>{photosHtml+=pLink(`Additional Photo ${i+1}`,url,'View Photo')});
   if(!photosHtml)photosHtml='<div class="pc-row"><span class="pc-l" style="color:var(--tx3)">No photos uploaded</span></div>';
   document.getElementById('hcPhotos').innerHTML=photosHtml;
 }
@@ -172,9 +133,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     docsMsel=makeMultiSelect(document.getElementById('docsSelect'),'documents_available',allOpts.documentsAvailable);
     chequeUploader=initSingleUpload('chequeBtn','chequePrev','chequeUrl');
     fillSelect(document.getElementById('selReqBy'),allOpts.assignedByList,'Select...');
-    const bankSel=document.getElementById('selBankLoan');const ocrBankSel=document.getElementById('ocrBank');
-    allOpts.banks.forEach(b=>{bankSel.innerHTML+=`<option value="${b}">${b}</option>`;ocrBankSel.innerHTML+=`<option value="${b}">${b}</option>`});
-    bankSel.addEventListener('change',()=>{document.getElementById('bankOther').style.display=bankSel.value==='Others'?'block':'none'});
+    const ocrBankSel=document.getElementById('ocrBank');
+    allOpts.banks.forEach(b=>{ocrBankSel.innerHTML+=`<option value="${b}">${b}</option>`});
     document.getElementById('selOcc').addEventListener('change',e=>{const w=document.getElementById('hdWrap'),d=document.getElementById('hdDate');
       if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
     const gsp=document.getElementById('gsp'),pgPct=document.getElementById('pgPct'),pgCalc=document.getElementById('pgCalc');
@@ -183,20 +143,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     gsp.addEventListener('input',calcPG);pgPct.addEventListener('input',calcPG);
     document.getElementById('rip').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');this.required=false}});
     document.getElementById('rgp').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');this.required=false}});
-    document.getElementById('loanCopy').addEventListener('change',function(){
-      if(this.checked){document.getElementById('loanBankFields').style.display='none';
-        const bk=document.getElementById('ocrBank').value;const ac=document.getElementById('ocrAc').value;
-        if(bk)document.getElementById('selBankLoan').value=bk;
-        if(ac)document.querySelector('[name="loan_account_number"]').value=ac;
-        document.getElementById('selBankLoan').required=false;
-        document.querySelector('[name="loan_account_number"]').required=false;
-      }else{document.getElementById('loanBankFields').style.display='block';
-        document.getElementById('selBankLoan').required=true;
-        document.querySelector('[name="loan_account_number"]').required=true;
-      }});
     setInterval(()=>{const has=[...document.querySelectorAll('#docsSelect input:checked')].some(c=>c.value.includes('Other'));
       document.getElementById('otherDocWrap').style.display=has?'block':'none'},500);
-    // History toggle
     document.getElementById('historyBtn').addEventListener('click',()=>{
       const sec=document.getElementById('historySection');
       if(sec.classList.contains('show')){sec.classList.remove('show');document.getElementById('historyBtn').textContent='Show Schedule & Visit Details ▼'}
@@ -231,6 +179,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('d_floor').value=d.floor??'';document.getElementById('d_area').value=d.area_sqft??'';
     document.getElementById('d_cfg').value=configDisplay(d.configuration,d.extra_area);
     document.getElementById('d_ab').value=d.assigned_by||'';
+    document.getElementById('d_ask').value=d.demand_price||'';
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
     sv('token_amount_requested',d.token_amount_requested);sv('token_requested_by',d.token_requested_by);
@@ -243,21 +192,18 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
     if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');document.getElementById('rip').required=false}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
     if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');document.getElementById('rgp').required=false}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
-    if(d.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=d.bank_name_loan;if(d.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
-    sv('outstanding_loan',d.outstanding_loan);sv('loan_account_number',d.loan_account_number);sr('loan_pay_willingness',d.loan_pay_willingness);
     sv('token_remarks',d.token_remarks);
     if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
-    document.getElementById('tokenForm').style.display='block';enableDoubleTapEdit(document.getElementById('prevCard'));
+    document.getElementById('tokenForm').style.display='block';
     document.getElementById('pdfBtn').disabled=!d.token_submitted_at;
     document.getElementById('emailBtn').disabled=!d.token_submitted_at;
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.token_is_draft?' (Draft)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('tokenForm').style.display='none'}}
 function collectBody(){const fd=new FormData(document.getElementById('tokenForm'));const body=Object.fromEntries(fd.entries());
-  body.loan_pay_willingness=getRadio('loan_pay_willingness');body.documents_available=docsMsel.getSelected();
-  if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
+  body.documents_available=docsMsel.getSelected();
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text'];
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','loan_pay_willingness','token_remarks','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
   const gsp=parseFloat(body.guaranteed_sale_price)||0;const pct=parseFloat(body.performance_guarantee_pct)||0;
   body.performance_guarantee=Math.round(gsp*100000*pct/100);delete body.performance_guarantee_pct;
@@ -268,7 +214,6 @@ document.getElementById('draftBtn').addEventListener('click',()=>{const body=col
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
-  if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});
@@ -279,7 +224,6 @@ document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)r
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
 
-// ── Send Token Request Email ──
 document.getElementById('emailBtn').addEventListener('click',async()=>{
   if(!currentUid){toast('Load a property first','warn');return}
   if(!confirm('Send token request email?'))return;
@@ -287,14 +231,11 @@ document.getElementById('emailBtn').addEventListener('click',async()=>{
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
   try{
     const r=await fetch(`${API}/api/token-request/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
-    const d=await r.json();
-    if(!r.ok)throw new Error(d.error);
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
     toast('Email sent successfully!','ok',5000);btn.innerHTML='✓ Email Sent';btn.style.borderColor='var(--grn)';btn.style.color='var(--grn)';
     setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
-  }catch(e){
-    toast(e.message||'Failed to send email','err');btn.innerHTML=orig;btn.disabled=false;
-    if(e.message&&e.message.includes('log out')){toast('Please logout and login again to authorize Gmail','warn',8000)}
-  }
+  }catch(e){toast(e.message||'Failed to send email','err');btn.innerHTML=orig;btn.disabled=false;
+    if(e.message&&e.message.includes('log out')){toast('Please logout and login again to authorize Gmail','warn',8000)}}
 });
 </script>
 </body></html>

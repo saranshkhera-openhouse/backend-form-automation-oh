@@ -3,8 +3,8 @@
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
-  <div class="hdr-right"><div class="form-name">Visit Form — Audit</div></div>
-  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
+  <div class="hdr-center"><div class="form-name">Visit Form — Audit</div></div>
+  <div class="hdr-right"></div>
 </header>
 <div class="ctn">
   <div class="card"><div class="card-t">Load Scheduled Visit</div>
@@ -13,7 +13,10 @@
     <div class="pf-st" id="pfSt"></div></div>
   <form id="form" style="display:none"><input type="hidden" name="uid" id="fUid">
     <div class="card" id="prevCard">
-      <div class="card-t">Property Summary</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-t" style="margin:0">Property Summary</div>
+        <button type="button" class="btn btn-sm" id="deadBtn" style="background:#fdecea;color:#b33a2e;border:1px solid #f0c4c0;font-size:11px;display:none">✕ Dead Schedule</button>
+      </div>
       <div class="r2"><div class="fg"><label>UID</label><input type="text" id="v_uid" class="pre" readonly></div>
         <div class="fg"><label>Source</label><input type="text" id="v_src" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Society</label><input type="text" id="v_soc" class="pre" readonly></div>
@@ -25,18 +28,9 @@
       <div class="r2"><div class="fg"><label>Assigned By</label><input type="text" id="v_ab" class="pre" readonly></div>
         <div class="fg"><label>Assigned To</label><input type="text" id="v_at" class="pre" readonly></div></div>
       <div class="r3">
-        <div class="fg">
-          <label>Unit No <span class="req">*</span></label>
-          <input type="text" name="v_unit" id="v_unit" required><div class="err-msg">Required</div>
-        </div>
-        <div class="fg">
-          <label>Tower No <span class="req">*</span></label>
-          <input type="text" name="v_tower" id="v_tower" required><div class="err-msg">Required</div>
-        </div>
-        <div class="fg">
-            <label>Floor <span class="req">*</span></label>
-            <select name="v_floor" id="selFloor" required></select><div class="err-msg">Required</div>
-        </div>
+        <div class="fg"><label>Unit No <span class="req">*</span></label><input type="text" name="v_unit" id="v_unit" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Tower No <span class="req">*</span></label><input type="text" name="v_tower" id="v_tower" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Floor <span class="req">*</span></label><select name="v_floor" id="selFloor" required></select><div class="err-msg">Required</div></div>
       </div>
       <div class="r3"><div class="fg"><label>Area (in sqft) <span class="req">*</span></label><input type="number" name="area_sqft_edit" id="v_area" step="0.01" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Configuration</label><input type="text" id="v_cfg" class="pre" readonly></div>
@@ -51,8 +45,6 @@
         <div class="step" onclick="goStep(4)"><div class="step-num">4</div><span class="step-text">Balconies</span></div>
       </div>
       <div class="prog-wrap" id="prog"><div class="prog-bar"><div class="prog-fill" style="width:0%"></div></div><div class="prog-lbl">0%</div></div>
-
-      <!-- P1: Rooms -->
       <div class="page active" id="p1"><div class="card"><div class="card-t">Rooms & Extra Area</div>
         <div class="fg"><label>Extra Area <span class="req">*</span></label><div class="pills" id="extraP"></div><div class="err-msg">Required</div></div>
         <div class="r2">
@@ -60,8 +52,6 @@
           <div class="fg"><label>Total Balconies <span class="req">*</span></label><select name="balconies" id="selBal" required></select><div class="err-msg">Required</div></div>
         </div></div>
       <div class="btn-row"><div></div><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
-
-      <!-- P2: Amenities -->
       <div class="page" id="p2"><div class="card"><div class="card-t">Amenities</div>
         <div class="r2">
           <div class="fg"><label>Gas Pipeline</label><div class="radios" id="gasGrp"></div></div>
@@ -71,8 +61,6 @@
         <div class="fg" id="furnWrap"><label>Furnishing Details <span class="req">*</span></label><div class="pills" id="furnP"></div><div class="err-msg">Required</div></div>
       </div>
       <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
-
-      <!-- P3: Structure -->
       <div class="page" id="p3"><div class="card"><div class="card-t">Structure & Facing</div>
         <div class="r3">
           <div class="fg"><label>Total No. of Lifts <span class="req">*</span></label><select name="total_lifts" id="selLift" required></select><div class="err-msg">Required</div></div>
@@ -85,11 +73,12 @@
         </div>
       </div>
       <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" onclick="nextStep()">Next →</button></div></div>
-
       <div class="page" id="p4"><div class="card"><div class="card-t">Balcony Details</div>
         <div id="balCards"></div>
         <hr class="div">
         <div class="fg"><label>Video Link <span class="req">*</span></label><input type="url" name="video_link" pattern="https?://.+" required><div class="err-msg">Required</div></div>
+        <hr class="div">
+        <div class="fg"><label>Remarks (optional)</label><textarea name="visit_remarks" id="visitRemarks" rows="3" placeholder="Any observations, notes..."></textarea></div>
       </div>
       <div class="btn-row"><button type="button" class="btn btn-out" onclick="S.prev()">← Back</button><button type="button" class="btn btn-dark" id="submitBtn">Submit Visit</button></div></div>
     </div>
@@ -103,18 +92,9 @@ function nextStep(){if(validateStep(S.current))S.next()}
 function validateStep(step){
   const pid=pages[step-1];
   if(!validatePage(pid))return false;
-  if(step===1){
-    const ea=document.querySelectorAll('input[name="extra_area"]:checked');
-    if(!ea.length){toast('Select at least one Extra Area option','err');return false}
-  }
-  if(step===2){
-    if(document.getElementById('selFurn').value!=='Unfurnished'){
-      const fd2=document.querySelectorAll('input[name="furnishing_details"]:checked');
-      if(!fd2.length){toast('Select at least one Furnishing Detail','err');return false}}
-  }
-  if(step===3){
-    if(!document.getElementById('exitCUrl').value){toast('Upload Compass Photo','err');return false}
-  }
+  if(step===1){const ea=document.querySelectorAll('input[name="extra_area"]:checked');if(!ea.length){toast('Select at least one Extra Area option','err');return false}}
+  if(step===2){if(document.getElementById('selFurn').value!=='Unfurnished'){const fd2=document.querySelectorAll('input[name="furnishing_details"]:checked');if(!fd2.length){toast('Select at least one Furnishing Detail','err');return false}}}
+  if(step===3){if(!document.getElementById('exitCUrl').value){toast('Upload Compass Photo','err');return false}}
   return true;
 }
 document.addEventListener('DOMContentLoaded',async()=>{
@@ -142,10 +122,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
       const floor=document.getElementById('selFloor').value;
       const area=document.getElementById('v_area').value;
       const missing=[];
-      if(!unit)missing.push('Unit No');
-      if(!tower)missing.push('Tower No');
-      if(!floor)missing.push('Floor');
-      if(!area)missing.push('Area');
+      if(!unit)missing.push('Unit No');if(!tower)missing.push('Tower No');if(!floor)missing.push('Floor');if(!area)missing.push('Area');
       if(missing.length){toast(`Fill required: ${missing.join(', ')}`,'err');
         if(!unit){const fg=document.getElementById('v_unit').closest('.fg');if(fg)fg.classList.add('invalid')}
         if(!tower){const fg=document.getElementById('v_tower').closest('.fg');if(fg)fg.classList.add('invalid')}
@@ -153,6 +130,20 @@ document.addEventListener('DOMContentLoaded',async()=>{
         if(!area){const fg=document.getElementById('v_area').closest('.fg');if(fg)fg.classList.add('invalid')}
         return}
       document.getElementById('startWrap').style.display='none';document.getElementById('prevCard').style.display='none';document.getElementById('stepperWrap').style.display='block'});
+    // Dead schedule
+    document.getElementById('deadBtn').addEventListener('click',async()=>{
+      const uid=document.getElementById('fUid').value;if(!uid)return;
+      if(!confirm(`Mark ${uid} as DEAD?\n\nThis will permanently remove it from all form dropdowns. This cannot be undone.`))return;
+      const btn=document.getElementById('deadBtn');btn.disabled=true;btn.textContent='Marking...';
+      try{const r=await fetch(`${API}/api/visit/mark-dead/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
+        const d=await r.json();if(!r.ok)throw new Error(d.error);
+        toast('Schedule marked as dead','ok');
+        btn.textContent='✕ Marked Dead';btn.style.background='#b33a2e';btn.style.color='#fff';
+        document.getElementById('startBtn').disabled=true;document.getElementById('startBtn').textContent='Dead Schedule';
+        // Remove from dropdown
+        const opt=document.querySelector(`#selUid option[value="${uid}"]`);if(opt)opt.remove();
+      }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='✕ Dead Schedule'}
+    });
   }catch(e){toast('Config failed','err')}
 });
 document.getElementById('loadBtn').addEventListener('click',loadData);
@@ -172,15 +163,20 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
     sv('bathrooms',d.bathrooms);sv('balconies',d.balconies);
-    if(d.extra_area){try{JSON.parse(d.extra_area).forEach(v=>{const cb=document.querySelector(`input[name="extra_area"][value="${v}"]`);if(cb){cb.checked=true;cb.closest('label').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}})}catch(e){}}    sr('gas_pipeline',d.gas_pipeline);sv('parking',d.parking);sv('furnishing',d.furnishing);
+    if(d.extra_area){try{JSON.parse(d.extra_area).forEach(v=>{const cb=document.querySelector(`input[name="extra_area"][value="${v}"]`);if(cb){cb.checked=true;cb.closest('label').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}})}catch(e){}}
+    sr('gas_pipeline',d.gas_pipeline);sv('parking',d.parking);sv('furnishing',d.furnishing);
     if(d.furnishing==='Unfurnished')document.getElementById('furnWrap').style.display='none';
-    if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb){cb.checked=true;cb.closest('label').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}})}catch(e){}}    sv('total_lifts',d.total_lifts);sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);
+    if(d.furnishing_details){try{JSON.parse(d.furnishing_details).forEach(v=>{const cb=document.querySelector(`input[name="furnishing_details"][value="${v}"]`);if(cb){cb.checked=true;cb.closest('label').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}})}catch(e){}}
+    sv('total_lifts',d.total_lifts);sv('total_floors_tower',d.total_floors_tower);sv('total_flats_floor',d.total_flats_floor);
     sv('exit_facing',d.exit_facing);if(d.exit_compass_image)exitC.setUrl(d.exit_compass_image);sv('video_link',d.video_link);
+    if(d.visit_remarks)document.getElementById('visitRemarks').value=d.visit_remarks;
     if(d.balconies){document.getElementById('selBal').value=d.balconies;buildBalconyCards()}
     if(d.balcony_details){try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details;
       setTimeout(()=>bd.forEach(b=>{const i=b.index;const at=document.querySelector(`.ba[data-i="${i}"]`);if(at)at.value=b.attached_to||'';
         const bf=document.querySelector(`.bf[data-i="${i}"]`);if(bf)bf.value=b.facing||'';
         const bv=document.querySelector(`.bv[data-i="${i}"]`);if(bv)bv.value=b.view||''}),100)}catch(e){}}
+    // Show dead button only before audit started (no visit_submitted_at)
+    document.getElementById('deadBtn').style.display=d.visit_submitted_at?'none':'inline-flex';
     document.getElementById('form').style.display='block';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message}}
@@ -216,7 +212,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   body.society_name=document.getElementById('v_soc').value;body.locality=document.getElementById('v_loc').value;
   body.unit_no=document.getElementById('v_unit').value;body.tower_no=document.getElementById('v_tower').value;
   body.floor=document.getElementById('selFloor').value;body.configuration=document.getElementById('v_cfg').value;
-  body.area_sqft=document.getElementById('v_area').value;
+  body.area_sqft=document.getElementById('v_area').value;body.visit_remarks=document.getElementById('visitRemarks').value;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/visit/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);showThankYou(body.uid)})});
 </script>

@@ -1,7 +1,7 @@
 const express=require('express'),router=express.Router();
 const{generateReceiptHTML}=require('../utils/pdf-template');
 const{sendTokenRequestEmail}=require('../utils/email-sender');
-const{visibilityFilter}=require('../utils/visibility');
+const{uidFilter}=require('../utils/visibility');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -9,7 +9,7 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
   });
   router.get('/uids',async(req,res)=>{
-    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,contact_no FROM properties WHERE visit_submitted_at IS NOT NULL${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,contact_no FROM properties WHERE visit_submitted_at IS NOT NULL AND is_dead IS NOT TRUE${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
   });
   router.post('/submit',async(req,res)=>{
     try{
@@ -25,6 +25,7 @@ module.exports=function(pool){
         grace_period=$14,rent_payable_grace_period=$15,
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
+        unit_no=$24,tower_no=$25,floor=$26,area_sqft=$27,demand_price=$28,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -34,7 +35,8 @@ module.exports=function(pool){
          parseInt(d.initial_period)||null,d.rent_payable_initial_period||null,
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
-         d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid]);
+         d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
+         d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });

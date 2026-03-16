@@ -23,7 +23,11 @@
 .prev-step.done{background:#e8f2ec;color:#2d5a3d}
 .prev-step.pending{background:#f3f4f6;color:#999}
 .prev-step.draft{background:#fef3c7;color:#92400e}
+.prev-step.dead{background:#fdecea;color:#b33a2e}
 .last-dt{font-size:10px;color:var(--tx3);font-family:var(--mono)}
+tr.row-dead{background:#fef2f2!important}
+tr.row-dead td{color:var(--red)!important;opacity:.7}
+.badge.dead-badge{background:#fdecea;color:#b33a2e;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -37,12 +41,11 @@
     <div class="stat"><div class="stat-val" id="sAll">—</div><div class="stat-lbl">Total</div></div>
     <div class="stat"><div class="stat-val" id="sSch">—</div><div class="stat-lbl">Scheduled</div></div>
     <div class="stat"><div class="stat-val" id="sVis">—</div><div class="stat-lbl">Visited</div></div>
-    <div class="stat"><div class="stat-val" id="sTok">—</div><div class="stat-lbl">Token Req Int.</div></div>
+    <div class="stat"><div class="stat-val" id="sTok">—</div><div class="stat-lbl">Token Req</div></div>
     <div class="stat"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal</div></div>
     <div class="stat"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Final</div></div>
     <div class="stat"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
   </div>
-
   <div class="card" style="padding:0;overflow:hidden">
     <div style="padding:8px 10px;border-bottom:1px solid var(--bd)">
       <div class="fbar">
@@ -52,6 +55,7 @@
           <option value="scheduled">Scheduled</option><option value="visited">Visited</option>
           <option value="token">Token Req</option><option value="draft">Draft</option>
           <option value="deal">Deal Done</option><option value="final">Final</option><option value="listed">Listed</option>
+          <option value="dead">Dead</option>
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()">↻</button>
       </div>
@@ -65,60 +69,51 @@
     </div>
     <div style="overflow-x:auto">
       <table class="tbl"><thead><tr>
-        <th data-s="uid">UID</th><th data-s="city">City</th>
-        <th data-s="society_name">Society</th><th>Unit</th><th>Owner</th><th data-s="assigned_by">Assigned By</th><th data-s="token_requested_by">Token By</th>
+        <th data-s="uid">UID</th><th data-s="city">City</th><th data-s="society_name">Society</th><th>Unit</th><th>Owner</th><th data-s="assigned_by">Assigned By</th><th data-s="token_requested_by">Token By</th>
         <th>Sch</th><th>Vis</th><th>Tok</th><th>Deal</th><th>Final</th><th>List</th><th data-s="last_activity">Last Activity</th><th>Actions</th>
       </tr></thead><tbody id="tb"><tr><td colspan="15" style="text-align:center;padding:30px;color:var(--tx3)">Loading...</td></tr></tbody></table>
     </div>
   </div>
 </div>
-
-<!-- UID Detail Modal -->
 <div class="modal-overlay" id="uidModal">
   <div class="modal-box">
     <div class="modal-hdr"><h3 id="modalTitle">Property Details</h3><button class="btn btn-out btn-sm" onclick="closeModal()">✕</button></div>
-    <div class="modal-body" id="modalBody"><div style="text-align:center;padding:30px;color:var(--tx3)">Loading...</div></div>
+    <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
-
 <script>
 const API=window.location.origin;let allData=[],sortCol='',sortDir='desc';
 let dateFilterStart=null,dateFilterEnd=null;
 
 function fmtDt(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
 function fmtDtFull(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}
-function latestTs(p){
-  const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.token_submitted_at,p.token_deal_submitted_at,p.final_submitted_at,p.listing_submitted_at].filter(Boolean);
-  if(!ts.length)return null;
-  return ts.reduce((a,b)=>new Date(a)>new Date(b)?a:b);
-}
+function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.token_submitted_at,p.token_deal_submitted_at,p.final_submitted_at,p.listing_submitted_at].filter(Boolean);if(!ts.length)return null;return ts.reduce((a,b)=>new Date(a)>new Date(b)?a:b)}
 
 async function loadData(){try{const r=await fetch(`${API}/api/properties`);allData=await r.json();
-  // Compute last_activity for sorting
   allData.forEach(p=>{p.last_activity=latestTs(p)||p.created_at||''});
   const cities=[...new Set(allData.map(p=>p.city).filter(Boolean))].sort();const fc=document.getElementById('fCity');const c=fc.value;
   fc.innerHTML='<option value="">All Cities</option>'+cities.map(c=>`<option>${c}</option>`).join('');fc.value=c;
   document.getElementById('sAll').textContent=allData.length;
-  document.getElementById('sSch').textContent=allData.filter(p=>p.schedule_submitted_at).length;
-  document.getElementById('sVis').textContent=allData.filter(p=>p.visit_submitted_at).length;
-  document.getElementById('sTok').textContent=allData.filter(p=>p.token_submitted_at).length;
-  document.getElementById('sDeal').textContent=allData.filter(p=>p.token_deal_submitted_at).length;
-  document.getElementById('sFin').textContent=allData.filter(p=>p.final_submitted_at).length;
-  document.getElementById('sLst').textContent=allData.filter(p=>p.listing_submitted_at).length;
+  document.getElementById('sSch').textContent=allData.filter(p=>p.schedule_submitted_at&&!p.is_dead).length;
+  document.getElementById('sVis').textContent=allData.filter(p=>p.visit_submitted_at&&!p.is_dead).length;
+  document.getElementById('sTok').textContent=allData.filter(p=>p.token_submitted_at&&!p.is_dead).length;
+  document.getElementById('sDeal').textContent=allData.filter(p=>p.token_deal_submitted_at&&!p.is_dead).length;
+  document.getElementById('sFin').textContent=allData.filter(p=>p.final_submitted_at&&!p.is_dead).length;
+  document.getElementById('sLst').textContent=allData.filter(p=>p.listing_submitted_at&&!p.is_dead).length;
   render()}catch(e){console.error(e)}}
 
 function render(){let d=[...allData];const q=document.getElementById('fQ').value.toLowerCase();const city=document.getElementById('fCity').value;const st=document.getElementById('fSt').value;
   document.getElementById('btnClearDate').style.display=(q||city||st||dateFilterStart)?'inline-flex':'none';
   if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q)||(p.assigned_by||'').toLowerCase().includes(q)||(p.token_requested_by||'').toLowerCase().includes(q));
   if(city)d=d.filter(p=>p.city===city);
-  if(st==='scheduled')d=d.filter(p=>p.schedule_submitted_at&&!p.visit_submitted_at);
-  if(st==='visited')d=d.filter(p=>p.visit_submitted_at&&!p.token_submitted_at);
-  if(st==='token')d=d.filter(p=>p.token_submitted_at&&!p.token_is_draft&&!p.token_deal_submitted_at);
-  if(st==='draft')d=d.filter(p=>p.token_is_draft);
-  if(st==='deal')d=d.filter(p=>p.token_deal_submitted_at&&!p.final_submitted_at);
-  if(st==='final')d=d.filter(p=>p.final_submitted_at&&!p.listing_submitted_at);
-  if(st==='listed')d=d.filter(p=>p.listing_submitted_at);
-  // Date filter on last_activity
+  if(st==='scheduled')d=d.filter(p=>p.schedule_submitted_at&&!p.visit_submitted_at&&!p.is_dead);
+  else if(st==='visited')d=d.filter(p=>p.visit_submitted_at&&!p.token_submitted_at&&!p.is_dead);
+  else if(st==='token')d=d.filter(p=>p.token_submitted_at&&!p.token_is_draft&&!p.token_deal_submitted_at&&!p.is_dead);
+  else if(st==='draft')d=d.filter(p=>p.token_is_draft&&!p.is_dead);
+  else if(st==='deal')d=d.filter(p=>p.token_deal_submitted_at&&!p.final_submitted_at&&!p.is_dead);
+  else if(st==='final')d=d.filter(p=>p.final_submitted_at&&!p.listing_submitted_at&&!p.is_dead);
+  else if(st==='listed')d=d.filter(p=>p.listing_submitted_at&&!p.is_dead);
+  else if(st==='dead')d=d.filter(p=>p.is_dead);
   if(dateFilterStart){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();return t>=dateFilterStart.getTime()&&t<dateFilterEnd.getTime()})}
   if(sortCol)d.sort((a,b)=>{let va=(a[sortCol]||'').toString().toLowerCase(),vb=(b[sortCol]||'').toString().toLowerCase();
     if(sortCol==='last_activity'){va=new Date(a[sortCol]||0).getTime();vb=new Date(b[sortCol]||0).getTime();return sortDir==='asc'?va-vb:vb-va}
@@ -129,268 +124,93 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   const unitCol=p=>[p.unit_no,p.tower_no].filter(Boolean).join('-');
   const clickName=(name)=>name?`<a href="#" class="link person-link" data-name="${name}">${name}</a>`:'—';
   tb.innerHTML=d.map(p=>{
+    const dead=p.is_dead;
     let acts=[];
-    if(!p.visit_submitted_at)acts.push(`<a href="/visit?uid=${p.uid}" class="link">Visit</a>`);
-    if(p.visit_submitted_at)acts.push(`<a href="/token-request?uid=${p.uid}" class="link">Token</a>`);
-    if(p.token_submitted_at||p.token_is_draft)acts.push(`<a href="/token-deal?uid=${p.uid}" class="link">Deal</a>`);
-    if(p.token_deal_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">Final</a>`);
-    if(p.visit_submitted_at)acts.push(`<a href="/listing?uid=${p.uid}" class="link">List</a>`);
-    if(p.final_submitted_at)acts.push(`<a href="/api/final/pdf/${p.uid}" class="link" target="_blank">PDF</a>`);
+    if(!dead){
+      if(!p.visit_submitted_at)acts.push(`<a href="/visit?uid=${p.uid}" class="link">Visit</a>`);
+      if(p.visit_submitted_at)acts.push(`<a href="/token-request?uid=${p.uid}" class="link">Token</a>`);
+      if(p.token_submitted_at||p.token_is_draft)acts.push(`<a href="/token-deal?uid=${p.uid}" class="link">Deal</a>`);
+      if(p.token_deal_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">Final</a>`);
+      if(p.final_submitted_at&&!p.listing_submitted_at)acts.push(`<a href="/listing?uid=${p.uid}" class="link">List</a>`);
+      if(p.final_submitted_at)acts.push(`<a href="/api/final/pdf/${p.uid}" class="link" target="_blank">PDF</a>`);
+    }
     const lastDt=p.last_activity?fmtDt(p.last_activity):'—';
-    return`<tr><td style="font-family:var(--mono);font-size:10px;font-weight:600"><a href="#" class="link uid-link" data-uid="${p.uid}">${p.uid}</a></td><td>${p.city||'—'}</td><td>${p.society_name||'—'}</td><td>${unitCol(p)||'—'}</td><td>${p.owner_broker_name||'—'}</td>
+    const deadBadge=dead?'<span class="badge dead-badge">DEAD</span>':'';
+    return`<tr class="${dead?'row-dead':''}"><td style="font-family:var(--mono);font-size:10px;font-weight:600"><a href="#" class="link uid-link" data-uid="${p.uid}">${p.uid}</a>${deadBadge}</td><td>${p.city||'—'}</td><td>${p.society_name||'—'}</td><td>${unitCol(p)||'—'}</td><td>${p.owner_broker_name||'—'}</td>
       <td>${clickName(p.assigned_by)}</td><td>${clickName(p.token_requested_by)}</td>
       <td>${ck(p.schedule_submitted_at)}</td><td>${ck(p.visit_submitted_at)}</td><td>${p.token_is_draft?'<span class="badge draft">Draft</span>':ck(p.token_submitted_at)}</td>
       <td>${ck(p.token_deal_submitted_at)}</td><td>${ck(p.final_submitted_at)}</td><td>${ck(p.listing_submitted_at)}</td>
-      <td class="last-dt">${lastDt}</td><td>${acts.join(' ')}</td></tr>`}).join('');
-  // Clickable person names
+      <td class="last-dt">${lastDt}</td><td>${dead?'<span style="color:var(--red);font-size:10px">Dead</span>':acts.join(' ')}</td></tr>`}).join('');
   tb.querySelectorAll('.person-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.getElementById('fQ').value=a.dataset.name;render()}));
-  // Clickable UIDs
   tb.querySelectorAll('.uid-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();openModal(a.dataset.uid)}));
 }
 
-// ═══ DATE FILTERS ═══
 function setDateFilter(mode){
-  const lbl=document.getElementById('dateLbl');
-  const clearBtn=document.getElementById('btnClearDate');
-  const customInput=document.getElementById('fCustomDate');
+  const lbl=document.getElementById('dateLbl');const clearBtn=document.getElementById('btnClearDate');const customInput=document.getElementById('fCustomDate');
   document.querySelectorAll('.date-btn').forEach(b=>b.style.cssText='');
   if(mode==='clear'){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';customInput.value='';document.getElementById('fQ').value='';document.getElementById('fCity').value='';document.getElementById('fSt').value='';render();return}
   const today=new Date();today.setHours(0,0,0,0);
-  if(mode==='yesterday'){
-    const yday=new Date(today);yday.setDate(yday.getDate()-1);
-    dateFilterStart=yday;dateFilterEnd=today;
-    lbl.textContent='Showing: '+fmtDt(yday);
-    document.getElementById('btnYday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';
-    customInput.value='';
-  }else if(mode==='30days'){
-    const d30=new Date(today);d30.setDate(d30.getDate()-30);
-    dateFilterStart=d30;dateFilterEnd=new Date(today.getTime()+86400000);
-    lbl.textContent='Showing: '+fmtDt(d30)+' → Today';
-    document.getElementById('btn30d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';
-    customInput.value='';
-  }else if(mode==='custom'){
-    const val=customInput.value;if(!val){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';render();return}
-    const picked=new Date(val+'T00:00:00');
-    dateFilterStart=picked;dateFilterEnd=new Date(picked.getTime()+86400000);
-    lbl.textContent='Showing: '+fmtDt(picked);
-  }
-  clearBtn.style.display='inline-flex';
-  render();
+  if(mode==='yesterday'){const yday=new Date(today);yday.setDate(yday.getDate()-1);dateFilterStart=yday;dateFilterEnd=today;lbl.textContent='Showing: '+fmtDt(yday);document.getElementById('btnYday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';customInput.value=''}
+  else if(mode==='30days'){const d30=new Date(today);d30.setDate(d30.getDate()-30);dateFilterStart=d30;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(d30)+' → Today';document.getElementById('btn30d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';customInput.value=''}
+  else if(mode==='custom'){const val=customInput.value;if(!val){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';clearBtn.style.display='none';render();return}const picked=new Date(val+'T00:00:00');dateFilterStart=picked;dateFilterEnd=new Date(picked.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(picked)}
+  clearBtn.style.display='inline-flex';render();
 }
 
-// ═══ UID DETAIL MODAL ═══
 async function openModal(uid){
-  document.getElementById('modalTitle').textContent=uid;
-  document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:var(--tx3)">Loading...</div>';
+  document.getElementById('modalTitle').textContent=uid;document.getElementById('modalBody').innerHTML='<div style="text-align:center;padding:30px;color:var(--tx3)">Loading...</div>';
   document.getElementById('uidModal').classList.add('open');
-  try{
-    const r=await fetch(`${API}/api/admin/property/${uid}`);
-    if(!r.ok)throw new Error('Not found');
-    const p=await r.json();
-    buildModal(p);
-  }catch(e){document.getElementById('modalBody').innerHTML=`<div style="text-align:center;padding:30px;color:var(--red)">${e.message}</div>`}
-}
+  try{const r=await fetch(`${API}/api/admin/property/${uid}`);if(!r.ok)throw new Error('Not found');const p=await r.json();buildModal(p)}
+  catch(e){document.getElementById('modalBody').innerHTML=`<div style="text-align:center;padding:30px;color:var(--red)">${e.message}</div>`}}
 function closeModal(){document.getElementById('uidModal').classList.remove('open')}
 document.getElementById('uidModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 
-function pv(label,val){
-  const isEmpty=val===null||val===undefined||val===''||val==='null';
-  return`<div class="prev-item"><div class="pi-label">${label}</div><div class="pi-value${isEmpty?' empty':''}">${isEmpty?'Not filled':val}</div></div>`;
-}
-function pvLink(label,url){
-  if(!url)return`<div class="prev-item"><div class="pi-label">${label}</div><div class="pi-value empty">Not uploaded</div></div>`;
-  return`<div class="prev-item"><div class="pi-label">${label}</div><div class="pi-value"><a href="${url}" target="_blank">View ↗</a></div></div>`;
-}
-function pvFull(label,val){
-  const isEmpty=val===null||val===undefined||val===''||val==='null';
-  return`<div class="prev-item full"><div class="pi-label">${label}</div><div class="pi-value${isEmpty?' empty':''}">${isEmpty?'Not filled':val}</div></div>`;
-}
+function pv(l,v){const isEmpty=v===null||v===undefined||v===''||v==='null';return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-value${isEmpty?' empty':''}">${isEmpty?'Not filled':v}</div></div>`}
+function pvLink(l,url){if(!url)return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-value empty">Not uploaded</div></div>`;return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-value"><a href="${url}" target="_blank">View ↗</a></div></div>`}
+function pvFull(l,v){const isEmpty=v===null||v===undefined||v===''||v==='null';return`<div class="prev-item full"><div class="pi-label">${l}</div><div class="pi-value${isEmpty?' empty':''}">${isEmpty?'Not filled':v}</div></div>`}
 function parseJ(v){try{return typeof v==='string'?JSON.parse(v):v||[]}catch(e){return[]}}
 function fmtAmt(v){if(!v||isNaN(v))return null;const n=Number(v);if(n>=10000000)return'₹ '+(n/10000000).toFixed(2)+' Cr';if(n>=100000)return'₹ '+(n/100000).toFixed(2)+' L';return'₹ '+n.toLocaleString('en-IN')}
 
 function buildModal(p){
   const mb=document.getElementById('modalBody');
-  // Form status pills
-  const steps=[
-    {name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},
-    {name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},
-    {name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},
-    {name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},
-    {name:'Final/PSD',done:!!p.final_submitted_at,ts:p.final_submitted_at},
-    {name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}
-  ];
-  let statusHtml=steps.map(s=>{
-    const cls=s.draft?'draft':s.done?'done':'pending';
-    const label=s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';
-    return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`;
-  }).join('');
-
-  const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');
-  const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');
-  const docs=parseJ(p.documents_available);
-  const bals=parseJ(p.balcony_details);
-
+  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'Final/PSD',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
+  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'DEAD':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
+  const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);const bals=parseJ(p.balcony_details);
   let html=`<div class="prev-status">${statusHtml}</div>`;
-
-  // Form 1: Schedule
-  html+=`<div class="prev-section"><div class="prev-section-t">Schedule (Form 1)</div><div class="prev-grid">
-    ${pv('UID',p.uid)}${pv('City',p.city)}${pv('Society',p.society_name)}${pv('Locality',p.locality)}
-    ${pv('Owner/Broker',p.owner_broker_name)}${pv('Contact',p.contact_no)}
-    ${pv('Unit No',p.unit_no)}${pv('Tower No',p.tower_no)}
-    ${pv('Floor',p.floor)}${pv('Area (sqft)',p.area_sqft)}
-    ${pv('Configuration',p.configuration)}${pv('Ask Price',p.demand_price?p.demand_price+' Lakhs':null)}
-    ${pv('Source',p.source)}${pv('Lead ID',p.lead_id)}
-    ${pv('Schedule Date',fmtDt(p.schedule_date))}${pv('Schedule Time',p.schedule_time)}
-    ${pv('Assigned By',p.assigned_by)}${pv('Assigned To',p.field_exec)}
-    ${pv('Submitted',fmtDtFull(p.schedule_submitted_at))}
-  </div></div>`;
-
-  // Form 2: Visit
-  html+=`<div class="prev-section"><div class="prev-section-t">Visit / Audit (Form 2)</div><div class="prev-grid">
-    ${pv('Extra Area',extras.length?extras.join(', '):null)}
-    ${pv('Bathrooms',p.bathrooms)}${pv('Balconies',p.balconies)}
-    ${pv('Gas Pipeline',p.gas_pipeline)}${pv('Parking',p.parking)}
-    ${pv('Furnishing',p.furnishing)}${pvFull('Furnishing Items',furnItems.length?furnItems.join(', '):null)}
-    ${pv('Total Lifts',p.total_lifts)}${pv('Total Floors',p.total_floors_tower)}
-    ${pv('Flats/Floor',p.total_flats_floor)}${pv('Exit Facing',p.exit_facing)}
-    ${pvLink('Exit Compass',p.exit_compass_image)}${pvLink('Video Link',p.video_link)}
-    ${pv('Submitted',fmtDtFull(p.visit_submitted_at))}
-  </div>`;
-  if(bals.length){html+=`<div style="margin-top:8px">`;bals.forEach((b,i)=>{
-    html+=`<div style="font-size:11px;font-weight:600;color:var(--ac);margin:${i?'8px':'4px'} 0 4px">Balcony ${b.index||i+1}</div>
-    <div class="prev-grid">${pv('Attached To',b.attached_to)}${pv('Facing',b.facing)}${pv('View',b.view)}
-    ${pvLink('Compass',b.compass_image)}${pvLink('View Photo',b.view_image)}</div>`;
-  });html+=`</div>`}
-  html+=`</div>`;
-
-  // Form 3: Token Request
-  html+=`<div class="prev-section"><div class="prev-section-t">Token Request (Form 3)</div><div class="prev-grid">
-    ${pv('Requested By',p.token_requested_by)}${pv('Token Amount',fmtAmt(p.token_amount_requested))}
-    ${pvLink('Cheque Image',p.cheque_image_url)}
-    ${pv('Bank A/C',p.cheque_account_number)}${pv('Bank Name',p.cheque_bank_name)}${pv('IFSC',p.cheque_ifsc)}
-    ${pv('Registry Status',p.registry_status)}${pv('Occupancy',p.occupancy_status)}
-    ${pv('Key Handover',p.key_handover_date?fmtDt(p.key_handover_date):null)}
-    ${pv('GSP',p.guaranteed_sale_price?p.guaranteed_sale_price+' Lakhs':null)}${pv('PG',fmtAmt(p.performance_guarantee))}
-    ${pv('Initial Period',p.initial_period?p.initial_period+' days':null)}${pv('Rent (Initial)',p.rent_payable_initial_period)}
-    ${pv('Grace Period',p.grace_period?p.grace_period+' days':null)}${pv('Rent (Grace)',p.rent_payable_grace_period)}
-    ${pv('Outstanding Loan',fmtAmt(p.outstanding_loan))}${pv('Loan Bank',p.bank_name_loan)}
-    ${pv('Loan A/C',p.loan_account_number)}${pv('Willing to Pay',p.loan_pay_willingness)}
-    ${pvFull('Documents',docs.length?docs.join(', '):null)}
-    ${pvFull('Remarks',p.token_remarks)}
-    ${pv('Submitted',fmtDtFull(p.token_submitted_at))}${pv('Draft',p.token_is_draft?'Yes':'No')}
-  </div></div>`;
-
-  // Form 4: Deal Terms
-  html+=`<div class="prev-section"><div class="prev-section-t">Deal Terms (Form 4)</div><div class="prev-grid">
-    ${pv('Token Amount',fmtAmt(p.deal_token_amount))}
-    ${pv('Bank Name',p.deal_bank_name)}${pv('Bank A/C',p.deal_bank_account_number)}${pv('IFSC',p.deal_ifsc_code)}
-    ${pv('Transfer Date',p.deal_transfer_date?fmtDt(p.deal_transfer_date):null)}${pv('NEFT Ref',p.deal_neft_reference)}
-    ${pv('Submitted',fmtDtFull(p.token_deal_submitted_at))}
-  </div></div>`;
-
-  // Form 5: Final / PSD
-  html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 5)</div><div class="prev-grid">
-    ${pv('Remaining Amount',fmtAmt(p.remaining_amount))}
-    ${pv('Bank Name',p.bank_name)}${pv('Bank A/C',p.bank_account_number)}${pv('IFSC',p.ifsc_code)}
-    ${pv('Transfer Date',p.token_transfer_date?fmtDt(p.token_transfer_date):null)}${pv('NEFT Ref',p.neft_reference)}
-    ${pv('Submitted',fmtDtFull(p.final_submitted_at))}
-  </div></div>`;
-
-  // Form 6: Listing
-  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 6)</div><div class="prev-grid">
-    ${pv('Society Age',p.society_age_years?p.society_age_years+' yrs':null)}
-    ${pv('Maintenance',fmtAmt(p.maintenance_charges))}${pv('Move-in Charges',fmtAmt(p.society_move_in_charges))}
-    ${pv('Electricity',fmtAmt(p.electricity_charges))}${pv('DG Charges',fmtAmt(p.dg_charges))}
-    ${pv('Water Supply',p.water_supply)}${pv('Circle Rate',fmtAmt(p.circle_rate))}
-    ${pv('Alpha/Beta',p.alpha_beta)}${pv('Beta %',p.beta_pct)}
-    ${pv('Loan Status',p.loan_status)}${pv('Seller Location',p.seller_location)}
-    ${pv('Parking No.',p.parking_number)}
-    ${pv('Submitted',fmtDtFull(p.listing_submitted_at))}
-  </div></div>`;
-
+  html+=`<div class="prev-section"><div class="prev-section-t">Schedule (Form 1)</div><div class="prev-grid">${pv('UID',p.uid)}${pv('City',p.city)}${pv('Society',p.society_name)}${pv('Locality',p.locality)}${pv('Owner/Broker',p.owner_broker_name)}${pv('Contact',p.contact_no)}${pv('Unit',p.unit_no)}${pv('Tower',p.tower_no)}${pv('Floor',p.floor)}${pv('Area',p.area_sqft)}${pv('Config',p.configuration)}${pv('Ask',p.demand_price?p.demand_price+' L':null)}${pv('Source',p.source)}${pv('Schedule Date',fmtDt(p.schedule_date))}${pv('Schedule Time',p.schedule_time)}${pv('Assigned By',p.assigned_by)}${pv('Assigned To',p.field_exec)}${pv('Submitted',fmtDtFull(p.schedule_submitted_at))}</div></div>`;
+  html+=`<div class="prev-section"><div class="prev-section-t">Visit (Form 2)</div><div class="prev-grid">${pv('Extra Area',extras.length?extras.join(', '):null)}${pv('Bathrooms',p.bathrooms)}${pv('Balconies',p.balconies)}${pv('Gas Pipeline',p.gas_pipeline)}${pv('Parking',p.parking)}${pv('Furnishing',p.furnishing)}${pvFull('Furnishing Items',furnItems.length?furnItems.join(', '):null)}${pv('Lifts',p.total_lifts)}${pv('Floors',p.total_floors_tower)}${pv('Flats/Floor',p.total_flats_floor)}${pv('Exit Facing',p.exit_facing)}${pvLink('Compass',p.exit_compass_image)}${pvLink('Video',p.video_link)}${pvFull('Remarks',p.visit_remarks)}${pv('Submitted',fmtDtFull(p.visit_submitted_at))}</div></div>`;
+  html+=`<div class="prev-section"><div class="prev-section-t">Token Request (Form 3)</div><div class="prev-grid">${pv('Requested By',p.token_requested_by)}${pv('Token Amount',fmtAmt(p.token_amount_requested))}${pvLink('Cheque',p.cheque_image_url)}${pv('Bank A/C',p.cheque_account_number)}${pv('Bank Name',p.cheque_bank_name)}${pv('IFSC',p.cheque_ifsc)}${pv('Registry',p.registry_status)}${pv('Occupancy',p.occupancy_status)}${pv('Key Handover',p.key_handover_date?fmtDt(p.key_handover_date):null)}${pv('GSP',p.guaranteed_sale_price?p.guaranteed_sale_price+' L':null)}${pv('PG',fmtAmt(p.performance_guarantee))}${pv('Initial Period',p.initial_period?p.initial_period+' d':null)}${pv('Rent (Init)',p.rent_payable_initial_period)}${pv('Grace Period',p.grace_period?p.grace_period+' d':null)}${pv('Rent (Grace)',p.rent_payable_grace_period)}${pvFull('Documents',docs.length?docs.join(', '):null)}${pvFull('Remarks',p.token_remarks)}${pv('Submitted',fmtDtFull(p.token_submitted_at))}</div></div>`;
+  html+=`<div class="prev-section"><div class="prev-section-t">Deal Terms (Form 4)</div><div class="prev-grid">${pv('Token Amount',fmtAmt(p.deal_token_amount))}${pv('Bank',p.deal_bank_name)}${pv('A/C',p.deal_bank_account_number)}${pv('IFSC',p.deal_ifsc_code)}${pv('Transfer Date',p.deal_transfer_date?fmtDt(p.deal_transfer_date):null)}${pv('NEFT Ref',p.deal_neft_reference)}${pv('Submitted',fmtDtFull(p.token_deal_submitted_at))}</div></div>`;
+  html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 5)</div><div class="prev-grid">${pv('Remaining',fmtAmt(p.remaining_amount))}${pv('Bank',p.bank_name)}${pv('A/C',p.bank_account_number)}${pv('IFSC',p.ifsc_code)}${pv('Transfer Date',p.token_transfer_date?fmtDt(p.token_transfer_date):null)}${pv('NEFT Ref',p.neft_reference)}${pv('Outstanding Loan',fmtAmt(p.outstanding_loan))}${pv('Loan Bank',p.bank_name_loan)}${pv('Loan A/C',p.loan_account_number)}${pv('Willing to Pay',p.loan_pay_willingness)}${pv('Submitted',fmtDtFull(p.final_submitted_at))}</div></div>`;
+  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 6)</div><div class="prev-grid">${pv('Society Age',p.society_age_years?p.society_age_years+' yrs':null)}${pv('Maintenance',fmtAmt(p.maintenance_charges))}${pv('Move-in',fmtAmt(p.society_move_in_charges))}${pv('Electricity',fmtAmt(p.electricity_charges))}${pv('DG',fmtAmt(p.dg_charges))}${pv('Water',p.water_supply)}${pv('Circle Rate',fmtAmt(p.circle_rate))}${pv('Alpha/Beta',p.alpha_beta)}${pv('Beta %',p.beta_pct)}${pv('Loan Status',p.loan_status)}${pv('Seller Loc',p.seller_location)}${pv('Parking No.',p.parking_number)}${pv('Submitted',fmtDtFull(p.listing_submitted_at))}</div></div>`;
   mb.innerHTML=html;
 }
 
 document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.s;if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=c;sortDir='asc'}render()})});
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];
-  loadData();
-});
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];loadData()});
 
-// ═══ USER MANAGEMENT ═══
 const FORM_KEYS=['schedule','visit','token-request','token-deal','final','listing'];
 const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal',final:'PSD',listing:'Listing'};
 let allUsers=[];
-
-async function loadUsers(){
-  try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}
-}
-
-// function renderUsers(){const tb=document.getElementById('utb');
-//   tb.innerHTML=allUsers.map(u=>{
-//     const forms=(u.allowed_forms||[]).includes('*')?'<span class="badge ok">ALL</span>':
-//       (u.allowed_forms||[]).map(f=>`<span class="badge ok">${FORM_LABELS[f]||f}</span>`).join(' ')||'<span class="badge wait">None</span>';
-//     return`<tr><td>${u.email}</td><td>${u.name||'—'}</td><td>${forms}</td>
-//       <td>${u.is_admin?'<span class="badge ok">Admin</span>':'—'}</td>
-//       <td>${u.is_active?'<span class="badge ok">Active</span>':'<span class="badge draft">Disabled</span>'}</td>
-//       <td><button class="btn btn-sm btn-out" onclick="editUser(${u.id})">Edit</button>
-//           <button class="btn btn-sm btn-out" style="color:var(--red)" onclick="toggleUser(${u.id},${!u.is_active})">${u.is_active?'Disable':'Enable'}</button></td></tr>`
-//   }).join('')}
-
+async function loadUsers(){try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}}
 function renderUsers(){const tb=document.getElementById('utb');
-  tb.innerHTML=allUsers.map(u=>{
-    const forms=(u.allowed_forms||[]).includes('*')?'<span class="badge ok">ALL</span>':
-      (u.allowed_forms||[]).map(f=>`<span class="badge ok">${FORM_LABELS[f]||f}</span>`).join(' ')||'<span class="badge wait">None</span>';
-    return`<tr><td>${u.email}</td><td>${u.name||'—'}</td><td>${forms}</td>
-      <td>${u.is_admin?'<span class="badge ok">Admin</span>':'—'}</td>
-      <td>${u.is_active?'<span class="badge ok">Active</span>':'<span class="badge draft">Disabled</span>'}</td></tr>`
-  }).join('')}
-
-async function addUser(){
-  const email=prompt('Enter email address:');if(!email)return;
-  const name=prompt('Enter name (optional):');
-  const allForms=confirm('Give access to ALL forms?');
-  let forms=allForms?['*']:[];
-  if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`Access to ${FORM_LABELS[k]}?`))forms.push(k)})}
-  const admin=confirm('Make this user an admin?');
-  try{const r=await fetch('/auth/users',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email,name,allowed_forms:forms,is_admin:admin})});
-    const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('User added!')}catch(e){alert('Error: '+e.message)}
-}
-
-async function editUser(id){
-  const u=allUsers.find(x=>x.id===id);if(!u)return;
-  const allForms=confirm(`Edit ${u.email}\n\nGive ALL form access?`);
-  let forms=allForms?['*']:[];
-  if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`Access to ${FORM_LABELS[k]}? ${(u.allowed_forms||[]).includes(k)||((u.allowed_forms||[]).includes('*'))?'(currently YES)':'(currently NO)'}`))forms.push(k)})}
-  const admin=confirm('Admin access?');
-  try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({allowed_forms:forms,is_admin:admin})});
-    const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Updated!')}catch(e){alert('Error: '+e.message)}
-}
-
-async function toggleUser(id,active){
-  if(!confirm(`${active?'Enable':'Disable'} this user?`))return;
-  try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({is_active:active})});
-    const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers()}catch(e){alert('Error: '+e.message)}
-}
-
+  tb.innerHTML=allUsers.map(u=>{const forms=(u.allowed_forms||[]).includes('*')?'<span class="badge ok">ALL</span>':(u.allowed_forms||[]).map(f=>`<span class="badge ok">${FORM_LABELS[f]||f}</span>`).join(' ')||'<span class="badge wait">None</span>';
+    return`<tr><td>${u.email}</td><td>${u.name||'—'}</td><td>${forms}</td><td>${u.is_admin?'<span class="badge ok">Admin</span>':'—'}</td><td>${u.is_active?'<span class="badge ok">Active</span>':'<span class="badge draft">Disabled</span>'}</td><td><button class="btn btn-sm btn-out" onclick="editUser(${u.id})">Edit</button> <button class="btn btn-sm btn-out" style="color:var(--red)" onclick="toggleUser(${u.id},${!u.is_active})">${u.is_active?'Disable':'Enable'}</button></td></tr>`}).join('')}
+async function addUser(){const email=prompt('Enter email:');if(!email)return;const name=prompt('Name (optional):');const allForms=confirm('ALL form access?');let forms=allForms?['*']:[];if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`Access to ${FORM_LABELS[k]}?`))forms.push(k)})}const admin=confirm('Admin?');
+  try{const r=await fetch('/auth/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,name,allowed_forms:forms,is_admin:admin})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Added!')}catch(e){alert('Error: '+e.message)}}
+async function editUser(id){const u=allUsers.find(x=>x.id===id);if(!u)return;const allForms=confirm(`Edit ${u.email}\n\nALL form access?`);let forms=allForms?['*']:[];if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`${FORM_LABELS[k]}? ${(u.allowed_forms||[]).includes(k)||(u.allowed_forms||[]).includes('*')?'(YES)':'(NO)'}`))forms.push(k)})}const admin=confirm('Admin?');
+  try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({allowed_forms:forms,is_admin:admin})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Updated!')}catch(e){alert('Error: '+e.message)}}
+async function toggleUser(id,active){if(!confirm(`${active?'Enable':'Disable'} this user?`))return;try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:active})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers()}catch(e){alert('Error: '+e.message)}}
 document.addEventListener('DOMContentLoaded',loadUsers);
 </script>
-
-<!-- User Management Section -->
 <div class="ctn wide" style="margin-top:10px">
   <div class="card" style="padding:0;overflow:hidden">
     <div style="padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
       <div><strong style="font-size:14px">User Management</strong><div style="font-size:10px;color:var(--tx3)">Manage access & permissions</div></div>
-      <!-- <button class="btn btn-dark btn-sm" onclick="addUser()">+ Add User</button> -->
+      <button class="btn btn-dark btn-sm" onclick="addUser()">+ Add User</button>
     </div>
-    <div style="overflow-x:auto">
-      <table class="tbl"><thead><tr><th>Email</th><th>Name</th><th>Form Access</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="utb"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tx3)">Loading...</td></tr></tbody></table>
-    </div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Email</th><th>Name</th><th>Form Access</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody id="utb"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--tx3)">Loading...</td></tr></tbody></table></div>
   </div>
 </div>
 <div class="ctn wide" style="margin-top:14px;text-align:center;padding-bottom:20px">

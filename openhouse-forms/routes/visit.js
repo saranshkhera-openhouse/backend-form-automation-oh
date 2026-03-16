@@ -6,7 +6,7 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
   });
   router.get('/uids',async(req,res)=>{
-    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name FROM properties WHERE schedule_submitted_at IS NOT NULL${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name FROM properties WHERE schedule_submitted_at IS NOT NULL AND is_dead IS NOT TRUE${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
   });
   router.post('/submit',async(req,res)=>{
     try{
@@ -18,18 +18,27 @@ module.exports=function(pool){
         gas_pipeline=$18,parking=$19,furnishing=$20,furnishing_details=$21,
         total_lifts=$22,total_floors_tower=$23,total_flats_floor=$24,
         exit_facing=$25,exit_compass_image=$26,video_link=$27,
-        balcony_details=$28,additional_images=$29,
+        balcony_details=$28,additional_images=$29,visit_remarks=$30,
         visit_submitted_at=NOW(),updated_at=NOW()
-        WHERE uid=$30`,
+        WHERE uid=$31`,
         [d.source,parseFloat(d.demand_price)||null,d.owner_broker_name,d.first_name||null,d.last_name||null,d.contact_no,
          d.city,d.locality,d.society_name,d.unit_no,d.tower_no||null,parseInt(d.floor)??null,d.configuration,parseFloat(d.area_sqft)||null,
          d.extra_area||'[]',parseInt(d.bathrooms)??null,parseInt(d.balconies)??null,
          d.gas_pipeline||null,d.parking,d.furnishing||null,d.furnishing_details||'[]',
          parseInt(d.total_lifts)??null,parseInt(d.total_floors_tower)??null,parseInt(d.total_flats_floor)??null,
          d.exit_facing||null,d.exit_compass_image||null,d.video_link||null,
-         d.balcony_details||'[]',d.additional_images||'[]',d.uid]);
+         d.balcony_details||'[]',d.additional_images||'[]',d.visit_remarks||null,d.uid]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Visit:',e);res.status(500).json({error:e.message})}
+  });
+  // Mark UID as dead
+  router.post('/dead/:uid',async(req,res)=>{
+    try{
+      const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      await pool.query('UPDATE properties SET is_dead=TRUE,updated_at=NOW() WHERE uid=$1',[req.params.uid]);
+      res.json({success:true,uid:req.params.uid});
+    }catch(e){console.error('Dead:',e);res.status(500).json({error:e.message})}
   });
   return router;
 };
