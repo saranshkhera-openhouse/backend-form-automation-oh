@@ -25,7 +25,6 @@ module.exports=function(pool){
         grace_period=$14,rent_payable_grace_period=$15,
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
-        unit_no=$24,tower_no=$25,floor=$26,area_sqft=$27,demand_price=$28,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -35,8 +34,7 @@ module.exports=function(pool){
          parseInt(d.initial_period)||null,d.rent_payable_initial_period||null,
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
-         d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
-         d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null]);
+         d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
@@ -66,11 +64,8 @@ module.exports=function(pool){
       const baseUrl=process.env.APP_URL||'';
       const pdfHtml=generateReceiptHTML(pRows[0],'deal',baseUrl);
       const result=await sendTokenRequestEmail({
-        accessToken:user.google_access_token,
-        refreshToken:user.google_refresh_token,
-        fromEmail:user.email,
-        property:pRows[0],
-        pdfHtml
+        accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
+        fromEmail:user.email,property:pRows[0],pdfHtml
       });
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
