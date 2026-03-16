@@ -50,7 +50,7 @@ function buildMimeEmail({ from, to, cc, subject, bodyHtml, pdfBuffer, pdfFilenam
     '',
     `--${boundary}`,
     'Content-Type: text/html; charset="UTF-8"',
-    'Content-Transfer-Encoding: quoted-printable',
+    'Content-Transfer-Encoding: 7bit',
     '',
     bodyHtml,
     '',
