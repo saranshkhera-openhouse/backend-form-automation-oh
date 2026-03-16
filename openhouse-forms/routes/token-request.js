@@ -1,7 +1,7 @@
 const express=require('express'),router=express.Router();
 const{generateReceiptHTML}=require('../utils/pdf-template');
 const{sendTokenRequestEmail}=require('../utils/email-sender');
-const{uidFilter}=require('../utils/visibility');
+const{visibilityFilter}=require('../utils/visibility');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{

@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
       const uid=document.getElementById('fUid').value;if(!uid)return;
       if(!confirm(`Mark ${uid} as DEAD?\n\nThis will permanently remove it from all form dropdowns. This cannot be undone.`))return;
       const btn=document.getElementById('deadBtn');btn.disabled=true;btn.textContent='Marking...';
-      try{const r=await fetch(`${API}/api/visit/mark-dead/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
+      try{const r=await fetch(`${API}/api/visit/dead/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
         const d=await r.json();if(!r.ok)throw new Error(d.error);
         toast('Schedule marked as dead','ok');
         btn.textContent='✕ Marked Dead';btn.style.background='#b33a2e';btn.style.color='#fff';
