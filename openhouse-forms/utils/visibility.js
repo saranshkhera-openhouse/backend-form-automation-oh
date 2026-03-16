@@ -30,7 +30,7 @@ const EMAIL_TO_NAMES = {
 
 // Manager email → array of team member display names
 const TEAMS = {
-  'apurv.nath@openhouse.in': ['Sushmita Roy'],
+  
   'sahaj.dureja@openhouse.in': ['Shashank Kumar', 'Rupali Prasad']
 };
 
