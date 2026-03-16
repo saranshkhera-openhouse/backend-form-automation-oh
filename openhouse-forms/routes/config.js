@@ -16,7 +16,7 @@ module.exports=function(pool){
     yesNo:["Yes","No"],
     cityMap:{"Gurgaon":"G","Noida":"N","Ghaziabad":"GH"},
     sourceMap:{"CP":"C","Direct":"D"},
-    assignedByList: ["Abhishek Rathore", "Aman Dixit", "Animesh Singh", "Apurba Nath", "Arti Ahirwar","Deepak Mishra", "Kavita Rawat", "Prateek Shrivastava", "Rahul Sheel", "Rupali Prasad", "Sahil Singh", "Shashank Kumar", "Sushmita Roy", "Vaibhav Dwivedi"],
+    assignedByList: ["Abhishek Rathore", "Aman Dixit", "Animesh Singh", "Apurv Nath", "Arti Ahirwar","Deepak Mishra", "Kavita Rawat", "Prateek Shrivastava", "Rahul Sheel", "Rupali Prasad", "Sahil Singh", "Shashank Kumar", "Sushmita Roy", "Vaibhav Dwivedi"],
     assignedToList: ["Aman Dixit" , "Animesh Singh","Deepak Mishra","Nishant Singh", "Praveen Kumar", "Rahul Sheel", "Rahul Singh", "Sahil Singh","Vaibhav Dwivedi",]
   };
   router.get('/',(_,r)=>r.json({options:OPT}));

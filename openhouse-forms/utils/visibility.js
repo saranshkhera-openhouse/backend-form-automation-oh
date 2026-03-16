@@ -9,7 +9,7 @@ const EMAIL_TO_NAMES = {
   'arti.ahirwar@openhouse.in': ['Arti Ahirwar'],
   'abhishek.rathore@openhouse.in': ['Abhishek Rathore'],
   'animesh.singh@openhouse.in': ['Animesh Singh'],
-  'apurv.nath@openhouse.in': ['Apurba Nath'],
+  'apurv.nath@openhouse.in': ['Apurv Nath'],
   'kavita.rawat@openhouse.in': ['Kavita Rawat'],
   'prashant@openhouse.in': ['Prashant'],
   'rahool@openhouse.in': ['Rahool'],
