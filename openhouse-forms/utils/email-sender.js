@@ -102,7 +102,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const society = p.society_name || 'Property';
   const tokenAmt = p.token_amount_requested ? '₹ ' + Number(p.token_amount_requested).toLocaleString('en-IN') : '';
 
-  const subject = `Token Request ${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `Token Request |${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
 
   const senderName = fromEmail.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
