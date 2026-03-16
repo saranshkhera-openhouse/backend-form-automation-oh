@@ -24,7 +24,8 @@ const EMAIL_TO_NAMES = {
   'ankit@openhouse.in': ['Ankit'],
   'vaibhav.dwivedi@openhouse.in': ['Vaibhav Dwivedi'],
   'aman.dixit@openhouse.in': ['Aman Dixit'],
-  'durejasahaj@gmail.com': ['Testing_Sahaj']
+  'durejasahaj@gmail.com': ['Testing_Sahaj'],
+  'deepak.mishra@openhoue.in':['Deepak Mishra']
 };
 
 // Manager email → array of team member display names
