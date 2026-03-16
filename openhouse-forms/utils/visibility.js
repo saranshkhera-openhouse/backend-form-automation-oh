@@ -86,4 +86,8 @@ function visibilityFilter(user, paramOffset = 0) {
   };
 }
 
-module.exports = { EMAIL_TO_NAMES, TEAMS, getVisibleNames, visibilityFilter };
+function uidFilter(user, paramOffset = 0) {
+  const vis = visibilityFilter(user, paramOffset);
+  return { clause: ' AND (is_dead IS NOT TRUE)' + vis.clause, params: vis.params };
+}
+module.exports = { EMAIL_TO_NAMES, TEAMS, getVisibleNames, visibilityFilter, uidFilter };

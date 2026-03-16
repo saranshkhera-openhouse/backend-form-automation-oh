@@ -176,7 +176,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
         const bf=document.querySelector(`.bf[data-i="${i}"]`);if(bf)bf.value=b.facing||'';
         const bv=document.querySelector(`.bv[data-i="${i}"]`);if(bv)bv.value=b.view||''}),100)}catch(e){}}
     // Show dead button only before audit started (no visit_submitted_at)
-    document.getElementById('deadBtn').style.display=d.visit_submitted_at?'none':'inline-flex';
+    document.getElementById('deadBtn').style.display='inline-flex';
     document.getElementById('form').style.display='block';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message}}
