@@ -15,7 +15,7 @@
     <div class="card" id="prevCard">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div class="card-t" style="margin:0">Property Summary</div>
-        <button type="button" class="btn btn-sm" id="deadBtn" style="background:#fdecea;color:#b33a2e;border:1px solid #f0c4c0;font-size:11px;display:none">✕ Cancel Schedule</button>
+        <button type="button" class="btn btn-sm" id="deadBtn" style="background:#fdecea;color:#b33a2e;border:1px solid #f0c4c0;font-size:11px;display:none">✕ Dead Schedule</button>
       </div>
       <div class="r2"><div class="fg"><label>UID</label><input type="text" id="v_uid" class="pre" readonly></div>
         <div class="fg"><label>Source</label><input type="text" id="v_src" class="pre" readonly></div></div>
@@ -174,7 +174,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     if(d.balcony_details){try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details;
       setTimeout(()=>bd.forEach(b=>{const i=b.index;const at=document.querySelector(`.ba[data-i="${i}"]`);if(at)at.value=b.attached_to||'';
         const bf=document.querySelector(`.bf[data-i="${i}"]`);if(bf)bf.value=b.facing||'';
-        const bv=document.querySelector(`.bv[data-i="${i}"]`);if(bv)bv.value=b.view||''}),100)}catch(e){}}
+        const bv=document.querySelector(`.bv[data-i="${i}"]`);if(bv){bv.value=b.view||'';
+          if(b.view==='N/A'){const photoFg=document.getElementById(`bv${i}Btn`)?.closest('.fg');if(photoFg)photoFg.style.display='none'}}}),100)}catch(e){}}
     // Show dead button only before audit started (no visit_submitted_at)
     document.getElementById('deadBtn').style.display='inline-flex';
     document.getElementById('form').style.display='block';
@@ -189,7 +190,11 @@ function buildBalconyCards(){const n=parseInt(document.getElementById('selBal').
       <div class="fg"><label>Compass Photo <span class="req">*</span></label><div class="img-single"><button type="button" class="img-single-btn" id="bc${i}Btn">Upload</button><div class="img-single-preview" id="bc${i}Prev"><img></div><input type="hidden" id="bc${i}Url"></div></div></div>
     <div class="r2"><div class="fg"><label>View <span class="req">*</span></label><select class="bv" data-i="${i}" required>${['<option value="">Select...</option>',...views.map(v=>`<option>${v}</option>`)].join('')}</select><div class="err-msg">Required</div></div>
       <div class="fg"><label>View Photo <span class="req">*</span></label><div class="img-single"><button type="button" class="img-single-btn" id="bv${i}Btn">Upload</button><div class="img-single-preview" id="bv${i}Prev"><img></div><input type="hidden" id="bv${i}Url"></div></div></div></div>`}
-  for(let i=1;i<=n;i++){initSingleUpload(`bc${i}Btn`,`bc${i}Prev`,`bc${i}Url`);initSingleUpload(`bv${i}Btn`,`bv${i}Prev`,`bv${i}Url`)}}
+  for(let i=1;i<=n;i++){initSingleUpload(`bc${i}Btn`,`bc${i}Prev`,`bc${i}Url`);initSingleUpload(`bv${i}Btn`,`bv${i}Prev`,`bv${i}Url`);
+    document.querySelector(`.bv[data-i="${i}"]`).addEventListener('change',function(){
+      const photoFg=document.getElementById(`bv${i}Btn`).closest('.fg');
+      if(this.value==='N/A'){photoFg.style.display='none'}else{photoFg.style.display=''}
+    })}}
 function getBalconyDetails(){const items=[];document.querySelectorAll('.ba').forEach(el=>{const i=el.dataset.i;
   items.push({index:parseInt(i),attached_to:el.value,facing:document.querySelector(`.bf[data-i="${i}"]`)?.value||'',
     compass_image:document.getElementById(`bc${i}Url`)?.value||'',view:document.querySelector(`.bv[data-i="${i}"]`)?.value||'',
@@ -199,7 +204,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const balCount=parseInt(document.getElementById('selBal').value)||0;
   for(let i=1;i<=balCount;i++){
     if(!document.getElementById(`bc${i}Url`).value){toast(`Upload Compass Photo for Balcony ${i}`,'err');return}
-    if(!document.getElementById(`bv${i}Url`).value){toast(`Upload View Photo for Balcony ${i}`,'err');return}}
+    const bvVal=document.querySelector(`.bv[data-i="${i}"]`)?.value||'';
+    if(bvVal!=='N/A'&&!document.getElementById(`bv${i}Url`).value){toast(`Upload View Photo for Balcony ${i}`,'err');return}}
   const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());
   if(body.video_link&&!body.video_link.match(/^https?:\/\/.+/)){toast('Video link must be a valid URL starting with http','err');return}
   body.gas_pipeline=getRadio('gas_pipeline');body.extra_area=getCheckedJSON('extra_area');body.furnishing_details=getCheckedJSON('furnishing_details');
