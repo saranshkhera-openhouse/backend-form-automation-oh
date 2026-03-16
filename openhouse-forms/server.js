@@ -10,6 +10,7 @@ const pool = require('./db/pool');
 const { MIGRATION_SQL, COMPAT_SQL } = require('./db/migrate');
 const { SOCIETIES } = require('./db/seed');
 const { isAuthenticated, hasFormAccess, isAdmin } = require('./middleware/auth');
+const { visibilityFilter } = require('./utils/visibility');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,7 +48,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       if (!email) return done(null, false);
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email)=$1 AND is_active=TRUE', [email]);
       if (!rows.length) return done(null, false);
-      // Update name + store OAuth tokens
       const updates = [];
       const vals = [];
       let idx = 1;
@@ -85,12 +85,12 @@ app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(
 app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
 
-// ── Admin API — list all properties ──
+// ── Admin API — list properties (admins see all, others see their own) ──
 app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
-  try{const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
+  try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
     assigned_by,field_exec,token_requested_by,
     schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,listing_submitted_at,created_at
-    FROM properties ORDER BY created_at DESC`);res.json(rows)}catch(e){console.error('Properties list error:',e.message);res.status(500).json({error:e.message})}
+    FROM properties WHERE TRUE${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){console.error('Properties list error:',e.message);res.status(500).json({error:e.message})}
 });
 
 // ── Admin API — single property (full detail for modal) ──
@@ -127,7 +127,7 @@ async function start() {
     if (parseInt(uc.rows[0].c) === 0) {
       console.log('\n  ⚠  No users found. Add first admin via Render Shell.');
     }
-    app.listen(PORT, () => console.log(`\n  OPENHOUSE v6.1 running on port ${PORT}\n`));
+    app.listen(PORT, () => console.log(`\n  OPENHOUSE v6.2 — Visibility Enabled — Port ${PORT}\n`));
   } catch (e) { console.error('Startup failed:', e.message); process.exit(1); }
 }
 start();

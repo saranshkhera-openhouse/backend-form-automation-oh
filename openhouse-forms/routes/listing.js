@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const{visibilityFilter}=require('../utils/visibility');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -6,9 +7,9 @@ module.exports=function(pool){
       if(!rows[0].final_submitted_at)return res.status(400).json({error:'Form 5 (PG Receipt) must be submitted first'});
       res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
   });
-  router.get('/uids',async(_,res)=>{
-    try{const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,final_submitted_at,listing_submitted_at
-      FROM properties WHERE final_submitted_at IS NOT NULL ORDER BY created_at DESC`);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+  router.get('/uids',async(req,res)=>{
+    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,final_submitted_at,listing_submitted_at
+      FROM properties WHERE final_submitted_at IS NOT NULL${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
   });
   router.post('/submit',async(req,res)=>{
     try{

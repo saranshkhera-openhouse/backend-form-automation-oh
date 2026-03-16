@@ -1,14 +1,15 @@
 const express=require('express'),router=express.Router();
 const{generateReceiptHTML}=require('../utils/pdf-template');
 const{sendTokenRequestEmail}=require('../utils/email-sender');
+const{visibilityFilter}=require('../utils/visibility');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
   });
-  router.get('/uids',async(_,res)=>{
-    try{const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,contact_no FROM properties WHERE visit_submitted_at IS NOT NULL ORDER BY created_at DESC`);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+  router.get('/uids',async(req,res)=>{
+    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,contact_no FROM properties WHERE visit_submitted_at IS NOT NULL${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
   });
   router.post('/submit',async(req,res)=>{
     try{
@@ -37,8 +38,6 @@ module.exports=function(pool){
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
-
-  // PDF preview — always fresh from DB, no cache
   router.get('/pdf/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
@@ -49,8 +48,6 @@ module.exports=function(pool){
       res.send(html);
     }catch(e){console.error('TokenReqPDF:',e);res.status(500).json({error:'PDF failed'})}
   });
-
-  // Send Token Request Email
   router.post('/send-email/:uid',async(req,res)=>{
     try{
       const userId=req.user?.id;
@@ -61,14 +58,11 @@ module.exports=function(pool){
       if(!user.google_access_token&&!user.google_refresh_token){
         return res.status(400).json({error:'Gmail not authorized. Please log out and log in again to grant email permission.'});
       }
-
       const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!pRows.length)return res.status(404).json({error:'Property not found'});
       if(!pRows[0].token_submitted_at)return res.status(400).json({error:'Token request must be submitted first'});
-
       const baseUrl=process.env.APP_URL||'';
       const pdfHtml=generateReceiptHTML(pRows[0],'deal',baseUrl);
-
       const result=await sendTokenRequestEmail({
         accessToken:user.google_access_token,
         refreshToken:user.google_refresh_token,
@@ -76,7 +70,6 @@ module.exports=function(pool){
         property:pRows[0],
         pdfHtml
       });
-
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
     }catch(e){
@@ -87,6 +80,5 @@ module.exports=function(pool){
       res.status(500).json({error:e.message||'Failed to send email'});
     }
   });
-
   return router;
 };

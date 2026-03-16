@@ -1,5 +1,6 @@
 const express=require('express'),router=express.Router();
 const{generateInvoiceHTML}=require('../utils/invoice-template');
+const{visibilityFilter}=require('../utils/visibility');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -7,9 +8,9 @@ module.exports=function(pool){
       const p=rows[0];if(!p.token_deal_submitted_at)return res.status(400).json({error:'Deal Terms must be submitted first'});
       res.json(p)}catch(e){res.status(500).json({error:e.message})}
   });
-  router.get('/uids',async(_,res)=>{
-    try{const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,token_deal_submitted_at,final_submitted_at
-      FROM properties WHERE token_deal_submitted_at IS NOT NULL ORDER BY updated_at DESC`);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+  router.get('/uids',async(req,res)=>{
+    try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,token_deal_submitted_at,final_submitted_at
+      FROM properties WHERE token_deal_submitted_at IS NOT NULL${vis.clause} ORDER BY updated_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
   });
   router.post('/submit',async(req,res)=>{
     try{
