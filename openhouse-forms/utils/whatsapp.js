@@ -43,6 +43,7 @@ async function sendWhatsApp(toName, message) {
     if (!phone) { console.log(`WA: No phone number for "${toName}", skipping`); return false; }
     console.log(`WA: Sending to ${toName} (${phone})...`);
     const res = await client.message.send({ chat_id: phone, message });
+    console.log(`WA: Response:`, JSON.stringify(res));
     console.log(`WA: Sent to ${toName} — OK`);
     return true;
   } catch (e) {
@@ -56,37 +57,30 @@ async function sendWhatsApp(toName, message) {
 function notifyVisitScheduled(property) {
   const p = property;
   const owner = p.owner_broker_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Owner';
-  const date = p.schedule_date ? new Date(p.schedule_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-  const time = p.schedule_time || '—';
-  const msg = `🏠 *New Visit Scheduled*
-
-*${p.uid}* — ${p.society_name || ''}
-📍 ${[p.locality, p.city].filter(Boolean).join(', ')}
-🏢 Tower ${p.tower_no || '—'} | Unit ${p.unit_no || '—'} | Floor ${p.floor || '—'}
-📐 ${p.area_sqft || '—'} sqft | ${p.configuration || '—'}
-
-👤 Owner: ${owner}
-📞 ${p.contact_no || '—'}
-
-📅 ${date} at ${time}
-📝 Assigned by: ${p.assigned_by || '—'}
-
-_Please complete the visit audit after the visit._`;
+  const date = p.schedule_date ? new Date(p.schedule_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+  const time = p.schedule_time || '';
+  const msg = `New Visit Scheduled - ${p.uid}
+Society: ${p.society_name || ''}
+Location: ${[p.locality, p.city].filter(Boolean).join(', ')}
+Tower: ${p.tower_no || '-'} | Unit: ${p.unit_no || '-'} | Floor: ${p.floor || '-'}
+Area: ${p.area_sqft || '-'} sqft | Config: ${p.configuration || '-'}
+Owner: ${owner}
+Phone: ${p.contact_no || '-'}
+Date: ${date} at ${time}
+Assigned by: ${p.assigned_by || '-'}`;
 
   return sendWhatsApp(p.field_exec, msg);
 }
 
 function notifyVisitCompleted(property) {
   const p = property;
-  const msg = `✅ *Visit Completed*
-
-*${p.uid}* — ${p.society_name || ''}
-🏢 Tower ${p.tower_no || '—'} | Unit ${p.unit_no || '—'}
-📐 ${p.area_sqft || '—'} sqft | ${p.configuration || '—'}
-
-Completed by: ${p.field_exec || '—'}
-${p.visit_remarks ? `📝 Remarks: ${p.visit_remarks}` : ''}
-_Ready for Token Request._`;
+  const msg = `Visit Completed - ${p.uid}
+Society: ${p.society_name || ''}
+Tower: ${p.tower_no || '-'} | Unit: ${p.unit_no || '-'}
+Area: ${p.area_sqft || '-'} sqft | Config: ${p.configuration || '-'}
+Completed by: ${p.field_exec || '-'}
+${p.visit_remarks ? 'Remarks: ' + p.visit_remarks : ''}
+Ready for Token Request.`;
 
   return sendWhatsApp(p.assigned_by, msg);
 }
