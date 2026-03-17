@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const{notifyVisitScheduled}=require('../utils/whatsapp');
 
 const CITY_MAP={'Gurgaon':'G','Noida':'N','Ghaziabad':'GH'};
 const SRC_MAP={'CP':'C','Direct':'D'};
@@ -50,6 +51,8 @@ module.exports=function(pool){
          d.city||null,d.society_name||null,d.locality||null,d.unit_no||null,d.tower_no||null,
          parseInt(d.floor)||null,d.configuration||null,d.assigned_by||null,d.field_exec||null]);
       res.json({success:true,uid});
+      // Fire-and-forget WhatsApp notification to assigned_to
+      notifyVisitScheduled({uid,...d,owner_broker_name:ownerName}).catch(e=>console.error('WA schedule notify error:',e));
     }catch(e){console.error('Schedule:',e);res.status(500).json({error:e.message})}
   });
 

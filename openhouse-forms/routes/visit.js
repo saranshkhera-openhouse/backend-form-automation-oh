@@ -1,5 +1,6 @@
 const express=require('express'),router=express.Router();
 const{visibilityFilter}=require('../utils/visibility');
+const{notifyVisitCompleted}=require('../utils/whatsapp');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -29,6 +30,10 @@ module.exports=function(pool){
          d.exit_facing||null,d.exit_compass_image||null,d.video_link||null,
          d.balcony_details||'[]',d.additional_images||'[]',d.visit_remarks||null,d.uid]);
       res.json({success:true,uid:d.uid});
+      // Fire-and-forget WhatsApp notification to assigned_by
+      pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
+        if(rows[0])notifyVisitCompleted(rows[0]).catch(e=>console.error('WA visit notify error:',e));
+      }).catch(e=>console.error('WA visit fetch error:',e));
     }catch(e){console.error('Visit:',e);res.status(500).json({error:e.message})}
   });
   // Mark UID as dead
