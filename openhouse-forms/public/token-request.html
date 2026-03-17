@@ -107,6 +107,36 @@
   </form>
 </div>
 
+<div class="confirm-overlay" id="ownerCheckModal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:998;display:none;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--sf);border-radius:12px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)">
+      <div style="font-size:14px;font-weight:700">Confirm Owner Name</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:2px">Is this the property owner or a channel partner (CP)?</div>
+    </div>
+    <div style="padding:14px 18px">
+      <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:12px;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#92400e;font-weight:600;margin-bottom:4px">Current Name</div>
+        <div style="font-size:16px;font-weight:700;color:var(--tx)" id="ownerCheckName"></div>
+      </div>
+      <div id="ownerEditWrap" style="display:none;margin-bottom:12px">
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;font-weight:600">Enter actual owner name:</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="ownerFirst" placeholder="First Name" style="flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r)">
+          <input type="text" id="ownerLast" placeholder="Last Name" style="flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r)">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px" id="ownerBtnRow">
+        <button type="button" class="btn btn-out" id="ownerCpBtn" style="flex:1">This is CP</button>
+        <button type="button" class="btn btn-dark" id="ownerOkBtn" style="flex:1">This is Owner ✓</button>
+      </div>
+      <div id="ownerSaveRow" style="display:none;gap:8px">
+        <button type="button" class="btn btn-out" id="ownerBackBtn" style="flex:1">← Back</button>
+        <button type="button" class="btn btn-dark" id="ownerSaveBtn" style="flex:1">Save & Send Email</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
   <div class="pdf-hdr"><h3>Token Request Preview</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
   <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
@@ -250,8 +280,52 @@ document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)r
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
 
-document.getElementById('emailBtn').addEventListener('click',async()=>{
+document.getElementById('emailBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Load a property first','warn');return}
+  const ownerName=document.getElementById('d_owner').value||loadedData?.owner_broker_name||'';
+  document.getElementById('ownerCheckName').textContent=ownerName;
+  document.getElementById('ownerEditWrap').style.display='none';
+  document.getElementById('ownerBtnRow').style.display='flex';
+  document.getElementById('ownerSaveRow').style.display='none';
+  document.getElementById('ownerCheckModal').style.display='flex';
+});
+document.getElementById('ownerOkBtn').addEventListener('click',()=>{
+  document.getElementById('ownerCheckModal').style.display='none';
+  sendEmail();
+});
+document.getElementById('ownerCpBtn').addEventListener('click',()=>{
+  document.getElementById('ownerEditWrap').style.display='block';
+  document.getElementById('ownerBtnRow').style.display='none';
+  document.getElementById('ownerSaveRow').style.display='flex';
+  document.getElementById('ownerFirst').value='';
+  document.getElementById('ownerLast').value='';
+  document.getElementById('ownerFirst').focus();
+});
+document.getElementById('ownerBackBtn').addEventListener('click',()=>{
+  document.getElementById('ownerEditWrap').style.display='none';
+  document.getElementById('ownerBtnRow').style.display='flex';
+  document.getElementById('ownerSaveRow').style.display='none';
+});
+document.getElementById('ownerSaveBtn').addEventListener('click',async()=>{
+  const first=document.getElementById('ownerFirst').value.trim();
+  const last=document.getElementById('ownerLast').value.trim();
+  if(!first){toast('Enter at least first name','err');return}
+  const fullName=[first,last].filter(Boolean).join(' ');
+  const btn=document.getElementById('ownerSaveBtn');btn.disabled=true;btn.textContent='Saving...';
+  try{
+    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    document.getElementById('d_owner').value=fullName;
+    if(loadedData)loadedData.owner_broker_name=fullName;
+    toast('Owner name updated','ok');
+    document.getElementById('ownerCheckModal').style.display='none';
+    btn.disabled=false;btn.textContent='Save & Send Email';
+    sendEmail();
+  }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='Save & Send Email'}
+});
+document.getElementById('ownerCheckModal').addEventListener('click',e=>{if(e.target===e.currentTarget){e.currentTarget.style.display='none'}});
+
+async function sendEmail(){
   if(!confirm('Send token request email?'))return;
   const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
@@ -262,6 +336,6 @@ document.getElementById('emailBtn').addEventListener('click',async()=>{
     setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
   }catch(e){toast(e.message||'Failed to send email','err');btn.innerHTML=orig;btn.disabled=false;
     if(e.message&&e.message.includes('log out')){toast('Please logout and login again to authorize Gmail','warn',8000)}}
-});
+}
 </script>
 </body></html>
