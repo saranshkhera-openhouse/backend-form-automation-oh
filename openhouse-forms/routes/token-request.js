@@ -38,6 +38,17 @@ module.exports=function(pool){
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
+  // Update owner name (CP → Owner correction)
+  router.post('/update-owner/:uid',async(req,res)=>{
+    try{
+      const{first_name,last_name,owner_broker_name}=req.body;
+      if(!owner_broker_name)return res.status(400).json({error:'Name required'});
+      await pool.query('UPDATE properties SET first_name=$1,last_name=$2,owner_broker_name=$3,updated_at=NOW() WHERE uid=$4',
+        [first_name||null,last_name||null,owner_broker_name,req.params.uid]);
+      res.json({success:true});
+    }catch(e){console.error('UpdateOwner:',e);res.status(500).json({error:e.message})}
+  });
+
   router.get('/pdf/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
