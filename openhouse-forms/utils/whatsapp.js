@@ -78,8 +78,6 @@ function notifyVisitScheduled(property) {
 
   const date = p.schedule_date ? new Date(p.schedule_date + 'T00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
   const time = p.schedule_time ? ((h, m) => { const hr = parseInt(h); return `${hr === 0 ? 12 : hr > 12 ? hr - 12 : hr}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })(...p.schedule_time.split(':')) : '-';
-  const location = [p.locality, p.city].filter(Boolean).join(', ') || '-';
-  const owner = p.owner_broker_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || '-';
 
   const bodyValues = [
     p.uid || '-',                    // {{1}} UID
@@ -88,11 +86,8 @@ function notifyVisitScheduled(property) {
     p.field_exec || '-',             // {{4}} Assigned To
     p.assigned_by || '-',            // {{5}} Assigned By
     p.society_name || '-',           // {{6}} Society
-    location,                        // {{7}} Locality, City
-    p.tower_no || '-',               // {{8}} Tower
-    p.unit_no || '-',                // {{9}} Unit
-    owner,                           // {{10}} Owner/CP
-    p.contact_no || '-',             // {{11}} Phone
+    p.tower_no || '-',               // {{7}} Tower
+    p.unit_no || '-',                // {{8}} Unit
   ];
 
   console.log(`WA: visit_scheduled → ${p.field_exec} (${phone}) | UID: ${p.uid}`);
@@ -105,16 +100,13 @@ function notifyVisitCompleted(property) {
   const phone = getPhone(p.assigned_by);
   if (!phone) { console.log(`WA: No phone for assigned_by "${p.assigned_by}"`); return Promise.resolve(false); }
 
-  const location = [p.locality, p.city].filter(Boolean).join(', ') || '-';
-
   const bodyValues = [
     p.uid || '-',                    // {{1}} UID
     p.society_name || '-',           // {{2}} Society
-    location,                        // {{3}} Locality, City
-    p.tower_no || '-',               // {{4}} Tower
-    p.unit_no || '-',                // {{5}} Unit
-    p.field_exec || '-',             // {{6}} Completed By
-    p.assigned_by || '-',            // {{7}} Assigned By
+    p.tower_no || '-',               // {{3}} Tower
+    p.unit_no || '-',                // {{4}} Unit
+    p.field_exec || '-',             // {{5}} Completed By
+    p.assigned_by || '-',            // {{6}} Assigned By
   ];
 
   console.log(`WA: visit_completed_1v → ${p.assigned_by} (${phone}) | UID: ${p.uid}`);
