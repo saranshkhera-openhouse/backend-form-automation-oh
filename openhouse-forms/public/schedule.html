@@ -1,10 +1,31 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Visit Schedule</title><link rel="stylesheet" href="/css/styles.css"></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Visit Schedule</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:center;justify-content:center;padding:16px}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:var(--sf);border-radius:12px;width:100%;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden;max-height:85vh;display:flex;flex-direction:column}
+.confirm-hdr{padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.confirm-hdr h3{font-size:14px;font-weight:700;margin:0}
+.confirm-hdr p{font-size:11px;color:var(--tx3);margin:2px 0 0}
+.confirm-body{padding:12px 18px;overflow-y:auto;flex:1}
+.confirm-ftr{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.ep-table{width:100%;border-collapse:collapse;font-size:11px}
+.ep-table th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);padding:6px 8px;border-bottom:2px solid var(--bd);font-weight:600}
+.ep-table td{padding:6px 8px;border-bottom:1px solid var(--bd)}
+.ep-table tr:last-child td{border-bottom:none}
+.ep-empty{text-align:center;padding:20px;color:var(--grn);font-size:12px;font-weight:500}
+.ep-new{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:12px}
+.ep-new-t{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#92400e;font-weight:600;margin-bottom:6px}
+.ep-new-row{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;font-weight:500;color:var(--tx)}
+.ep-new-row span{display:flex;flex-direction:column}
+.ep-new-row .epl{font-size:8px;text-transform:uppercase;color:#92400e;font-weight:600;letter-spacing:.05em}
+</style>
+</head>
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
   <div class="hdr-right"><div class="form-name">Visit Schedule Form</div></div>
-  <div class="hdr-right"><a href="/" class="btn btn-out btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)">Home</a></div>
+  <div class="hdr-right"></div>
 </header>
 <div class="ctn">
   <form id="form">
@@ -43,18 +64,9 @@
         <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Society first</option></select><div class="err-msg">Required</div></div>
       </div>
       <div class="r3">
-        <div class="fg">
-            <label>Unit No.</label>
-            <input type="text" name="unit_no">
-        </div>
-        <div class="fg">
-            <label>Tower No.</label>
-            <input type="text" name="tower_no">
-        </div>
-        <div class="fg">
-            <label>Floor</label>
-            <select name="floor" id="selFloor"></select>
-        </div>
+        <div class="fg"><label>Unit No.</label><input type="text" name="unit_no"></div>
+        <div class="fg"><label>Tower No.</label><input type="text" name="tower_no"></div>
+        <div class="fg"><label>Floor</label><select name="floor" id="selFloor"></select></div>
       </div>
       <div class="r3">
         <div class="fg" id="areaFg">
@@ -79,9 +91,25 @@
     <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Create Visit Schedule</button>
   </form>
 </div>
+
+<!-- Confirmation popup -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-hdr"><h3>Confirm Schedule</h3><p id="confirmSociety"></p></div>
+    <div class="confirm-body">
+      <div class="ep-new" id="confirmNew"></div>
+      <div id="confirmExisting"></div>
+    </div>
+    <div class="confirm-ftr">
+      <button type="button" class="btn btn-out btn-sm" onclick="closeConfirm()">← Go Back</button>
+      <button type="button" class="btn btn-dark btn-sm" id="confirmSubmitBtn">Confirm & Submit</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/shared.js"></script>
 <script>
-let opts;
+let opts,pendingBody=null;
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
     const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;
@@ -104,8 +132,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
       const m=document.getElementById('areaManual');
       if(this.value==='other'){m.style.display='block';m.required=true;m.focus()}else{m.style.display='none';m.required=false;m.value=''}
     });
+    // Confirm submit
+    document.getElementById('confirmSubmitBtn').addEventListener('click',doSubmit);
+    document.getElementById('confirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm()});
   }catch(e){toast('Config failed','err')}
 });
+
 async function loadAreas(soc){
   const sel=document.getElementById('selArea'),man=document.getElementById('areaManual');
   man.style.display='none';man.required=false;man.value='';sel.style.display='';
@@ -116,19 +148,65 @@ async function loadAreas(soc){
     a.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)});
     const ot=document.createElement('option');ot.value='other';ot.textContent='Other (type manually)';sel.appendChild(ot);
   }catch(e){sel.innerHTML='<option value="">Failed</option>'}}
+
 async function genUID(){const city=document.getElementById('selCity').value;const src=getRadio('source');const box=document.getElementById('uidBox'),h=document.getElementById('fUid');
   if(!city||!src){box.textContent='Select city & source above';box.classList.add('empty');h.value='';return}
   try{const r=await fetch(`${API}/api/schedule/next-uid?city=${encodeURIComponent(city)}&source=${encodeURIComponent(src)}`);const d=await r.json();if(!r.ok)throw new Error(d.error);box.textContent=d.uid;box.classList.remove('empty');h.value=d.uid}catch(e){box.textContent='Error';box.classList.add('empty');h.value=''}}
-document.getElementById('submitBtn').addEventListener('click',()=>{const uid=document.getElementById('fUid').value;
+
+// Step 1: validate → show confirmation popup
+document.getElementById('submitBtn').addEventListener('click',async()=>{
+  const uid=document.getElementById('fUid').value;
   if(!uid){toast('Select city & source to generate UID','err');return}
   const{valid,missing}=validateForm('form');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const ph=document.getElementById('phone').value.replace(/\D/g,'');
   if(ph.length!==10){toast('Contact must be 10 digits','err');return}
   if(ph[0]==='0'){toast('Contact cannot start with 0','err');return}
-  const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());body.source=getRadio('source');body.uid=uid;
+  const fd=new FormData(document.getElementById('form'));const body=Object.fromEntries(fd.entries());
+  body.source=getRadio('source');body.uid=uid;
   if(body.area_sqft==='other'){body.area_sqft=body.area_manual}delete body.area_manual;
   if(!body.area_sqft||parseFloat(body.area_sqft)<=0){toast('Enter valid area','err');return}
-  submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/schedule/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  pendingBody=body;
+  // Fetch existing properties in this society
+  const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Checking...';
+  try{
+    const r=await fetch(`${API}/api/schedule/society-check?society=${encodeURIComponent(body.society_name)}`);
+    const existing=await r.json();
+    showConfirm(body,existing);
+  }catch(e){toast('Check failed, submitting directly...','warn');doSubmit()}
+  finally{btn.disabled=false;btn.textContent='Create Visit Schedule'}
+});
+
+function showConfirm(body,existing){
+  document.getElementById('confirmSociety').textContent=`${body.society_name} — ${existing.length} existing propert${existing.length===1?'y':'ies'}`;
+  // New property card
+  document.getElementById('confirmNew').innerHTML=`<div class="ep-new-t">New Schedule</div>
+    <div class="ep-new-row">
+      <span><span class="epl">UID</span>${body.uid}</span>
+      <span><span class="epl">Tower</span>${body.tower_no||'—'}</span>
+      <span><span class="epl">Unit</span>${body.unit_no||'—'}</span>
+      <span><span class="epl">Area</span>${body.area_sqft} sqft</span>
+      <span><span class="epl">Config</span>${body.configuration||'—'}</span>
+    </div>`;
+  // Existing properties table
+  if(existing.length){
+    const rows=existing.map(p=>`<tr><td style="font-family:var(--mono);font-weight:600">${p.uid}</td><td>${p.tower_no||'—'}</td><td>${p.unit_no||'—'}</td><td>${p.area_sqft||'—'}</td><td>${p.configuration||'—'}</td><td>${p.floor||'—'}</td></tr>`).join('');
+    document.getElementById('confirmExisting').innerHTML=`<div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px">Existing Properties in ${body.society_name}</div>
+      <table class="ep-table"><thead><tr><th>UID</th><th>Tower</th><th>Unit</th><th>Area</th><th>Config</th><th>Floor</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }else{
+    document.getElementById('confirmExisting').innerHTML=`<div class="ep-empty">✓ No existing properties in this society</div>`;
+  }
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function closeConfirm(){document.getElementById('confirmOverlay').classList.remove('open');pendingBody=null}
+
+// Step 2: actual submit
+function doSubmit(){
+  if(!pendingBody)return;
+  const body=pendingBody;
+  closeConfirm();
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/schedule/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
     const dt=body.schedule_date||'';const tm=body.schedule_time||'';
     const tw=body.tower_no||'';const un=body.unit_no||'';const soc=body.society_name||'';
@@ -157,6 +235,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{const uid=doc
         </div>
       </div>
       <div class="ty-actions"><a href="/schedule" class="ty-back">Schedule New Visit</a><a href="/" class="ty-back">Home</a></div>`;
-    ov.classList.add('show')})});
+    ov.classList.add('show')});
+}
 </script>
 </body></html>

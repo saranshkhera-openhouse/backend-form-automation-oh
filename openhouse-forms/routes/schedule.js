@@ -13,11 +13,20 @@ module.exports=function(pool){
       const ci=CITY_MAP[city];const si=SRC_MAP[source];
       if(!ci||!si)return res.status(400).json({error:'Invalid city or source'});
       const prefix=`OH${ci}${si}`;
-      // Count existing UIDs with this prefix
       const{rows}=await pool.query(`SELECT MAX(CAST(REPLACE(uid,$1,'') AS INTEGER)) as max_num FROM properties WHERE uid LIKE $2`,[prefix, prefix+'%']);
       const next=(rows[0].max_num||1000)+1;
       const uid=prefix+String(next);
       res.json({uid,prefix,next});
+    }catch(e){res.status(500).json({error:e.message})}
+  });
+
+  // Check existing properties in a society
+  router.get('/society-check',async(req,res)=>{
+    try{
+      const society=req.query.society;
+      if(!society)return res.json([]);
+      const{rows}=await pool.query('SELECT uid,unit_no,tower_no,floor,area_sqft,configuration FROM properties WHERE society_name=$1 AND is_dead IS NOT TRUE ORDER BY created_at DESC',[society]);
+      res.json(rows);
     }catch(e){res.status(500).json({error:e.message})}
   });
 
