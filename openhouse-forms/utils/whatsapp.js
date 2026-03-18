@@ -13,6 +13,8 @@ const NAME_TO_PHONE = {
   'Shashank Kumar':     '8003297088',
   'Rupali Prasad':      '8003297088',
   'Sushmita Roy':       '8595594789',
+  'Sahaj Dureja':       '8003297088',
+  'Test Sahaj':         '8003297088',
 };
 
 function getPhone(name) {

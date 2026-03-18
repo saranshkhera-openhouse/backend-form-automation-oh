@@ -192,7 +192,7 @@ function showConfirm(body,existing){
   if(existing.length){
     const rows=existing.map(p=>`<tr><td style="font-family:var(--mono);font-weight:600">${p.uid}</td><td>${p.tower_no||'—'}</td><td>${p.unit_no||'—'}</td><td>${p.area_sqft||'—'}</td><td>${p.configuration||'—'}</td><td>${p.floor||'—'}</td></tr>`).join('');
     document.getElementById('confirmExisting').innerHTML=`<div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px">Existing Properties in ${body.society_name}</div>
-      <table class="ep-table"><thead><tr><th>UID</th><th>Tower</th><th>Unit</th><th>Area</th><th>Config</th><th>Floor</th></tr></thead><tbody>${rows}</tbody></table>`;
+      <table class="ep-table"><thead><tr><th>UID</th><th>Tower</th><th>Unit</th><th>Area</th><th>configuration</th><th>Floor</th></tr></thead><tbody>${rows}</tbody></table>`;
   }else{
     document.getElementById('confirmExisting').innerHTML=`<div class="ep-empty">✓ No existing properties in this society</div>`;
   }
