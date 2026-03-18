@@ -115,4 +115,46 @@ function notifyVisitCompleted(property) {
   return sendInterakt(phone, 'visit_completed_1v', bodyValues);
 }
 
-module.exports = { sendInterakt, notifyVisitScheduled, notifyVisitCompleted, NAME_TO_PHONE };
+// ── Notification: Visit Reassigned (notify NEW field_exec) ──
+function notifyVisitReassigned(property, newExec) {
+  const p = property;
+  const phone = getPhone(newExec);
+  if (!phone) { console.log(`WA: No phone for new exec "${newExec}"`); return Promise.resolve(false); }
+
+  const date = p.schedule_date ? new Date(p.schedule_date + 'T00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+  const time = p.schedule_time ? ((h, m) => { const hr = parseInt(h); return `${hr === 0 ? 12 : hr > 12 ? hr - 12 : hr}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })(...p.schedule_time.split(':')) : '-';
+
+  const bodyValues = [
+    p.uid || '-',                    // {{1}} UID
+    date,                            // {{2}} Date
+    time,                            // {{3}} Time
+    newExec || '-',                  // {{4}} New Assigned To
+    p.assigned_by || '-',            // {{5}} Assigned By
+    p.society_name || '-',           // {{6}} Society
+    p.tower_no || '-',               // {{7}} Tower
+    p.unit_no || '-',                // {{8}} Unit
+  ];
+
+  console.log(`WA: visit_reassigned → ${newExec} (${phone}) | UID: ${p.uid}`);
+  return sendInterakt(phone, 'visit_reassigned', bodyValues);
+}
+
+// ── Notification: Visit Cancelled (notify assigned_by) ──
+function notifyVisitCancelled(property, cancelledBy) {
+  const p = property;
+  const phone = getPhone(p.assigned_by);
+  if (!phone) { console.log(`WA: No phone for assigned_by "${p.assigned_by}"`); return Promise.resolve(false); }
+
+  const bodyValues = [
+    p.uid || '-',                    // {{1}} UID
+    p.society_name || '-',           // {{2}} Society
+    p.tower_no || '-',               // {{3}} Tower
+    p.unit_no || '-',                // {{4}} Unit
+    cancelledBy || '-',              // {{5}} Cancelled by
+  ];
+
+  console.log(`WA: visit_cancelled → ${p.assigned_by} (${phone}) | UID: ${p.uid}`);
+  return sendInterakt(phone, 'visit_cancelled', bodyValues);
+}
+
+module.exports = { sendInterakt, notifyVisitScheduled, notifyVisitCompleted, notifyVisitReassigned, notifyVisitCancelled, NAME_TO_PHONE };
