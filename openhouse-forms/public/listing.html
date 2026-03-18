@@ -122,6 +122,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('l_poss').value=d.possession_status||d.occupancy_status||'';
     document.getElementById('l_club').value=d.club_facility||'';
     document.getElementById('l_park').value=d.parking||'';
+    if(!d.parking||d.parking==='N/A'||d.parking==='No Parking'){document.getElementById('parkNum').closest('.fg').style.display='none';document.getElementById('parkNum').required=false}else{document.getElementById('parkNum').closest('.fg').style.display='';document.getElementById('parkNum').required=true}
     document.getElementById('l_furn').value=d.furnishing||'';
     // Building (readonly)
     document.getElementById('l_tfloors').value=d.total_floors_tower||'';
