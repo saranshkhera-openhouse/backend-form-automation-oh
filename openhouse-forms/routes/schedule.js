@@ -65,13 +65,14 @@ module.exports=function(pool){
           `SELECT schedule_time FROM properties WHERE field_exec=$1 AND schedule_date=$2 AND is_dead IS NOT TRUE`,
           [d.field_exec,d.schedule_date]);
         const windows=busy.map(r=>{const[h,m]=r.schedule_time.split(':').map(Number);const s=h*60+m;return{start:s,end:s+60}});
-        const hit=windows.find(w=>selMin>=w.start&&selMin<w.end);
+        const newEnd=selMin+60;
+        const hit=windows.find(w=>selMin<w.end&&newEnd>w.start);
         if(hit){
-          // Find next free minute after all overlapping windows
+          // Find next free minute where a 60-min visit fits without overlap
           let next=hit.end;
-          let safe=false;while(!safe&&next<20*60){safe=true;for(const w of windows){if(next>=w.start&&next<w.end){next=w.end;safe=false;break}}}
+          let safe=false;while(!safe&&next<=20*60-60){safe=true;for(const w of windows){if(next<w.end&&(next+60)>w.start){next=w.end;safe=false;break}}}
           const nh=Math.floor(next/60),nm=next%60;
-          const nextStr=next<20*60?`${nh>12?nh-12:nh===0?12:nh}:${String(nm).padStart(2,'0')} ${nh>=12?'PM':'AM'}`:'No slots today';
+          const nextStr=next<=20*60-60?`${nh>12?nh-12:nh===0?12:nh}:${String(nm).padStart(2,'0')} ${nh>=12?'PM':'AM'}`:'No slots today';
           return res.status(400).json({error:`This slot is busy for ${d.field_exec}. Next free: ${nextStr}`});
         }
       }
