@@ -19,6 +19,14 @@
 .ep-new-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 16px;font-size:13px;font-weight:500;color:var(--tx)}
 .ep-new-row span{display:flex;flex-direction:column;gap:3px}
 .ep-new-row .epl{font-size:8px;text-transform:uppercase;color:#92400e;font-weight:600;letter-spacing:.05em}
+.busy-timeline{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.busy-timeline .bt-title{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);font-weight:600}
+.busy-slot{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;font-size:11px}
+.busy-slot .bs-time{font-weight:700;color:#b33a2e;font-family:var(--mono);white-space:nowrap}
+.busy-slot .bs-dash{color:#e5a3a0}
+.busy-slot .bs-info{color:#92400e;font-size:10px}
+.free-hint{font-size:10px;color:var(--grn);font-weight:500;margin-top:4px}
+.slot-conflict{font-size:11px;color:#b33a2e;font-weight:500;margin-top:4px;display:none}
 </style>
 </head>
 <body>
@@ -44,7 +52,15 @@
       <div class="fg"><label>Lead ID (OPTIONAL)</label><input type="text" name="lead_id"></div>
       <div class="r2">
         <div class="fg"><label>Date <span class="req">*</span></label><input type="date" name="schedule_date" id="schedDate" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Time <span class="req">*</span></label><input type="time" name="schedule_time" required><div class="err-msg">Required</div></div>
+        <div class="fg" id="timeFg"><label>Time <span class="req">*</span></label><input type="time" name="schedule_time" id="schedTime" required><div class="err-msg">Required</div>
+          <div class="slot-conflict" id="slotConflict"></div></div>
+      </div>
+      <div id="slotSection" style="display:none">
+        <div class="busy-timeline">
+          <div class="bt-title">Schedule for <strong id="slotExecName"></strong> on <strong id="slotDateLabel"></strong></div>
+          <div id="busyList"></div>
+          <div class="free-hint" id="freeHint"></div>
+        </div>
       </div>
     </div>
 
@@ -109,7 +125,104 @@
 
 <script src="/js/shared.js"></script>
 <script>
-let opts,pendingBody=null;
+let opts,pendingBody=null,busyWindows=[];
+const SLOT_START=8,SLOT_END=20;
+
+function fmtHour(h){return `${h>12?h-12:h===0?12:h}:00 ${h>=12?'PM':'AM'}`}
+function fmtTime12(t){if(!t)return'';const[h,m]=t.split(':');const hr=parseInt(h);return`${hr===0?12:hr>12?hr-12:hr}:${m.padStart(2,'0')} ${hr>=12?'PM':'AM'}`}
+function timeToMin(t){const[h,m]=t.split(':').map(Number);return h*60+m}
+function minToTime(m){const h=Math.floor(m/60),mm=m%60;return`${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`}
+
+async function loadBusySlots(){
+  const exec=document.getElementById('selAT').value;
+  const date=document.getElementById('schedDate').value;
+  const section=document.getElementById('slotSection');
+  const conflict=document.getElementById('slotConflict');
+  conflict.style.display='none';
+  busyWindows=[];
+  if(!exec||!date){section.style.display='none';return}
+  try{
+    const r=await fetch(`${API}/api/schedule/busy-slots?field_exec=${encodeURIComponent(exec)}&date=${date}`);
+    const slots=await r.json();
+    // Build busy windows: each visit blocks from its time to +60 min
+    busyWindows=slots.map(s=>{
+      const start=timeToMin(s.time);
+      const end=start+60;
+      return{startMin:start,endMin:end,time:s.time,uid:s.uid,society:s.society||'',tower:s.tower||'',unit:s.unit||''};
+    }).sort((a,b)=>a.startMin-b.startMin);
+    document.getElementById('slotExecName').textContent=exec;
+    const dt=new Date(date+'T00:00');
+    document.getElementById('slotDateLabel').textContent=dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    const list=document.getElementById('busyList');
+    if(busyWindows.length){
+      list.innerHTML=busyWindows.map(w=>{
+        const from=fmtTime12(w.time);
+        const to=fmtTime12(minToTime(w.endMin));
+        const info=[w.society,w.tower?'T'+w.tower:'',w.unit].filter(Boolean).join(' ');
+        return`<div class="busy-slot"><span class="bs-time">${from}</span><span class="bs-dash">→</span><span class="bs-time">${to}</span><span class="bs-info">${info} (${w.uid})</span></div>`;
+      }).join('');
+    }else{
+      list.innerHTML='';
+    }
+    // Show free windows hint
+    const hint=document.getElementById('freeHint');hint.style.color='';
+    const freeSlots=getFreeWindows();
+    if(busyWindows.length&&freeSlots.length){
+      hint.style.color='var(--grn)';
+      hint.textContent='✓ Free: '+freeSlots.map(f=>fmtTime12(minToTime(f.start))+' – '+fmtTime12(minToTime(f.end))).join(', ');
+    }else if(busyWindows.length&&!freeSlots.length){
+      hint.textContent='✗ No free slots available today';hint.style.color='var(--red)';
+    }else{
+      hint.textContent='✓ All slots free';hint.style.color='var(--grn)';
+    }
+    section.style.display='block';
+    validateTimeSlot();
+  }catch(e){console.error('Slots:',e);section.style.display='none';busyWindows=[]}
+}
+
+function getFreeWindows(){
+  const dayStart=SLOT_START*60,dayEnd=SLOT_END*60;
+  if(!busyWindows.length)return[{start:dayStart,end:dayEnd}];
+  const free=[];
+  let cursor=dayStart;
+  for(const w of busyWindows){
+    if(w.startMin>cursor)free.push({start:cursor,end:w.startMin});
+    cursor=Math.max(cursor,w.endMin);
+  }
+  if(cursor<dayEnd)free.push({start:cursor,end:dayEnd});
+  return free.filter(f=>f.end-f.start>=30); // at least 30min gap
+}
+
+function validateTimeSlot(){
+  const time=document.getElementById('schedTime').value;
+  const conflict=document.getElementById('slotConflict');
+  const timeFg=document.getElementById('timeFg');
+  conflict.style.display='none';
+  timeFg.classList.remove('invalid');
+  if(!time||!busyWindows.length)return true;
+  const selMin=timeToMin(time);
+  // Check if selected time falls in any busy window
+  const hit=busyWindows.find(w=>selMin>=w.startMin&&selMin<w.endMin);
+  if(hit){
+    // Find next free time
+    let nextFree=null;
+    const sorted=[...busyWindows].sort((a,b)=>a.startMin-b.startMin);
+    for(const w of sorted){if(w.endMin>selMin){nextFree=w.endMin;break}}
+    // Check if nextFree itself is in another window
+    if(nextFree!==null){
+      let safe=nextFree;
+      for(const w of sorted){if(safe>=w.startMin&&safe<w.endMin)safe=w.endMin}
+      if(safe<=SLOT_END*60)nextFree=safe;else nextFree=null;
+    }
+    const nextStr=nextFree!==null?fmtTime12(minToTime(nextFree)):'No slots today';
+    conflict.innerHTML=`⚠ ${hit.uid} is scheduled at ${fmtTime12(hit.time)}. Busy till ${fmtTime12(minToTime(hit.endMin))}. Next free: <strong>${nextStr}</strong>`;
+    conflict.style.display='block';
+    timeFg.classList.add('invalid');
+    return false;
+  }
+  return true;
+}
+
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
     const r=await fetch(`${API}/api/config`);opts=(await r.json()).options;
@@ -121,7 +234,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
     await loadCities(document.getElementById('selCity'));
     const today=new Date().toISOString().split('T')[0];
     document.getElementById('schedDate').min=today;
-    document.getElementById('schedDate').addEventListener('change',function(){if(this.value<today){this.value='';toast('Past dates not allowed','warn')}});
+    document.getElementById('schedDate').addEventListener('change',function(){if(this.value<today){this.value='';toast('Past dates not allowed','warn')}loadBusySlots()});
+    document.getElementById('selAT').addEventListener('change',loadBusySlots);
+    document.getElementById('schedTime').addEventListener('change',validateTimeSlot);
+    document.getElementById('schedTime').addEventListener('input',validateTimeSlot);
     const cityEl=document.getElementById('selCity'),socEl=document.getElementById('selSoc'),locEl=document.getElementById('selLoc');
     cityEl.addEventListener('change',()=>{loadSocieties(cityEl.value,socEl,locEl);genUID()});
     socEl.addEventListener('change',()=>{loadLocalities(cityEl.value,socEl.value,locEl);loadAreas(socEl.value)});
@@ -158,6 +274,7 @@ document.getElementById('submitBtn').addEventListener('click',async()=>{
   const uid=document.getElementById('fUid').value;
   if(!uid){toast('Select city & source to generate UID','err');return}
   const{valid,missing}=validateForm('form');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  if(!validateTimeSlot()){toast('Selected time slot is busy for this executive','err');return}
   const ph=document.getElementById('phone').value.replace(/\D/g,'');
   if(ph.length!==10){toast('Contact must be 10 digits','err');return}
   if(ph[0]==='0'){toast('Contact cannot start with 0','err');return}
@@ -192,7 +309,7 @@ function showConfirm(body,existing){
   if(existing.length){
     const rows=existing.map(p=>`<tr><td style="font-family:var(--mono);font-weight:600">${p.uid}</td><td>${p.tower_no||'—'}</td><td>${p.unit_no||'—'}</td><td>${p.area_sqft||'—'}</td><td>${p.configuration||'—'}</td><td>${p.floor||'—'}</td></tr>`).join('');
     document.getElementById('confirmExisting').innerHTML=`<div style="font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px">Existing Properties in ${body.society_name}</div>
-      <table class="ep-table"><thead><tr><th>UID</th><th>Tower</th><th>Unit</th><th>Area</th><th>configuration</th><th>Floor</th></tr></thead><tbody>${rows}</tbody></table>`;
+      <table class="ep-table"><thead><tr><th>UID</th><th>Tower</th><th>Unit</th><th>Area</th><th>Config</th><th>Floor</th></tr></thead><tbody>${rows}</tbody></table>`;
   }else{
     document.getElementById('confirmExisting').innerHTML=`<div class="ep-empty">✓ No existing properties in this society</div>`;
   }
