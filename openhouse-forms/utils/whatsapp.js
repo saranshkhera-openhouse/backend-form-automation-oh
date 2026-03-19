@@ -22,6 +22,7 @@ const NAME_TO_PHONE = {
   'Rahul Sheel':        '9289311664',
   'Rahul Singh':        '9217710683',
   'Sahil Singh':        '9217275007',
+  'Ashwani Sharma':     '9217710686'
 };
 
 function getPhone(name) {
