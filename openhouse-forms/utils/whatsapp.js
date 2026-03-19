@@ -5,10 +5,6 @@ const https = require('https');
 const NAME_TO_PHONE = {
   'Akash Pandit':       '8595594789',
   'Deepak Mishra':      '8130724002',
-  'Nisha':              '9211599292',
-  'Ashwini':            '',
-  'Prakhar Viash':      '',
-  'Subham Singh Negi':  '',
   'Praveen Kumar':      '9289996737',
   'Shashank Kumar':     '9205658886',
   'Rupali Prasad':      '9289996738',
