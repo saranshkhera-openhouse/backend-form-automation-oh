@@ -68,12 +68,19 @@ module.exports=function(pool){
         const newEnd=selMin+60;
         const hit=windows.find(w=>selMin<w.end&&newEnd>w.start);
         if(hit){
-          // Find next free minute where a 60-min visit fits without overlap
-          let next=hit.end;
-          let safe=false;while(!safe&&next<=20*60-60){safe=true;for(const w of windows){if(next<w.end&&(next+60)>w.start){next=w.end;safe=false;break}}}
-          const nh=Math.floor(next/60),nm=next%60;
-          const nextStr=next<=20*60-60?`${nh>12?nh-12:nh===0?12:nh}:${String(nm).padStart(2,'0')} ${nh>=12?'PM':'AM'}`:'No slots today';
-          return res.status(400).json({error:`This slot is busy for ${d.field_exec}. Next free: ${nextStr}`});
+          const fmt=m=>{const h=Math.floor(m/60),mm=m%60;return`${h>12?h-12:h===0?12:h}:${String(mm).padStart(2,'0')} ${h>=12?'PM':'AM'}`};
+          const sorted=[...windows].sort((a,b)=>a.start-b.start);
+          // Find next free AFTER
+          let after=hit.end;
+          let safe=false;while(!safe&&after<=20*60){safe=true;for(const w of sorted){if(after<w.end&&(after+60)>w.start){after=w.end;safe=false;break}}}
+          // Find nearest free BEFORE
+          let before=null;
+          for(let t=selMin-30;t>=8*60;t-=30){const tEnd=t+60;const blocked=sorted.some(w=>t<w.end&&tEnd>w.start);if(!blocked){before=t;break}}
+          const suggestions=[];
+          if(before!==null)suggestions.push(fmt(before));
+          if(after<=20*60)suggestions.push(fmt(after));
+          const sugStr=suggestions.length?suggestions.join(', '):'None available today';
+          return res.status(400).json({error:`This slot is busy for ${d.field_exec}. Free slots: ${sugStr}`});
         }
       }
       // Combine first+last into owner_broker_name for backward compat

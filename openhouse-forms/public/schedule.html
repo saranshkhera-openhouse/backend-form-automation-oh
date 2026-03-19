@@ -261,12 +261,24 @@ function validateTimeSlot(){
   if(!time||!busyWindows.length)return true;
   const hit=isSlotBusy(time);
   if(hit){
-    const selMin=timeToMin(time);const newEnd=selMin+60;
-    // Find next free
-    let next=hit.endMin;const sorted=[...busyWindows].sort((a,b)=>a.startMin-b.startMin);
-    let safe=false;while(!safe&&next<SLOT_END*60){safe=true;for(const w of sorted){if(next<w.endMin&&(next+60)>w.startMin){next=w.endMin;safe=false;break}}}
-    const nextStr=next<=SLOT_END*60-60?fmtTime12(minToTime(next)):'No slots today';
-    conflict.innerHTML=`⚠ Conflicts with <strong>${hit.uid}</strong> (${fmtTime12(hit.time)} → ${fmtTime12(minToTime(hit.endMin))}). Next free: <strong>${nextStr}</strong>`;
+    const selMin=timeToMin(time);
+    const sorted=[...busyWindows].sort((a,b)=>a.startMin-b.startMin);
+    // Find next free AFTER
+    let after=hit.endMin;
+    let safe=false;while(!safe&&after<=SLOT_END*60){safe=true;for(const w of sorted){if(after<w.endMin&&(after+60)>w.startMin){after=w.endMin;safe=false;break}}}
+    const afterOk=after<=SLOT_END*60;
+    // Find nearest free BEFORE
+    let before=null;
+    for(let t=selMin-30;t>=SLOT_START*60;t-=30){
+      const tEnd=t+60;const blocked=sorted.some(w=>t<w.endMin&&tEnd>w.startMin);
+      if(!blocked){before=t;break}
+    }
+    // Build suggestion
+    const suggestions=[];
+    if(before!==null)suggestions.push(fmtTime12(minToTime(before)));
+    if(afterOk)suggestions.push(fmtTime12(minToTime(after)));
+    const sugStr=suggestions.length?suggestions.map(s=>`<strong>${s}</strong>`).join(', '):'None available today';
+    conflict.innerHTML=`⚠ Conflicts with <strong>${hit.uid}</strong> (${fmtTime12(hit.time)} → ${fmtTime12(minToTime(hit.endMin))}). Free slots: ${sugStr}`;
     conflict.style.display='block';timeFg.classList.add('invalid');
     return false;
   }
