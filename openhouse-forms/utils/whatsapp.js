@@ -26,7 +26,7 @@ const NAME_TO_PHONE = {
   'Sahil Singh':        '9217275007',
   'Ashwani Sharma':     '9217710686',
   'Rahool':             '9899546824',
-  'Prashant Singh':     '9289500953',
+  'Prashant':           '9289500953',
   'Ashish':             '9555666059',
   'Saransh Khera':      '8595594789'
 };
