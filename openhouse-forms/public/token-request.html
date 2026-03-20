@@ -119,11 +119,12 @@
         <div style="font-size:16px;font-weight:700;color:var(--tx)" id="ownerCheckName"></div>
       </div>
       <div id="ownerEditWrap" style="display:none;margin-bottom:12px">
-        <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;font-weight:600">Enter owner name:</div>
-        <div style="display:flex;gap:8px">
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;font-weight:600">Enter owner details:</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
           <input type="text" id="ownerFirst" placeholder="First Name" style="flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r)">
           <input type="text" id="ownerLast" placeholder="Last Name" style="flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r)">
         </div>
+        <input type="tel" id="ownerPhone" placeholder="Phone Number (10 digits)" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" style="width:100%;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r);font-family:var(--mono)">
       </div>
       <div style="display:flex;gap:8px" id="ownerBtnRow">
         <button type="button" class="btn btn-out" id="ownerCpBtn" style="flex:1">This is CP</button>
@@ -131,7 +132,7 @@
       </div>
       <div id="ownerSaveRow" style="display:none;gap:8px">
         <button type="button" class="btn btn-out" id="ownerBackBtn" style="flex:1">← Back</button>
-        <button type="button" class="btn btn-dark" id="ownerSaveBtn" style="flex:1">Update & Send Email</button>
+        <button type="button" class="btn btn-dark" id="ownerSaveBtn" style="flex:1">Save & Send Email</button>
       </div>
     </div>
   </div>
@@ -299,6 +300,7 @@ document.getElementById('ownerCpBtn').addEventListener('click',()=>{
   document.getElementById('ownerSaveRow').style.display='flex';
   document.getElementById('ownerFirst').value='';
   document.getElementById('ownerLast').value='';
+  document.getElementById('ownerPhone').value='';
   document.getElementById('ownerFirst').focus();
 });
 document.getElementById('ownerBackBtn').addEventListener('click',()=>{
@@ -310,18 +312,21 @@ document.getElementById('ownerSaveBtn').addEventListener('click',async()=>{
   const first=document.getElementById('ownerFirst').value.trim();
   const last=document.getElementById('ownerLast').value.trim();
   if(!first){toast('Enter at least first name','err');return}
+  const phone=document.getElementById('ownerPhone').value.trim();
+  if(phone&&(phone.length!==10||phone[0]==='0')){toast('Enter valid 10-digit phone number','err');return}
   const fullName=[first,last].filter(Boolean).join(' ');
   const btn=document.getElementById('ownerSaveBtn');btn.disabled=true;btn.textContent='Saving...';
   try{
-    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName})});
+    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName,contact_no:phone||undefined})});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
     document.getElementById('d_owner').value=fullName;
     if(loadedData)loadedData.owner_broker_name=fullName;
-    toast('Owner name updated','ok');
+    if(phone){document.getElementById('d_phone').value=phone;if(loadedData)loadedData.contact_no=phone}
+    toast('Owner details updated','ok');
     document.getElementById('ownerCheckModal').style.display='none';
-    btn.disabled=false;btn.textContent='Save & Send Email';
+    btn.disabled=false;btn.textContent='Update & Send Email';
     sendEmail();
-  }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='Save & Send Email'}
+  }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='Update & Send Email'}
 });
 document.getElementById('ownerCheckModal').addEventListener('click',e=>{if(e.target===e.currentTarget){e.currentTarget.style.display='none'}});
 
