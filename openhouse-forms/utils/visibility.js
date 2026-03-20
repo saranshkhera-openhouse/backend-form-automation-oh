@@ -34,7 +34,7 @@ const TEAMS = {
   
   'abhishek.rathore@openhouse.in' : ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh'],
   'animesh.singh@openhouse.in': ['Nishant Kumar','Rahul Sheel','Sushmita Roy'],
-  'ashish@openhouse.in': ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh']
+  'ashish@openhouse.in': ['Aman Dixit','Sahil Singh']
 };
 
 /**
