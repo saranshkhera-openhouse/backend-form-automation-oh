@@ -206,8 +206,9 @@ function notifyVisitCompleted(property) {
 // Direct: assigned_by + token_requested_by | Umbrella: top + mid managers
 function notifyTokenRequest(property) {
   const p = property;
+  const amt = p.token_amount_requested ? '₹' + Number(p.token_amount_requested).toLocaleString('en-IN') : '-';
   const bodyValues = [
-    p.uid || '-',
+    amt,
     p.society_name || '-',
     p.tower_no || '-',
     p.unit_no || '-',
