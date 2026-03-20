@@ -35,13 +35,14 @@ const NAME_TO_PHONE = {
 // HIERARCHY — who sees what
 // ═══════════════════════════════════════════════════════
 // Top managers: get ALL notifications across entire system
-const TOP_MANAGERS = ['Sahaj Dureja', 'Ashish'];
+const TOP_MANAGERS = ['Rahool', 'Ashish','Prashant'];
 
 // Mid managers: get notifications for themselves + their team
 const MID_MANAGERS = {
-  'Apurv Nath':     ['Sushmita Roy'],
-  'Sahaj Dureja':   ['Test Sahaj', 'Rupali Prasad'],
-  'Saransh Khera':  ['Test Sahaj'],
+  'Abhishek Rathore':     ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh'],
+  'Animesh Singh':        ['Nishant Kumar','Rahul Sheel','Sushmita Roy'],
+  'Sahaj Dureja':         ['Test Sahaj'],
+  'Saransh Khera':        ['Test Sahaj'],
 };
 
 // ═══════════════════════════════════════════════════════
