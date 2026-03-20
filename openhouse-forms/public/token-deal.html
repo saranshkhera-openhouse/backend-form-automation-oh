@@ -104,8 +104,8 @@ document.getElementById('previewBtn').addEventListener('click',()=>{
   document.getElementById('pcAccount').innerHTML=
     pRow('Bank Name',document.getElementById('dBank').value)+pRow('A/C No.',document.getElementById('dAc').value)+pRow('IFSC',document.getElementById('dIfsc').value)+
     pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value);
-  let sel=[];try{sel=typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available||[]}catch(e){}
-  const miss=allDocOptions.filter(doc=>!sel.includes(doc)&&!doc.includes('Other'));
+  let sel=[];try{sel=typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available||[];sel=sel.map(s=>s.trim())}catch(e){console.log('Doc parse error:',d.documents_available,e)}
+  const miss=allDocOptions.filter(doc=>!sel.some(s=>s===doc.trim()||doc.trim().includes(s)||s.includes(doc.trim()))&&!doc.includes('Other'));
   document.getElementById('pcMissing').innerHTML=miss.length?miss.map(m=>`<div class="pc-row"><span class="pc-l" style="color:var(--red)">✗</span><span class="pc-v" style="color:var(--red)">${m}</span></div>`).join(''):'<div class="pc-row"><span class="pc-v" style="color:var(--grn)">All documents available</span></div>';
   sec.classList.add('show');document.getElementById('previewBtn').textContent='Hide Deal Terms';
 });
