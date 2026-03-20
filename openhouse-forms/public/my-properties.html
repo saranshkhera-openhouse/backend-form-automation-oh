@@ -29,6 +29,17 @@
 .reassign-wrap select{font-size:13px;flex:1;min-width:140px}
 .reassign-wrap button{white-space:nowrap}
 .prop-count{font-size:11px;color:var(--tx3);margin-bottom:10px}
+.stage-pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600;white-space:nowrap;margin-left:6px}
+.stage-pill.s-sch{background:#dbeafe;color:#1e40af}
+.stage-pill.s-vis{background:#e0e7ff;color:#3730a3}
+.stage-pill.s-tok{background:#fef3c7;color:#92400e}
+.stage-pill.s-deal{background:#fce7f3;color:#9d174d}
+.stage-pill.s-fin{background:#d1fae5;color:#065f46}
+.stage-pill.s-lst{background:#e8f2ec;color:#2d5a3d}
+.stage-pill.s-can{background:#fdecea;color:#b33a2e}
+.prog-bar{height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin:0 14px}
+.prog-fill{height:100%;border-radius:2px;transition:width .3s}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -38,8 +49,18 @@
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
-  <div style="margin-bottom:10px">
-    <input type="text" id="fQ" placeholder="🔍 Search UID, society, owner..." style="font-size:16px;width:100%;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r)">
+  <div class="filter-row">
+    <input type="text" id="fQ" placeholder="🔍 Search UID, society, owner..." style="font-size:16px;flex:2;min-width:180px;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r)">
+    <select id="fStatus" style="font-size:14px;flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r)">
+      <option value="">All Stages</option>
+      <option value="scheduled">Scheduled</option>
+      <option value="visited">Visited</option>
+      <option value="token">Token Req</option>
+      <option value="deal">Deal</option>
+      <option value="final">Final</option>
+      <option value="listed">Listed</option>
+      <option value="dead">Cancelled</option>
+    </select>
   </div>
   <div class="prop-count" id="propCount">Loading...</div>
   <div id="propList"></div>
@@ -51,6 +72,19 @@ let allProps=[],assignedToList=[];
 function fmtDt(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
 function fmtTime12(t){if(!t)return'—';const[h,m]=t.split(':');const hr=parseInt(h);return`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`}
 
+function getStage(p){
+  if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead',step:0};
+  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:6};
+  if(p.final_submitted_at)return{label:'Final',cls:'s-fin',key:'final',step:5};
+  if(p.token_deal_submitted_at)return{label:'Deal',cls:'s-deal',key:'deal',step:4};
+  if(p.token_submitted_at||p.token_is_draft)return{label:p.token_is_draft?'Token (Draft)':'Token Req',cls:'s-tok',key:'token',step:3};
+  if(p.visit_submitted_at)return{label:'Visited',cls:'s-vis',key:'visited',step:2};
+  if(p.schedule_submitted_at)return{label:'Scheduled',cls:'s-sch',key:'scheduled',step:1};
+  return{label:'—',cls:'',key:'',step:0};
+}
+
+const PROG_COLORS={1:'#3b82f6',2:'#6366f1',3:'#f59e0b',4:'#ec4899',5:'#10b981',6:'#2d5a3d',0:'#b33a2e'};
+
 function pdv(label,val){
   const isEmpty=val===null||val===undefined||val===''||val==='null';
   return`<div class="pd-item"><div class="pd-label">${label}</div><div class="pd-value${isEmpty?' empty':''}">${isEmpty?'—':val}</div></div>`;
@@ -58,8 +92,10 @@ function pdv(label,val){
 
 function renderProps(){
   const q=document.getElementById('fQ').value.toLowerCase();
+  const st=document.getElementById('fStatus').value;
   let d=allProps;
   if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q));
+  if(st)d=d.filter(p=>p._stage.key===st);
   document.getElementById('propCount').textContent=`${d.length} propert${d.length===1?'y':'ies'}`;
   const list=document.getElementById('propList');
   if(!d.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--tx3)">No properties found</div>';return}
@@ -68,6 +104,10 @@ function renderProps(){
 
   list.innerHTML=d.map((p,idx)=>{
     const dead=p.is_dead;
+    const stage=p._stage;
+    const progPct=dead?100:Math.round(stage.step/6*100);
+    const progColor=PROG_COLORS[stage.step]||'#ccc';
+
     const steps=[
       {n:'Schedule',ok:!!p.schedule_submitted_at},
       {n:'Visit',ok:!!p.visit_submitted_at},
@@ -104,9 +144,11 @@ function renderProps(){
     return`<div class="prop-card${dead?' dead':''}" id="pc_${idx}">
       <div class="prop-hdr" onclick="toggleCard(${idx})">
         <span class="prop-uid">${p.uid}</span>
+        <span class="stage-pill ${stage.cls}">${stage.label}</span>
         <span class="prop-soc">${subtitle}</span>
         <span class="prop-arrow">▼</span>
       </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${progPct}%;background:${progColor}"></div></div>
       <div class="prop-status">${statusHtml}</div>
       <div class="prop-body">${detailHtml}</div>
     </div>`;
@@ -136,9 +178,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const opts=(await cr.json()).options;
     assignedToList=[...opts.assignedToList,...opts.assignedByList].filter((v,i,a)=>a.indexOf(v)===i).sort();
     allProps=await pr.json();
+    allProps.forEach(p=>p._stage=getStage(p));
     renderProps();
   }catch(e){toast('Failed to load','err');document.getElementById('propCount').textContent='Failed to load'}
 });
 document.getElementById('fQ').addEventListener('input',renderProps);
+document.getElementById('fStatus').addEventListener('change',renderProps);
 </script>
 </body></html>
