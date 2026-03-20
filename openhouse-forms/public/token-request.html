@@ -132,7 +132,7 @@
       </div>
       <div id="ownerSaveRow" style="display:none;gap:8px">
         <button type="button" class="btn btn-out" id="ownerBackBtn" style="flex:1">← Back</button>
-        <button type="button" class="btn btn-dark" id="ownerSaveBtn" style="flex:1">Save & Send Email</button>
+        <button type="button" class="btn btn-dark" id="ownerSaveBtn" style="flex:1">Save Changes</button>
       </div>
     </div>
   </div>
@@ -292,6 +292,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 });
 document.getElementById('ownerOkBtn').addEventListener('click',()=>{
   document.getElementById('ownerCheckModal').style.display='none';
+  if(!confirm('Send token request email?'))return;
   sendEmail();
 });
 document.getElementById('ownerCpBtn').addEventListener('click',()=>{
@@ -322,16 +323,14 @@ document.getElementById('ownerSaveBtn').addEventListener('click',async()=>{
     document.getElementById('d_owner').value=fullName;
     if(loadedData)loadedData.owner_broker_name=fullName;
     if(phone){document.getElementById('d_phone').value=phone;if(loadedData)loadedData.contact_no=phone}
-    toast('Owner details updated','ok');
+    toast('Owner details updated. Verify and click Send Mail again.','ok',5000);
     document.getElementById('ownerCheckModal').style.display='none';
-    btn.disabled=false;btn.textContent='Update & Send Email';
-    sendEmail();
-  }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='Update & Send Email'}
+    btn.disabled=false;btn.textContent='Save Changes';
+  }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='Save Changes'}
 });
 document.getElementById('ownerCheckModal').addEventListener('click',e=>{if(e.target===e.currentTarget){e.currentTarget.style.display='none'}});
 
 async function sendEmail(){
-  if(!confirm('Send token request email?'))return;
   const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
   try{
