@@ -24,7 +24,6 @@ const EMAIL_TO_NAMES = {
   'ankit@openhouse.in': ['Ankit'],
   'vaibhav.dwivedi@openhouse.in': ['Vaibhav Dwivedi'],
   'aman.dixit@openhouse.in': ['Aman Dixit'],
-  'durejasahaj@gmail.com': ['Testing_Sahaj'],
   'deepak.mishra@openhoue.in':['Deepak Mishra'],
   'nisha.deewan@openhouse.in':['Nisha Deewan'],
   'ashwani.sharma@openhouse.in':['Ashwani Sharma']
@@ -35,7 +34,7 @@ const TEAMS = {
   
   'abhishek.rathore@openhouse.in' : ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh'],
   'animesh.singh@openhouse.in': ['Nishant Kumar','Rahul Sheel','Sushmita Roy'],
-  'sahaj.dureja@openhouse.in': ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh']
+  'ashish@openhouse.in': ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh']
 };
 
 /**
