@@ -14,7 +14,7 @@
 
   <form id="dealForm" style="display:none"><input type="hidden" name="uid" id="fUid">
     <div class="card"><div class="card-t">Token Amount</div>
-      <div class="fg"><label>Token (in ₹)</label><input type="text" name="deal_token_amount" id="dealAmt" class="pre" readonly></div></div>
+      <div class="fg"><label>Token (₹)</label><input type="text" name="deal_token_amount" id="dealAmt" class="pre" readonly></div></div>
 
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">NEFT Details</div>
       <div class="r2">
@@ -84,10 +84,12 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 function pRow(l,v){return v&&v!=='—'&&v!==''?`<div class="pc-row"><span class="pc-l">${l}</span><span class="pc-v">${v}</span></div>`:''}
 function fmt(v){return v?'₹ '+Number(v).toLocaleString('en-IN'):'—'}
 
-document.getElementById('previewBtn').addEventListener('click',()=>{
+document.getElementById('previewBtn').addEventListener('click',async()=>{
   if(!propData){toast('Load property first','warn');return}
   const sec=document.getElementById('previewSection');
   if(sec.classList.contains('show')){sec.classList.remove('show');document.getElementById('previewBtn').textContent='Preview Deal Terms';return}
+  // Re-fetch fresh data to get current documents_available
+  try{const fr=await fetch(`${API}/api/token-deal/prefill/${currentUid}`);if(fr.ok){propData=await fr.json()}}catch(e){}
   const d=propData;const amt=document.getElementById('dealAmt').value;
   document.getElementById('pcProp').innerHTML=pRow('UID',d.uid)+pRow('Society',d.society_name)+pRow('Locality',d.locality)+
     pRow('Unit',d.unit_no)+pRow('Tower',d.tower_no)+pRow('Floor',d.floor)+pRow('Config',configDisplay(d.configuration,d.extra_area))+
@@ -104,8 +106,14 @@ document.getElementById('previewBtn').addEventListener('click',()=>{
   document.getElementById('pcAccount').innerHTML=
     pRow('Bank Name',document.getElementById('dBank').value)+pRow('A/C No.',document.getElementById('dAc').value)+pRow('IFSC',document.getElementById('dIfsc').value)+
     pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value);
-  let sel=[];try{sel=typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available||[];sel=sel.map(s=>s.trim())}catch(e){console.log('Doc parse error:',d.documents_available,e)}
-  const miss=allDocOptions.filter(doc=>!sel.some(s=>s===doc.trim()||doc.trim().includes(s)||s.includes(doc.trim()))&&!doc.includes('Other'));
+  let sel=[];
+  try{
+    const raw=d.documents_available;
+    if(typeof raw==='string')sel=JSON.parse(raw);
+    else if(Array.isArray(raw))sel=raw;
+    sel=sel.map(s=>typeof s==='string'?s.trim():s).filter(Boolean);
+  }catch(e){sel=[]}
+  const miss=allDocOptions.filter(doc=>{const dt=doc.trim();return!sel.some(s=>s.trim()===dt)&&!dt.includes('Other')});
   document.getElementById('pcMissing').innerHTML=miss.length?miss.map(m=>`<div class="pc-row"><span class="pc-l" style="color:var(--red)">✗</span><span class="pc-v" style="color:var(--red)">${m}</span></div>`).join(''):'<div class="pc-row"><span class="pc-v" style="color:var(--grn)">All documents available</span></div>';
   sec.classList.add('show');document.getElementById('previewBtn').textContent='Hide Deal Terms';
 });
