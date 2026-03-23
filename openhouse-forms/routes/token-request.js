@@ -26,6 +26,7 @@ module.exports=function(pool){
         grace_period=$14,rent_payable_grace_period=$15,
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
+        has_loan=$24,token_remarks_printed=$25,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -35,8 +36,15 @@ module.exports=function(pool){
          parseInt(d.initial_period)||null,d.rent_payable_initial_period||null,
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
-         d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid]);
+         d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
+         d.has_loan||'No',d.token_remarks_printed||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
+      // Fire-and-forget WhatsApp notification (only on actual submit, not draft)
+      if(!isDraft){
+        pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
+          if(rows[0])notifyTokenRequest(rows[0]).catch(e=>console.error('WA token notify error:',e));
+        }).catch(e=>console.error('WA token fetch error:',e));
+      }
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
   // Update owner name (CP → Owner correction)
@@ -81,8 +89,6 @@ module.exports=function(pool){
       });
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
-      // Fire-and-forget WhatsApp notification after email sent
-      notifyTokenRequest(pRows[0]).catch(e=>console.error('WA token notify error:',e));
     }catch(e){
       console.error('SendEmail:',e);
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
