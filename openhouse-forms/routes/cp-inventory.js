@@ -11,6 +11,15 @@ module.exports=function(pool){
     }catch(e){res.status(500).json({error:e.message})}
   });
 
+  // Get societies for a city+locality
+  router.get('/societies',async(req,res)=>{
+    try{
+      const{city,locality}=req.query;if(!city||!locality)return res.json([]);
+      const{rows}=await pool.query('SELECT DISTINCT society_name FROM master_societies WHERE city=$1 AND locality=$2 ORDER BY society_name',[city,locality]);
+      res.json(rows.map(r=>r.society_name));
+    }catch(e){res.status(500).json({error:e.message})}
+  });
+
   router.post('/submit',async(req,res)=>{
     try{
       const d=req.body;

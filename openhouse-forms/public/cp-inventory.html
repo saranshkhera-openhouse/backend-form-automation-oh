@@ -13,10 +13,10 @@
 .upload-area p{font-size:12px;color:var(--tx3);margin:4px 0 0}
 .upload-area .ua-icon{font-size:24px;color:var(--tx3)}
 .upload-area .ua-btn{font-size:12px;color:var(--ac);font-weight:600}
-.radio-group{display:flex;flex-direction:column;gap:6px;margin-top:4px}
-.radio-group label{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;cursor:pointer;font-size:14px;transition:.1s}
-.radio-group label:has(input:checked){border-color:var(--ac);background:rgba(59,130,246,.04)}
-.radio-group input[type="radio"]{margin:0}
+.info-box{background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.info-box .ib-title{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:10px}
+.info-box ol{margin:0;padding-left:18px;font-size:12px;color:var(--tx2);line-height:1.7}
+.info-box ol li{margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -26,12 +26,28 @@
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
+  <div class="info-box">
+    <div class="ib-title">CP Inventory Form</div>
+    <ol>
+      <li>Please submit all leads through this form only and not over WhatsApp etc.</li>
+      <li>It is mandatory to be onboarded as a Channel Partner before submitting any inventory. Please get in touch with the OH Team to get onboarded.</li>
+      <li>We will require 72 working hours to revert with the next steps.</li>
+      <li>If the property is relevant and as per our requirement, we will schedule a visit to the apartment.</li>
+      <li>Once visited, the apartment will be tagged against the CP code in the system.</li>
+      <li>In case the same property is being presented by two different CPs, priority will be given to the CP with earlier submission. We therefore encourage you to send us inventory immediately to claim your priority.</li>
+      <li>All tagged inventory will remain exclusive to the CP until 30 days from the date of property visit or 15 days from the date of owner meeting, whichever is earlier.</li>
+      <li>In case of disputes, Openhouse will strive to preserve the interests of the Channel Partner for long-term engagement but the decision of the Openhouse team will be absolute in this regard.</li>
+    </ol>
+  </div>
+
   <form id="cpForm">
 
     <div class="card">
       <div class="card-t">CP Details</div>
-      <div class="fg"><label>CP Code</label><input type="text" name="cp_code" placeholder="Optional"></div>
-      <div class="fg"><label>CP Name <span class="req">*</span></label><input type="text" name="cp_name" required><div class="err-msg">Required</div></div>
+      <div class="r2">
+        <div class="fg"><label>CP Code</label><input type="text" name="cp_code" placeholder="Optional"></div>
+        <div class="fg"><label>CP Name <span class="req">*</span></label><input type="text" name="cp_name" required><div class="err-msg">Required</div></div>
+      </div>
       <div class="fg"><label>CP Contact No <span class="req">*</span></label><input type="tel" name="cp_contact" id="cpPhone" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="inline-err" id="phoneErr"></div><div class="err-msg">Required</div></div>
     </div>
 
@@ -41,6 +57,46 @@
         <div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required><option value="">Select City</option></select><div class="err-msg">Required</div></div>
         <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Select city first</option></select><div class="err-msg">Required</div></div>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Property Details</div>
+      <div class="fg"><label>Society Name <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled><option value="">Select locality first</option></select><div class="err-msg">Required</div></div>
+      <div class="r2">
+        <div class="fg"><label>Configuration <span class="req">*</span></label>
+          <select name="configuration" id="selConfig" required>
+            <option value="">Select...</option>
+            <option>2 BHK</option><option>2.5 BHK</option><option>3 BHK</option><option>3.5 BHK</option><option>4 BHK</option><option>4.5 BHK</option><option>5 BHK</option><option>Other</option>
+          </select>
+          <input type="text" id="configOther" name="configuration_other" placeholder="Specify configuration" style="display:none;margin-top:4px">
+          <div class="err-msg">Required</div>
+        </div>
+        <div class="fg"><label>Floor</label>
+          <select name="floor" id="selFloor">
+            <option value="">Select...</option>
+            <option>Ground</option><option>Lower</option><option>Middle</option><option>Higher</option><option>Top</option><option>Other</option>
+          </select>
+          <input type="text" id="floorOther" name="floor_other" placeholder="Specify floor" style="display:none;margin-top:4px">
+        </div>
+      </div>
+      <div class="fg"><label>Unit No</label><input type="text" name="unit_no">
+        <div style="font-size:9px;color:var(--tx3);margin-top:2px">Providing unit numbers helps us tag inventory to avoid situations where the same inventory is provided by multiple CPs.</div></div>
+      <div class="r2">
+        <div class="fg"><label>Size (in sqft) <span class="req">*</span></label><input type="number" name="size_sqft" step="0.01" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Price Expectation (in Lakhs) <span class="req">*</span></label><input type="number" name="price_expectation" step="0.01" required><div class="err-msg">Required</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Additional Info</div>
+      <div class="fg"><label>Flat Status</label>
+        <select name="flat_status">
+          <option value="">Select...</option>
+          <option>Owner Occupied</option><option>Tenant Occupied</option><option>Vacant</option>
+        </select>
+      </div>
+      <div class="fg"><label>Exit Facing From Main Gate</label><input type="text" name="exit_facing"></div>
+      <div class="fg"><label>Additional Comments</label><textarea name="additional_comments" rows="3"></textarea></div>
     </div>
 
     <div class="card">
@@ -58,51 +114,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-t">Property Details</div>
-      <div class="fg"><label>Society Name <span class="req">*</span></label><input type="text" name="society_name" required><div class="err-msg">Required</div></div>
-      <div class="fg"><label>Configuration <span class="req">*</span></label>
-        <div class="radio-group" id="configGroup">
-          <label><input type="radio" name="configuration" value="2 BHK" required><span>2 BHK</span></label>
-          <label><input type="radio" name="configuration" value="3 BHK"><span>3 BHK</span></label>
-          <label><input type="radio" name="configuration" value="4 BHK"><span>4 BHK</span></label>
-          <label><input type="radio" name="configuration" value="Other"><span>Other</span></label>
-        </div>
-        <input type="text" id="configOther" name="configuration_other" placeholder="Specify configuration" style="display:none;margin-top:6px">
-        <div class="err-msg">Required</div>
-      </div>
-      <div class="fg"><label>Floor</label>
-        <div class="radio-group">
-          <label><input type="radio" name="floor" value="Ground"><span>Ground</span></label>
-          <label><input type="radio" name="floor" value="Top"><span>Top</span></label>
-          <label><input type="radio" name="floor" value="Higher"><span>Higher</span></label>
-          <label><input type="radio" name="floor" value="Lower"><span>Lower</span></label>
-          <label><input type="radio" name="floor" value="Middle"><span>Middle</span></label>
-          <label><input type="radio" name="floor" value="Other"><span>Other</span></label>
-        </div>
-        <input type="text" id="floorOther" name="floor_other" placeholder="Specify floor" style="display:none;margin-top:6px">
-      </div>
-      <div class="fg"><label>Unit No</label><input type="text" name="unit_no" placeholder="Helps tag inventory to avoid duplicates">
-        <div style="font-size:9px;color:var(--tx3);margin-top:2px">Providing unit numbers help us tag the inventory to address situations where same inventory is provided by multiple CPs.</div></div>
-      <div class="r2">
-        <div class="fg"><label>Size (in sqft) <span class="req">*</span></label><input type="number" name="size_sqft" step="0.01" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Price Expectation (in Lakhs) <span class="req">*</span></label><input type="number" name="price_expectation" step="0.01" required><div class="err-msg">Required</div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-t">Additional Info</div>
-      <div class="fg"><label>Flat Status</label>
-        <div class="radio-group">
-          <label><input type="radio" name="flat_status" value="Owner Occupied"><span>Owner Occupied</span></label>
-          <label><input type="radio" name="flat_status" value="Tenant Occupied"><span>Tenant Occupied</span></label>
-          <label><input type="radio" name="flat_status" value="Vacant"><span>Vacant</span></label>
-        </div>
-      </div>
-      <div class="fg"><label>Exit Facing From Main Gate</label><input type="text" name="exit_facing"></div>
-      <div class="fg"><label>Additional Comments</label><textarea name="additional_comments" rows="3"></textarea></div>
-    </div>
-
     <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit Inventory</button>
   </form>
 </div>
@@ -118,9 +129,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const cityEl=document.getElementById('selCity');
     cities.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cityEl.appendChild(o)});
 
-    // City → Locality
+    const locEl=document.getElementById('selLoc');
+    const socEl=document.getElementById('selSoc');
+
+    // City → Locality (reset society too)
     cityEl.addEventListener('change',async()=>{
-      const locEl=document.getElementById('selLoc');
+      socEl.innerHTML='<option value="">Select locality first</option>';socEl.disabled=true;
       const city=cityEl.value;
       if(!city){locEl.innerHTML='<option value="">Select city first</option>';locEl.disabled=true;return}
       locEl.innerHTML='<option value="">Loading...</option>';locEl.disabled=true;
@@ -133,17 +147,28 @@ document.addEventListener('DOMContentLoaded',async()=>{
       }catch(e){locEl.innerHTML='<option value="">Failed</option>'}
     });
 
+    // Locality → Society
+    locEl.addEventListener('change',async()=>{
+      const city=cityEl.value;const loc=locEl.value;
+      if(!city||!loc){socEl.innerHTML='<option value="">Select locality first</option>';socEl.disabled=true;return}
+      socEl.innerHTML='<option value="">Loading...</option>';socEl.disabled=true;
+      try{
+        const r=await fetch(`${API}/api/cp-inventory/societies?city=${encodeURIComponent(city)}&locality=${encodeURIComponent(loc)}`);
+        const socs=await r.json();
+        socEl.innerHTML='<option value="">Select Society</option>';
+        socs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;socEl.appendChild(o)});
+        socEl.disabled=false;
+        makeSearchable(socEl);
+      }catch(e){socEl.innerHTML='<option value="">Failed</option>'}
+    });
+
     // Config "Other" toggle
-    document.querySelectorAll('input[name="configuration"]').forEach(r=>{
-      r.addEventListener('change',()=>{
-        document.getElementById('configOther').style.display=r.value==='Other'?'block':'none';
-      });
+    document.getElementById('selConfig').addEventListener('change',function(){
+      document.getElementById('configOther').style.display=this.value==='Other'?'block':'none';
     });
     // Floor "Other" toggle
-    document.querySelectorAll('input[name="floor"]').forEach(r=>{
-      r.addEventListener('change',()=>{
-        document.getElementById('floorOther').style.display=r.value==='Other'?'block':'none';
-      });
+    document.getElementById('selFloor').addEventListener('change',function(){
+      document.getElementById('floorOther').style.display=this.value==='Other'?'block':'none';
     });
 
     setupContactValidation('cpPhone','phoneErr');
@@ -198,7 +223,6 @@ function renderFiles(){
       <a href="${f.url}" target="_blank">View</a>
       <span class="fi-remove" onclick="removeFile(${i})">✕</span>
     </div>`).join('');
-  // Update area text
   const area=document.getElementById('uploadArea');
   if(uploadedFiles.length>=MAX_FILES){area.style.display='none'}else{area.style.display=''}
 }
@@ -222,14 +246,9 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const body=Object.fromEntries(fd.entries());
 
   // Handle config/floor "Other"
-  const config=document.querySelector('input[name="configuration"]:checked');
-  if(config&&config.value==='Other'){body.configuration=document.getElementById('configOther').value||'Other'}
-  else if(config){body.configuration=config.value}
+  if(body.configuration==='Other'){body.configuration=document.getElementById('configOther').value||'Other'}
   delete body.configuration_other;
-
-  const floor=document.querySelector('input[name="floor"]:checked');
-  if(floor&&floor.value==='Other'){body.floor=document.getElementById('floorOther').value||'Other'}
-  else if(floor){body.floor=floor.value}
+  if(body.floor==='Other'){body.floor=document.getElementById('floorOther').value||'Other'}
   delete body.floor_other;
 
   body.bulk_inventory_urls=JSON.stringify(uploadedFiles.map(f=>({name:f.name,url:f.url})));
