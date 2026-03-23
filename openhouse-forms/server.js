@@ -73,6 +73,7 @@ app.use('/api/token-request', isAuthenticated, hasFormAccess, require('./routes/
 app.use('/api/token-deal', isAuthenticated, hasFormAccess, require('./routes/token-deal')(pool));
 app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(pool));
 app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
+app.use('/api/cp-inventory', isAuthenticated, require('./routes/cp-inventory')(pool));
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
 
 app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
@@ -107,6 +108,7 @@ app.get('/token-request', ...sendForm('token-request.html'));
 app.get('/token-deal', ...sendForm('token-deal.html'));
 app.get('/final', ...sendForm('final.html'));
 app.get('/listing', ...sendForm('listing.html'));
+app.get('/cp-inventory', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/cp-inventory.html')));
 app.get('/admin', isAuthenticated, isAdmin, (_, r) => r.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/my-properties', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/my-properties.html')));
 app.get('/', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/index.html')));
