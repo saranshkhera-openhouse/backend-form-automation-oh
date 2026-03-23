@@ -100,13 +100,18 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   .footer-note{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;text-align:right;line-height:1.7;flex-shrink:0}
   .print-bar{text-align:center;margin-bottom:10px}
   .print-bar button{font-family:'DM Sans',sans-serif;padding:8px 24px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;font-size:12px;font-weight:500}
+  .page-1-content{display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
+  .page-1-content .p1-body{flex:1}
+  .page-1-content>.footer{margin-top:auto}
   .page-1-content .section-label,.page-1-content .field-grid,.page-1-content .doc-grid,.page-1-content .token-strip{page-break-inside:avoid}
   @media print{body{background:white;padding:8px 12px 12px}.page{max-width:100%}.print-bar{display:none!important}
+    .page-1-content{min-height:calc(100vh - 24px)}
     .field,.doc-item,.terms-wrap,.token-strip,.greeting-strip{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:.3cm .6cm;size:A4}}
 </style></head>
 <body><div class="page">
   <div class="print-bar"><button onclick="window.print()">Print / Save as PDF</button></div>
   <div class="page-1-content">
+  <div class="p1-body">
   <div class="header">
     <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
     <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
@@ -175,6 +180,12 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   </div>`:''}
   ${p.token_remarks_printed?`<div class="section-label">Remarks</div>
   <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;font-size:11px;color:#374151;line-height:1.5;white-space:pre-wrap">${esc(p.token_remarks_printed)}</div>`:''}
+  </div><!-- end p1-body -->
+  <div class="footer">
+    <div><div class="footer-brand">Avano Technologies Private Limited</div>
+      <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
+    <div class="footer-note">Token Receipt<br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
+  </div>
   </div><!-- end page-1-content -->
   <div class="section-label" style="page-break-before:always">Terms &amp; Conditions</div>
   <div class="terms-wrap"><h4>Please read carefully</h4>
