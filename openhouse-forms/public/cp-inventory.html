@@ -53,15 +53,15 @@
 
     <div class="card">
       <div class="card-t">Location</div>
+      <div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required><option value="">Select City</option></select><div class="err-msg">Required</div></div>
       <div class="r2">
-        <div class="fg"><label>City <span class="req">*</span></label><select name="city" id="selCity" required><option value="">Select City</option></select><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Select city first</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Society <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled><option value="">Select city first</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Locality <span class="req">*</span></label><select name="locality" id="selLoc" required disabled><option value="">Select society first</option></select><div class="err-msg">Required</div></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-t">Property Details</div>
-      <div class="fg"><label>Society Name <span class="req">*</span></label><select name="society_name" id="selSoc" required disabled><option value="">Select locality first</option></select><div class="err-msg">Required</div></div>
       <div class="r2">
         <div class="fg"><label>Configuration <span class="req">*</span></label>
           <select name="configuration" id="selConfig" required>
@@ -123,44 +123,25 @@ let uploadedFiles=[];
 
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
-    // Load cities
-    const cr=await fetch(`${API}/api/config/cities`);
-    const cities=await cr.json();
     const cityEl=document.getElementById('selCity');
-    cities.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cityEl.appendChild(o)});
-
-    const locEl=document.getElementById('selLoc');
     const socEl=document.getElementById('selSoc');
+    const locEl=document.getElementById('selLoc');
 
-    // City → Locality (reset society too)
-    cityEl.addEventListener('change',async()=>{
-      socEl.innerHTML='<option value="">Select locality first</option>';socEl.disabled=true;
-      const city=cityEl.value;
-      if(!city){locEl.innerHTML='<option value="">Select city first</option>';locEl.disabled=true;return}
-      locEl.innerHTML='<option value="">Loading...</option>';locEl.disabled=true;
-      try{
-        const r=await fetch(`${API}/api/cp-inventory/localities?city=${encodeURIComponent(city)}`);
-        const locs=await r.json();
-        locEl.innerHTML='<option value="">Select Locality</option>';
-        locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;locEl.appendChild(o)});
-        locEl.disabled=false;
-      }catch(e){locEl.innerHTML='<option value="">Failed</option>'}
+    // Load cities using shared.js
+    await loadCities(cityEl);
+
+    // City → Society (searchable), reset locality
+    cityEl.addEventListener('change',()=>{
+      loadSocieties(cityEl.value,socEl,locEl);
     });
 
-    // Locality → Society
-    locEl.addEventListener('change',async()=>{
-      const city=cityEl.value;const loc=locEl.value;
-      if(!city||!loc){socEl.innerHTML='<option value="">Select locality first</option>';socEl.disabled=true;return}
-      socEl.innerHTML='<option value="">Loading...</option>';socEl.disabled=true;
-      try{
-        const r=await fetch(`${API}/api/cp-inventory/societies?city=${encodeURIComponent(city)}&locality=${encodeURIComponent(loc)}`);
-        const socs=await r.json();
-        socEl.innerHTML='<option value="">Select Society</option>';
-        socs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;socEl.appendChild(o)});
-        socEl.disabled=false;
-        makeSearchable(socEl);
-      }catch(e){socEl.innerHTML='<option value="">Failed</option>'}
+    // Society → Locality (auto-fill)
+    socEl.addEventListener('change',()=>{
+      loadLocalities(cityEl.value,socEl.value,locEl);
     });
+
+    // Make society searchable
+    makeSearchable(socEl);
 
     // Config "Other" toggle
     document.getElementById('selConfig').addEventListener('change',function(){
