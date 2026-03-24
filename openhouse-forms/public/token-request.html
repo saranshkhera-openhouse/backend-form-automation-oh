@@ -19,6 +19,7 @@
         <div class="fg"><label>Locality</label><input type="text" id="d_loc" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="d_owner" class="pre" readonly></div>
         <div class="fg"><label>Phone</label><input type="text" id="d_phone" class="pre" readonly></div></div>
+      <div class="fg"><label>Co-owner (if any)</label><input type="text" name="co_owner" id="d_coowner"></div>
       <div class="r3">
         <div class="fg"><label>Unit No <span class="req">*</span></label><input type="text" name="unit_no" id="d_unit" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Tower No <span class="req">*</span></label><input type="text" name="tower_no" id="d_tower" required><div class="err-msg">Required</div></div>
@@ -239,6 +240,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('d_uid').value=d.uid;document.getElementById('d_src').value=d.source||'';
     document.getElementById('d_soc').value=d.society_name||'';document.getElementById('d_loc').value=d.locality||'';
     document.getElementById('d_owner').value=d.owner_broker_name||'';document.getElementById('d_phone').value=d.contact_no||'';
+    document.getElementById('d_coowner').value=d.co_owner||'';
     document.getElementById('d_unit').value=d.unit_no||'';document.getElementById('d_tower').value=d.tower_no||'';
     document.getElementById('d_floor').value=d.floor??'';document.getElementById('d_area').value=d.area_sqft??'';
     document.getElementById('d_cfg').value=configDisplay(d.configuration,d.extra_area);
@@ -279,7 +281,7 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan'];
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
   body.performance_guarantee=parseFloat(body.performance_guarantee)||null;
   return body}

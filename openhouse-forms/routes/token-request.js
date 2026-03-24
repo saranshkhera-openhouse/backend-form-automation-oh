@@ -26,7 +26,7 @@ module.exports=function(pool){
         grace_period=$14,rent_payable_grace_period=$15,
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
-        has_loan=$24,token_remarks_printed=$25,
+        has_loan=$24,token_remarks_printed=$25,co_owner=$26,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -37,7 +37,7 @@ module.exports=function(pool){
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
-         d.has_loan||'No',d.token_remarks_printed||null]);
+         d.has_loan||'No',d.token_remarks_printed||null,d.co_owner||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
