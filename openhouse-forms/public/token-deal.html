@@ -93,7 +93,7 @@ document.getElementById('previewBtn').addEventListener('click',async()=>{
   const d=propData;const amt=document.getElementById('dealAmt').value;
   document.getElementById('pcProp').innerHTML=pRow('UID',d.uid)+pRow('Society',d.society_name)+pRow('Locality',d.locality)+
     pRow('Unit',d.unit_no)+pRow('Tower',d.tower_no)+pRow('Floor',d.floor)+pRow('Config',configDisplay(d.configuration,d.extra_area))+
-    pRow('Area (sqft)',d.area_sqft?d.area_sqft+'':'')+pRow('Owner',d.owner_broker_name)+pRow('Phone',d.contact_no)+
+    pRow('Area (sqft)',d.area_sqft?d.area_sqft+'':'')+pRow('Owner',d.owner_broker_name)+pRow('Co-owner',d.co_owner)+pRow('Phone',d.contact_no)+
     pRow('Registry',d.registry_status)+pRow('Occupancy',d.occupancy_status);
   let ri=d.rent_payable_initial_period,rg=d.rent_payable_grace_period;
   if(ri&&ri!=='N/A')ri=fmt(ri);if(rg&&rg!=='N/A')rg=fmt(rg);
