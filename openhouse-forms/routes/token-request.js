@@ -39,12 +39,6 @@ module.exports=function(pool){
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
          d.has_loan||'No',d.token_remarks_printed||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
-      // Fire-and-forget WhatsApp notification (only on actual submit, not draft)
-      if(!isDraft){
-        pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
-          if(rows[0])notifyTokenRequest(rows[0]).catch(e=>console.error('WA token notify error:',e));
-        }).catch(e=>console.error('WA token fetch error:',e));
-      }
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
   // Update owner name (CP → Owner correction)
@@ -89,6 +83,8 @@ module.exports=function(pool){
       });
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
+      // Fire-and-forget WhatsApp notification after email sent
+      notifyTokenRequest(pRows[0]).catch(e=>console.error('WA token notify error:',e));
     }catch(e){
       console.error('SendEmail:',e);
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
