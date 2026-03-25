@@ -28,6 +28,10 @@
 .reassign-wrap label{font-size:11px;font-weight:600;color:var(--tx3);white-space:nowrap}
 .reassign-wrap select{font-size:13px;flex:1;min-width:140px}
 .reassign-wrap button{white-space:nowrap}
+.resched-wrap{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.resched-wrap label{font-size:11px;font-weight:600;color:var(--tx3);white-space:nowrap;width:100%}
+.resched-wrap input{font-size:13px;flex:1;min-width:100px}
+.resched-wrap button{white-space:nowrap}
 .prop-count{font-size:11px;color:var(--tx3);margin-bottom:10px}
 .stage-pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600;white-space:nowrap;margin-left:6px}
 .stage-pill.s-sch{background:#dbeafe;color:#1e40af}
@@ -139,6 +143,12 @@ function renderProps(){
         <label>Re-assign To:</label>
         <select id="ra_${idx}"><option value="">Select...</option>${atOpts}</select>
         <button class="btn btn-out btn-sm" onclick="reassign('${p.uid}',${idx})">Update</button>
+      </div>`:''}
+      ${!dead&&p.schedule_submitted_at&&!p.visit_submitted_at?`<div class="resched-wrap">
+        <label>Reschedule Visit:</label>
+        <input type="date" id="rd_${idx}" value="${p.schedule_date?p.schedule_date.split('T')[0]:''}" min="${new Date().toISOString().split('T')[0]}">
+        <input type="time" id="rt_${idx}" value="${p.schedule_time||''}">
+        <button class="btn btn-out btn-sm" onclick="reschedule('${p.uid}',${idx})">Reschedule</button>
       </div>`:''}`;
 
     return`<div class="prop-card${dead?' dead':''}" id="pc_${idx}">
@@ -168,6 +178,28 @@ async function reassign(uid,idx){
     toast(`Re-assigned to ${newExec}`,'ok');
     // Update local data
     const p=allProps.find(x=>x.uid===uid);if(p)p.field_exec=newExec;
+    renderProps();
+  }catch(e){toast(e.message||'Failed','err')}
+}
+
+async function reschedule(uid,idx){
+  const dateEl=document.getElementById('rd_'+idx);
+  const timeEl=document.getElementById('rt_'+idx);
+  const newDate=dateEl.value;const newTime=timeEl.value;
+  if(!newDate){toast('Select a date','warn');return}
+  if(!newTime){toast('Select a time','warn');return}
+  const today=new Date().toISOString().split('T')[0];
+  if(newDate<today){toast('Cannot schedule in the past','err');return}
+  const dtFmt=new Date(newDate+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const [h,m]=newTime.split(':');const hr=parseInt(h);
+  const tmFmt=`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`;
+  if(!confirm(`Reschedule ${uid} to ${dtFmt} at ${tmFmt}?`))return;
+  try{
+    const r=await fetch(`${API}/api/visit/reschedule/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({schedule_date:newDate,schedule_time:newTime})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    toast(`Rescheduled to ${dtFmt} at ${tmFmt}`,'ok');
+    const p=allProps.find(x=>x.uid===uid);
+    if(p){p.schedule_date=newDate;p.schedule_time=newTime}
     renderProps();
   }catch(e){toast(e.message||'Failed','err')}
 }

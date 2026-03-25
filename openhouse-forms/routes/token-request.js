@@ -18,6 +18,7 @@ module.exports=function(pool){
       const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[d.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query(`UPDATE properties SET
+        unit_no=$27,tower_no=$28,floor=$29,area_sqft=$30,demand_price=$31,
         token_requested_by=$1,token_amount_requested=$2,
         cheque_image_url=$3,cheque_bank_name=$4,cheque_account_number=$5,cheque_ifsc=$6,
         registry_status=$7,occupancy_status=$8,key_handover_date=$9,
@@ -37,7 +38,8 @@ module.exports=function(pool){
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
-         d.has_loan||'No',d.token_remarks_printed||null,d.co_owner||null]);
+         d.has_loan||'No',d.token_remarks_printed||null,d.co_owner||null,
+         d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });

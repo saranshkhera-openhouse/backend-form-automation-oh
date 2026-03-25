@@ -61,5 +61,20 @@ module.exports=function(pool){
       notifyVisitReassigned(rows[0],field_exec).catch(e=>console.error('WA reassign notify error:',e));
     }catch(e){console.error('Reassign:',e);res.status(500).json({error:e.message})}
   });
+  // Reschedule visit date/time
+  router.post('/reschedule/:uid',async(req,res)=>{
+    try{
+      const{schedule_date,schedule_time}=req.body;
+      if(!schedule_date)return res.status(400).json({error:'Date is required'});
+      if(!schedule_time)return res.status(400).json({error:'Time is required'});
+      const today=new Date().toISOString().split('T')[0];
+      if(schedule_date<today)return res.status(400).json({error:'Cannot schedule in the past'});
+      const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      if(rows[0].visit_submitted_at)return res.status(400).json({error:'Visit already completed, cannot reschedule'});
+      await pool.query('UPDATE properties SET schedule_date=$1,schedule_time=$2,updated_at=NOW() WHERE uid=$3',[schedule_date,schedule_time,req.params.uid]);
+      res.json({success:true,uid:req.params.uid,schedule_date,schedule_time});
+    }catch(e){console.error('Reschedule:',e);res.status(500).json({error:e.message})}
+  });
   return router;
 };
