@@ -36,10 +36,12 @@
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .modal-overlay.open{display:flex}
-.modal-box{background:var(--sf);border-radius:12px;width:100%;max-width:780px;margin:20px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.modal-box{background:var(--sf);border-radius:12px;width:100%;max-width:860px;margin:20px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)}
 .modal-hdr h3{font-size:15px;font-weight:600;margin:0}
 .modal-body{padding:14px 18px;max-height:80vh;overflow-y:auto}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--bd);background:var(--bg);display:flex;gap:8px;align-items:center;justify-content:flex-end}
+.modal-footer .save-status{font-size:11px;color:var(--tx3);margin-right:auto}
 .prev-section{margin-bottom:14px}
 .prev-section-t{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
 .prev-section-t::after{content:'';flex:1;height:1px;background:var(--bd)}
@@ -50,6 +52,11 @@
 .prev-item .pi-value{font-size:12px;font-weight:500;color:var(--tx)}
 .prev-item .pi-value.empty{color:#bbb;font-style:italic;font-weight:300}
 .prev-item .pi-value a{color:var(--ac2);text-decoration:underline;font-size:11px}
+.prev-item input,.prev-item select,.prev-item textarea{width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--bd);border-radius:4px;font-family:inherit;color:var(--tx);background:var(--sf)}
+.prev-item input:focus,.prev-item select:focus,.prev-item textarea:focus{border-color:var(--ac);outline:none;box-shadow:0 0 0 2px rgba(99,102,241,.1)}
+.prev-item textarea{resize:vertical;min-height:40px}
+.prev-item select{padding:3px 4px}
+.prev-item .pi-readonly{font-size:12px;font-weight:500;color:var(--tx)}
 .prev-status{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .prev-step{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600}
 .prev-step.done{background:#e8f2ec;color:#2d5a3d}
@@ -122,6 +129,11 @@ tr.row-dead td{color:var(--red)!important;opacity:.7}
   <div class="modal-box">
     <div class="modal-hdr"><h3 id="modalTitle">Property Details</h3><button class="btn btn-out btn-sm" onclick="closeModal()">✕</button></div>
     <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <span class="save-status" id="saveStatus"></span>
+      <button class="btn btn-out btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-dark btn-sm" id="saveBtn" onclick="saveModal()">💾 Save Changes</button>
+    </div>
   </div>
 </div>
 <script>
@@ -263,25 +275,105 @@ function closeModal(){document.getElementById('uidModal').classList.remove('open
 document.getElementById('uidModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
+let currentModalUid=null;
 function pv(l,v){const isEmpty=v===null||v===undefined||v===''||v==='null';return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-value${isEmpty?' empty':''}">${isEmpty?'Not filled':v}</div></div>`}
 function pvLink(l,url){if(!url)return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-value empty">Not uploaded</div></div>`;return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-value"><a href="${url}" target="_blank">View ↗</a></div></div>`}
-function pvFull(l,v){const isEmpty=v===null||v===undefined||v===''||v==='null';return`<div class="prev-item full"><div class="pi-label">${l}</div><div class="pi-value${isEmpty?' empty':''}">${isEmpty?'Not filled':v}</div></div>`}
+function pvFull(l,v){const isEmpty=v===null||v===undefined||v===''||v==='null';return`<div class="prev-item full"><div class="pi-label">${l}</div><div class="pi-value${isEmpty?' empty':''}"><div style="white-space:pre-wrap">${isEmpty?'Not filled':v}</div></div></div>`}
 function parseJ(v){try{return typeof v==='string'?JSON.parse(v):v||[]}catch(e){return[]}}
 function fmtAmt(v){if(!v||isNaN(v))return null;const n=Number(v);if(n>=10000000)return'₹ '+(n/10000000).toFixed(2)+' Cr';if(n>=100000)return'₹ '+(n/100000).toFixed(2)+' L';return'₹ '+n.toLocaleString('en-IN')}
 
+function ef(l,name,val,type='text'){const v=val===null||val===undefined?'':val;
+  if(type==='date'){const dv=v?new Date(v).toISOString().split('T')[0]:'';return`<div class="prev-item"><div class="pi-label">${l}</div><input type="date" name="${name}" value="${dv}"></div>`}
+  if(type==='number')return`<div class="prev-item"><div class="pi-label">${l}</div><input type="number" name="${name}" value="${v}" step="any"></div>`;
+  return`<div class="prev-item"><div class="pi-label">${l}</div><input type="text" name="${name}" value="${String(v).replace(/"/g,'&quot;')}"></div>`}
+function efSel(l,name,val,opts){const v=val||'';const optHtml=opts.map(o=>`<option value="${o}"${o===v?' selected':''}>${o}</option>`).join('');
+  return`<div class="prev-item"><div class="pi-label">${l}</div><select name="${name}"><option value="">—</option>${optHtml}</select></div>`}
+function efArea(l,name,val){const v=val===null||val===undefined?'':val;return`<div class="prev-item full"><div class="pi-label">${l}</div><textarea name="${name}" rows="2">${String(v).replace(/</g,'&lt;')}</textarea></div>`}
+function efRO(l,v){const isEmpty=v===null||v===undefined||v===''||v==='null';return`<div class="prev-item"><div class="pi-label">${l}</div><div class="pi-readonly" style="font-size:12px;color:${isEmpty?'#bbb':'var(--tx)'}">${isEmpty?'—':v}</div></div>`}
+
 function buildModal(p){
+  currentModalUid=p.uid;
   const mb=document.getElementById('modalBody');
+  document.getElementById('saveStatus').textContent='';
   const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'Final/PSD',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
   let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
-  const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);const bals=parseJ(p.balcony_details);
-  let html=`<div class="prev-status">${statusHtml}</div>`;
-  html+=`<div class="prev-section"><div class="prev-section-t">Schedule (Form 1)</div><div class="prev-grid">${pv('UID',p.uid)}${pv('City',p.city)}${pv('Society',p.society_name)}${pv('Locality',p.locality)}${pv('Owner/Broker',p.owner_broker_name)}${pv('Contact',p.contact_no)}${pv('Unit',p.unit_no)}${pv('Tower',p.tower_no)}${pv('Floor',p.floor)}${pv('Area',p.area_sqft)}${pv('Config',p.configuration)}${pv('Ask',p.demand_price?p.demand_price+' L':null)}${pv('Source',p.source)}${pv('Schedule Date',fmtDt(p.schedule_date))}${pv('Schedule Time',p.schedule_time)}${pv('Assigned By',p.assigned_by)}${pv('Assigned To',p.field_exec)}${pv('Submitted',fmtDtFull(p.schedule_submitted_at))}</div></div>`;
-  html+=`<div class="prev-section"><div class="prev-section-t">Visit (Form 2)</div><div class="prev-grid">${pv('Extra Area',extras.length?extras.join(', '):null)}${pv('Bathrooms',p.bathrooms)}${pv('Balconies',p.balconies)}${pv('Gas Pipeline',p.gas_pipeline)}${pv('Parking',p.parking)}${pv('Furnishing',p.furnishing)}${pvFull('Furnishing Items',furnItems.length?furnItems.join(', '):null)}${pv('Lifts',p.total_lifts)}${pv('Floors',p.total_floors_tower)}${pv('Flats/Floor',p.total_flats_floor)}${pv('Exit Facing',p.exit_facing)}${pvLink('Compass',p.exit_compass_image)}${pvLink('Video',p.video_link)}${pvFull('Remarks',p.visit_remarks)}${pv('Submitted',fmtDtFull(p.visit_submitted_at))}</div></div>`;
-  html+=`<div class="prev-section"><div class="prev-section-t">Token Request (Form 3)</div><div class="prev-grid">${pv('Requested By',p.token_requested_by)}${pv('Token Amount',fmtAmt(p.token_amount_requested))}${pvLink('Cheque',p.cheque_image_url)}${pv('Bank A/C',p.cheque_account_number)}${pv('Bank Name',p.cheque_bank_name)}${pv('IFSC',p.cheque_ifsc)}${pv('Registry',p.registry_status)}${pv('Occupancy',p.occupancy_status)}${pv('Key Handover',p.key_handover_date?fmtDt(p.key_handover_date):null)}${pv('GSP',p.guaranteed_sale_price?p.guaranteed_sale_price+' L':null)}${pv('PG',fmtAmt(p.performance_guarantee))}${pv('Initial Period',p.initial_period?p.initial_period+' d':null)}${pv('Rent (Init)',p.rent_payable_initial_period)}${pv('Grace Period',p.grace_period?p.grace_period+' d':null)}${pv('Rent (Grace)',p.rent_payable_grace_period)}${pv('Outstanding Loan',fmtAmt(p.outstanding_loan))}${pv('Loan Bank',p.bank_name_loan)}${pv('Willing to Pay',p.loan_pay_willingness)}${pvFull('Documents',docs.length?docs.join(', '):null)}${pvFull('Remarks',p.token_remarks)}${pv('Submitted',fmtDtFull(p.token_submitted_at))}</div></div>`;
-  html+=`<div class="prev-section"><div class="prev-section-t">Deal Terms (Form 4)</div><div class="prev-grid">${pv('Token Amount',fmtAmt(p.deal_token_amount))}${pv('Bank',p.deal_bank_name)}${pv('A/C',p.deal_bank_account_number)}${pv('IFSC',p.deal_ifsc_code)}${pv('Transfer Date',p.deal_transfer_date?fmtDt(p.deal_transfer_date):null)}${pv('NEFT Ref',p.deal_neft_reference)}${pv('Submitted',fmtDtFull(p.token_deal_submitted_at))}</div></div>`;
-  html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 5)</div><div class="prev-grid">${pv('Remaining',fmtAmt(p.remaining_amount))}${pv('Bank',p.bank_name)}${pv('A/C',p.bank_account_number)}${pv('IFSC',p.ifsc_code)}${pv('Transfer Date',p.token_transfer_date?fmtDt(p.token_transfer_date):null)}${pv('NEFT Ref',p.neft_reference)}${pv('Outstanding Loan',fmtAmt(p.outstanding_loan))}${pv('Loan Bank',p.bank_name_loan)}${pv('Loan A/C',p.loan_account_number)}${pv('Willing to Pay',p.loan_pay_willingness)}${pv('Submitted',fmtDtFull(p.final_submitted_at))}</div></div>`;
-  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 6)</div><div class="prev-grid">${pv('Society Age',p.society_age_years?p.society_age_years+' yrs':null)}${pv('Maintenance',fmtAmt(p.maintenance_charges))}${pv('Move-in',fmtAmt(p.society_move_in_charges))}${pv('Electricity',fmtAmt(p.electricity_charges))}${pv('DG',fmtAmt(p.dg_charges))}${pv('Water',p.water_supply)}${pv('Circle Rate',fmtAmt(p.circle_rate))}${pv('Alpha/Beta',p.alpha_beta)}${pv('Beta %',p.beta_pct)}${pv('Loan Status',p.loan_status)}${pv('Seller Loc',p.seller_location)}${pv('Parking No.',p.parking_number)}${pv('Submitted',fmtDtFull(p.listing_submitted_at))}</div></div>`;
+  const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
+
+  let html=`<div class="prev-status">${statusHtml}
+    <label style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red);font-weight:600;cursor:pointer">
+      <input type="checkbox" name="is_dead" ${p.is_dead?'checked':''} style="margin:0"> Cancelled
+    </label></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Schedule (Form 1)</div><div class="prev-grid">
+    ${efRO('UID',p.uid)}${ef('City','city',p.city)}${ef('Society','society_name',p.society_name)}
+    ${ef('Locality','locality',p.locality)}${ef('Owner/Broker','owner_broker_name',p.owner_broker_name)}${ef('First Name','first_name',p.first_name)}
+    ${ef('Last Name','last_name',p.last_name)}${ef('Contact','contact_no',p.contact_no)}${ef('Co-owner','co_owner',p.co_owner)}
+    ${ef('Unit No','unit_no',p.unit_no)}${ef('Tower No','tower_no',p.tower_no)}${ef('Floor','floor',p.floor,'number')}
+    ${ef('Area (sqft)','area_sqft',p.area_sqft,'number')}${ef('Configuration','configuration',p.configuration)}${ef('Ask Price (L)','demand_price',p.demand_price,'number')}
+    ${ef('Source','source',p.source)}${ef('Assigned By','assigned_by',p.assigned_by)}${ef('Assigned To','field_exec',p.field_exec)}
+    ${ef('Schedule Date','schedule_date',p.schedule_date,'date')}${ef('Schedule Time','schedule_time',p.schedule_time)}${efRO('Submitted',fmtDtFull(p.schedule_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Visit (Form 2)</div><div class="prev-grid">
+    ${efRO('Extra Area',extras.length?extras.join(', '):'—')}${ef('Bathrooms','bathrooms',p.bathrooms,'number')}${ef('Balconies','balconies',p.balconies,'number')}
+    ${efSel('Gas Pipeline','gas_pipeline',p.gas_pipeline,['Yes','No','Provision available'])}${efSel('Parking','parking',p.parking,['Covered','Open','Stilt','No Parking','N/A'])}${efSel('Furnishing','furnishing',p.furnishing,['Fully Furnished','Semi Furnished','Unfurnished'])}
+    ${efRO('Furnishing Items',furnItems.length?furnItems.join(', '):'—')}
+    ${ef('Total Lifts','total_lifts',p.total_lifts,'number')}${ef('Floors in Tower','total_floors_tower',p.total_floors_tower,'number')}${ef('Flats/Floor','total_flats_floor',p.total_flats_floor,'number')}
+    ${ef('Exit Facing','exit_facing',p.exit_facing)}${pvLink('Compass',p.exit_compass_image)}${ef('Video Link','video_link',p.video_link)}
+    ${efArea('Visit Remarks','visit_remarks',p.visit_remarks)}${efRO('Submitted',fmtDtFull(p.visit_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Token Request (Form 3)</div><div class="prev-grid">
+    ${ef('Requested By','token_requested_by',p.token_requested_by)}${ef('Token Amount (₹)','token_amount_requested',p.token_amount_requested,'number')}${pvLink('Cheque Image',p.cheque_image_url)}
+    ${ef('Cheque Bank','cheque_bank_name',p.cheque_bank_name)}${ef('Cheque A/C','cheque_account_number',p.cheque_account_number)}${ef('Cheque IFSC','cheque_ifsc',p.cheque_ifsc)}
+    ${efSel('Registry','registry_status',p.registry_status,['Registered','Unregistered','Conveyance Done'])}${efSel('Occupancy','occupancy_status',p.occupancy_status,['Vacant','Tenant','Self Occupied'])}${ef('Key Handover','key_handover_date',p.key_handover_date,'date')}
+    ${ef('GSP (Lakhs)','guaranteed_sale_price',p.guaranteed_sale_price,'number')}${ef('PG (₹)','performance_guarantee',p.performance_guarantee,'number')}${ef('Initial Period (d)','initial_period',p.initial_period,'number')}
+    ${ef('Rent (Initial)','rent_payable_initial_period',p.rent_payable_initial_period)}${ef('Grace Period (d)','grace_period',p.grace_period,'number')}${ef('Rent (Grace)','rent_payable_grace_period',p.rent_payable_grace_period)}
+    ${efSel('Has Loan?','has_loan',p.has_loan,['Yes','No'])}${ef('Outstanding Loan (₹)','outstanding_loan',p.outstanding_loan,'number')}${ef('Loan Bank','bank_name_loan',p.bank_name_loan)}
+    ${ef('Loan A/C','loan_account_number',p.loan_account_number)}${efSel('Willing to Pay','loan_pay_willingness',p.loan_pay_willingness,['Yes','No'])}${efRO('Documents',docs.length?docs.join(', '):'—')}
+    ${efArea('Remarks (Printed)','token_remarks_printed',p.token_remarks_printed)}${efArea('Remarks (Internal)','token_remarks',p.token_remarks)}${efRO('Submitted',fmtDtFull(p.token_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Deal Terms (Form 4)</div><div class="prev-grid">
+    ${ef('Token Amount (₹)','deal_token_amount',p.deal_token_amount,'number')}${ef('Bank Name','deal_bank_name',p.deal_bank_name)}${ef('Account No','deal_bank_account_number',p.deal_bank_account_number)}
+    ${ef('IFSC','deal_ifsc_code',p.deal_ifsc_code)}${ef('Transfer Date','deal_transfer_date',p.deal_transfer_date,'date')}${ef('NEFT Ref','deal_neft_reference',p.deal_neft_reference)}
+    ${efRO('Submitted',fmtDtFull(p.token_deal_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 5)</div><div class="prev-grid">
+    ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Bank Name','bank_name',p.bank_name)}${ef('Account No','bank_account_number',p.bank_account_number)}
+    ${ef('IFSC','ifsc_code',p.ifsc_code)}${ef('Transfer Date','token_transfer_date',p.token_transfer_date,'date')}${ef('NEFT Ref','neft_reference',p.neft_reference)}
+    ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 6)</div><div class="prev-grid">
+    ${ef('Asking Price (L)','listing_asking_price',p.listing_asking_price,'number')}${ef('Availability','listing_availability',p.listing_availability)}${ef('Society Age (yrs)','society_age_years',p.society_age_years,'number')}
+    ${ef('Total Units','total_units',p.total_units,'number')}${ef('Maintenance (₹)','maintenance_charges',p.maintenance_charges,'number')}${ef('Move-in (₹)','society_move_in_charges',p.society_move_in_charges,'number')}
+    ${ef('Electricity (₹)','electricity_charges',p.electricity_charges,'number')}${ef('DG Charges (₹)','dg_charges',p.dg_charges,'number')}${ef('Water Supply','water_supply',p.water_supply)}
+    ${efSel('Alpha/Beta','alpha_beta',p.alpha_beta,['Alpha','Beta'])}${ef('Beta %','beta_pct',p.beta_pct,'number')}${ef('Loan Status','loan_status',p.loan_status)}
+    ${ef('Seller Location','seller_location',p.seller_location)}${ef('Circle Rate (₹)','circle_rate',p.circle_rate,'number')}${ef('Parking Number','parking_number',p.parking_number)}
+    ${efArea('Highlights','listing_highlights',p.listing_highlights)}${efArea('Description','listing_description',p.listing_description)}${efRO('Submitted',fmtDtFull(p.listing_submitted_at))}
+  </div></div>`;
+
   mb.innerHTML=html;
+}
+
+async function saveModal(){
+  if(!currentModalUid)return;
+  const btn=document.getElementById('saveBtn');const status=document.getElementById('saveStatus');
+  btn.disabled=true;btn.textContent='Saving...';status.textContent='';
+  try{
+    const body={};
+    document.querySelectorAll('#modalBody input[name],#modalBody select[name],#modalBody textarea[name]').forEach(el=>{
+      if(el.type==='checkbox')body[el.name]=el.checked;
+      else body[el.name]=el.value;
+    });
+    const r=await fetch(`${API}/api/admin/property/${currentModalUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    status.textContent='✓ Saved '+new Date().toLocaleTimeString();status.style.color='var(--grn)';
+    loadData();
+  }catch(e){status.textContent='✗ '+e.message;status.style.color='var(--red)'}
+  finally{btn.disabled=false;btn.textContent='💾 Save Changes'}
 }
 
 document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.s;if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=c;sortDir='asc'}render()})});
@@ -308,7 +400,7 @@ document.addEventListener('DOMContentLoaded',loadUsers);
       <div><strong style="font-size:14px">User Management</strong><div style="font-size:10px;color:var(--tx3)">Manage access & permissions</div></div>
       <!-- <button class="btn btn-dark btn-sm" onclick="addUser()">+ Add User</button> -->
     </div>
-    <div><table class="tbl"><thead><tr><th style="width:45px">#</th><th>Email</th><th>Name</th><th>Form Access</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <div><table class="tbl"><thead><tr><th style="width:30px">#</th><th>Email</th><th>Name</th><th>Form Access</th><th>Role</th><th>Status</th><th></th></tr></thead>
     <tbody id="utb"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tx3)">Loading...</td></tr></tbody></table></div>
   </div>
 </div>

@@ -88,6 +88,43 @@ app.get('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
     if(!rows.length)return res.status(404).json({error:'Not found'});res.json(rows[0])}catch(e){console.error('Property detail error:',e.message);res.status(500).json({error:e.message})}
 });
 
+// Admin: Update any property fields
+app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
+  try{
+    const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[req.params.uid]);
+    if(!rows.length)return res.status(404).json({error:'UID not found'});
+    const d=req.body;delete d.uid;delete d.created_at;delete d.updated_at;
+    const allowed=new Set(['city','locality','society_name','unit_no','tower_no','floor','area_sqft','configuration',
+      'demand_price','source','owner_broker_name','first_name','last_name','contact_no','assigned_by','field_exec',
+      'schedule_date','schedule_time','co_owner',
+      'extra_area','bathrooms','balconies','gas_pipeline','parking','furnishing','furnishing_details',
+      'total_lifts','total_floors_tower','total_flats_floor','exit_facing','video_link','visit_remarks','sunlight',
+      'possession_status','tentative_handover_date','club_facility',
+      'token_requested_by','token_amount_requested','registry_status','occupancy_status','key_handover_date',
+      'guaranteed_sale_price','performance_guarantee','initial_period','rent_payable_initial_period',
+      'grace_period','rent_payable_grace_period','outstanding_loan','bank_name_loan','loan_account_number',
+      'loan_pay_willingness','has_loan','token_remarks','token_remarks_printed','inclusions','papers_available',
+      'cheque_bank_name','cheque_account_number','cheque_ifsc',
+      'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference',
+      'remaining_amount','bank_name','bank_account_number','ifsc_code','token_transfer_date','neft_reference',
+      'listing_asking_price','listing_availability','listing_highlights','listing_description',
+      'society_age_years','total_units','maintenance_charges','society_move_in_charges','electricity_charges',
+      'water_supply','dg_charges','alpha_beta','beta_pct','loan_status','seller_location',
+      'current_occupancy_pct','circle_rate','parking_number','is_dead']);
+    const sets=[];const vals=[];let i=1;
+    for(const[k,v]of Object.entries(d)){
+      if(!allowed.has(k))continue;
+      sets.push(`${k}=$${i}`);vals.push(v===''?null:v);i++;
+    }
+    if(!sets.length)return res.status(400).json({error:'No valid fields to update'});
+    sets.push(`updated_at=NOW()`);
+    vals.push(req.params.uid);
+    await pool.query(`UPDATE properties SET ${sets.join(',')} WHERE uid=$${i}`,vals);
+    const{rows:updated}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+    res.json({success:true,property:updated[0]});
+  }catch(e){console.error('Admin update error:',e.message);res.status(500).json({error:e.message})}
+});
+
 // ── My Properties — user sees only their linked properties ──
 app.get('/api/my-properties', isAuthenticated, async(req,res)=>{
   try{const vis=visibilityFilter(req.user);
