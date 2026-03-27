@@ -2,6 +2,7 @@
 
 function fmtDate(d){if(!d)return '—';const dt=new Date(d);const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${String(dt.getDate()).padStart(2,'0')} ${m[dt.getMonth()]} ${dt.getFullYear()}`}
 function fmtAmt(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000)return '₹ '+(n/10000000).toFixed(2)+' Crores';if(n>=100000)return '₹ '+(n/100000).toFixed(2)+' Lakhs';return '₹ '+n.toLocaleString('en-IN')}
+function fmtPG(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000){const x=Math.floor(n/10000)/1000;return '₹ '+x.toFixed(3)+' Crores'}if(n>=100000){const x=Math.floor(n/100)/1000;return '₹ '+x.toFixed(3)+' Lakhs'}return '₹ '+n.toLocaleString('en-IN')}
 function fmtCurrency(v){if(!v||isNaN(v))return '—';return '₹ '+Number(v).toLocaleString('en-IN')}
 function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+(n/100).toFixed(2)+' Crores';return '₹ '+n+' Lakhs'}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
@@ -122,7 +123,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   </div>
   <div class="greeting-strip">
     <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
-    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtAmt(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
+    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
     ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div></div>`:''}
   </div>
   <div class="section-label">Seller Details</div>
