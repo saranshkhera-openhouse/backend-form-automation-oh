@@ -4,8 +4,7 @@ function fmtDate(d){if(!d)return '—';const dt=new Date(d);const m=['Jan','Feb'
 function fmtAmt(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000)return '₹ '+(n/10000000).toFixed(2)+' Crores';if(n>=100000)return '₹ '+(n/100000).toFixed(2)+' Lakhs';return '₹ '+n.toLocaleString('en-IN')}
 function fmtPG(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000){const x=Math.floor(n/10000)/1000;return '₹ '+x.toFixed(3)+' Crores'}if(n>=100000){const x=Math.floor(n/100)/1000;return '₹ '+x.toFixed(3)+' Lakhs'}return '₹ '+n.toLocaleString('en-IN')}
 function fmtCurrency(v){if(!v||isNaN(v))return '—';return '₹ '+Number(v).toLocaleString('en-IN')}
-function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+(n/100).toFixed(2)+' Crores';return '₹ '+n+' Lakhs'}
-function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+parseFloat((n/100).toFixed(4))+' Crores';return '₹ '+parseFloat(n.toFixed(4))+' Lakhs'}function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
 function pill(val,type){return val?`<span class="pill ${type}">${esc(val)}</span>`:'—'}
 function fval(v,cls=''){if(!v||v==='null')return `<div class="f-value empty">—</div>`;return `<div class="f-value ${cls}">${esc(String(v))}</div>`}
 
