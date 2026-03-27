@@ -154,7 +154,9 @@ function sendInterakt(phone, templateName, bodyValues) {
 // ═══════════════════════════════════════════════════════
 function fmtDate(d) {
   if (!d) return '-';
-  return new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const dt = d instanceof Date ? d : new Date(d + 'T00:00');
+  if (isNaN(dt)) return '-';
+  return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 function fmtTime(t) {
   if (!t) return '-';
