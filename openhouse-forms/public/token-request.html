@@ -20,7 +20,7 @@
       <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="d_owner" class="pre" readonly></div>
         <div class="fg"><label>Phone</label><input type="text" id="d_phone" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Co-owner (if any)</label><input type="text" name="co_owner" id="d_coowner"></div>
-        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="d_coowner_number" placeholder="Phone number"></div></div>
+        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="d_coowner_number" placeholder="Phone number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div></div>
       <div class="r3">
         <div class="fg"><label>Unit No <span class="req">*</span></label><input type="text" name="unit_no" id="d_unit" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Tower No <span class="req">*</span></label><input type="text" name="tower_no" id="d_tower" required><div class="err-msg">Required</div></div>

@@ -31,7 +31,7 @@
       <div class="fg"><label>Owner Email <span class="req">*</span></label><input type="email" name="owner_email" id="dOwnerEmail" required placeholder="owner@example.com"><div class="err-msg">Required</div></div>
       <div class="r2">
         <div class="fg"><label>Co-owner Email</label><input type="email" name="co_owner_email" id="dCoOwnerEmail" placeholder="co-owner@example.com (optional)"></div>
-        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="dCoOwnerNumber" placeholder="Phone number (optional)"></div>
+        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="dCoOwnerNumber" placeholder="Phone number (optional)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
       </div>
     </div>
 
@@ -79,12 +79,12 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('dAc').value=propData.deal_bank_account_number||propData.cheque_account_number||'';
     document.getElementById('dBank').value=propData.deal_bank_name||propData.cheque_bank_name||'';
     document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';
-    // Form 4 own fields (editable)
-    if(propData.deal_transfer_date)document.getElementById('dDate').value=propData.deal_transfer_date.split('T')[0];
-    if(propData.deal_neft_reference)document.getElementById('dRef').value=propData.deal_neft_reference;
-    if(propData.owner_email)document.getElementById('dOwnerEmail').value=propData.owner_email;
-    if(propData.co_owner_email)document.getElementById('dCoOwnerEmail').value=propData.co_owner_email;
-    if(propData.co_owner_number)document.getElementById('dCoOwnerNumber').value=propData.co_owner_number;
+    // Form 4 own fields (editable) — always reset to avoid stale values from previous UID
+    document.getElementById('dDate').value=propData.deal_transfer_date?propData.deal_transfer_date.split('T')[0]:'';
+    document.getElementById('dRef').value=propData.deal_neft_reference||'';
+    document.getElementById('dOwnerEmail').value=propData.owner_email||'';
+    document.getElementById('dCoOwnerEmail').value=propData.co_owner_email||'';
+    document.getElementById('dCoOwnerNumber').value=propData.co_owner_number||'';
     document.getElementById('dealForm').style.display='block';
     document.getElementById('previewSection').classList.remove('show');
     document.getElementById('previewBtn').textContent='Preview Deal Terms';
