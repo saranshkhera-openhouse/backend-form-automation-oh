@@ -145,6 +145,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='token_remarks_printed') THEN ALTER TABLE properties ADD COLUMN token_remarks_printed TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_email') THEN ALTER TABLE properties ADD COLUMN owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='co_owner_email') THEN ALTER TABLE properties ADD COLUMN co_owner_email TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='co_owner_number') THEN ALTER TABLE properties ADD COLUMN co_owner_number TEXT; END IF;
 END $$;
 `;
 

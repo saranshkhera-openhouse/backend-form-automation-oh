@@ -337,6 +337,7 @@ function buildModal(p){
   html+=`<div class="prev-section"><div class="prev-section-t">Deal Terms (Form 4)</div><div class="prev-grid">
     ${ef('Token Amount (₹)','deal_token_amount',p.deal_token_amount,'number')}${ef('Bank Name','deal_bank_name',p.deal_bank_name)}${ef('Account No','deal_bank_account_number',p.deal_bank_account_number)}
     ${ef('IFSC','deal_ifsc_code',p.deal_ifsc_code)}${ef('Transfer Date','deal_transfer_date',p.deal_transfer_date,'date')}${ef('NEFT Ref','deal_neft_reference',p.deal_neft_reference)}
+    ${ef('Owner Email','owner_email',p.owner_email)}${ef('Co-owner Email','co_owner_email',p.co_owner_email)}${ef('Co-owner Number','co_owner_number',p.co_owner_number)}
     ${efRO('Submitted',fmtDtFull(p.token_deal_submitted_at))}
   </div></div>`;
 

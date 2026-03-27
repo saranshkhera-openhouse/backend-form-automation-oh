@@ -19,7 +19,8 @@
         <div class="fg"><label>Locality</label><input type="text" id="d_loc" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="d_owner" class="pre" readonly></div>
         <div class="fg"><label>Phone</label><input type="text" id="d_phone" class="pre" readonly></div></div>
-      <div class="fg"><label>Co-owner (if any)</label><input type="text" name="co_owner" id="d_coowner"></div>
+      <div class="r2"><div class="fg"><label>Co-owner (if any)</label><input type="text" name="co_owner" id="d_coowner"></div>
+        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="d_coowner_number" placeholder="Phone number"></div></div>
       <div class="r3">
         <div class="fg"><label>Unit No <span class="req">*</span></label><input type="text" name="unit_no" id="d_unit" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Tower No <span class="req">*</span></label><input type="text" name="tower_no" id="d_tower" required><div class="err-msg">Required</div></div>
@@ -251,6 +252,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('d_soc').value=d.society_name||'';document.getElementById('d_loc').value=d.locality||'';
     document.getElementById('d_owner').value=d.owner_broker_name||'';document.getElementById('d_phone').value=d.contact_no||'';
     document.getElementById('d_coowner').value=d.co_owner||'';
+    document.getElementById('d_coowner_number').value=d.co_owner_number||'';
     document.getElementById('d_unit').value=d.unit_no||'';document.getElementById('d_tower').value=d.tower_no||'';
     document.getElementById('d_floor').value=d.floor??'';document.getElementById('d_area').value=d.area_sqft??'';
     document.getElementById('d_cfg').value=configDisplay(d.configuration,d.extra_area);
