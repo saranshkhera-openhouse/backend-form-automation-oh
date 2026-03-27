@@ -202,8 +202,8 @@ async function updateProp(uid,idx){
       if(newTime)p.schedule_time=newTime;
     }
     renderProps();
-    // Fire WhatsApp notification
-    fetch(`${API}/api/visit/notify/${uid}`,{method:'POST'}).catch(()=>{});
+    // Fire WhatsApp notification only if rescheduled without reassign (reassign already notifies via backend)
+    if(!newExec&&(newDate||newTime))fetch(`${API}/api/visit/notify/${uid}`,{method:'POST'}).catch(()=>{});
   }catch(e){toast(e.message||'Failed','err')}
 }
 
