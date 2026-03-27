@@ -24,14 +24,13 @@
 .pd-label{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:500}
 .pd-value{font-size:11px;font-weight:500;color:var(--tx);margin-top:1px}
 .pd-value.empty{color:#bbb;font-style:italic;font-weight:300}
-.reassign-wrap{margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.reassign-wrap label{font-size:11px;font-weight:600;color:var(--tx3);white-space:nowrap}
-.reassign-wrap select{font-size:13px;flex:1;min-width:140px}
-.reassign-wrap button{white-space:nowrap}
-.resched-wrap{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.resched-wrap label{font-size:11px;font-weight:600;color:var(--tx3);white-space:nowrap;width:100%}
-.resched-wrap input{font-size:13px;flex:1;min-width:100px}
-.resched-wrap button{white-space:nowrap}
+.update-wrap{margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.update-wrap label{font-size:11px;font-weight:600;color:var(--tx3);white-space:nowrap}
+.update-wrap select{font-size:13px;flex:1;min-width:140px}
+.update-wrap input{font-size:13px;flex:1;min-width:100px}
+.update-wrap .uw-row{display:flex;align-items:center;gap:6px;width:100%;flex-wrap:wrap}
+.update-wrap .uw-btns{display:flex;gap:6px;width:100%;margin-top:4px}
+.update-wrap button{white-space:nowrap}
 .prop-count{font-size:11px;color:var(--tx3);margin-bottom:10px}
 .stage-pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600;white-space:nowrap;margin-left:6px}
 .stage-pill.s-sch{background:#dbeafe;color:#1e40af}
@@ -139,16 +138,20 @@ function renderProps(){
         ${pdv('Schedule Date',fmtDt(p.schedule_date))}${pdv('Schedule Time',fmtTime12(p.schedule_time))}
         ${pdv('Assigned By',p.assigned_by)}${pdv('Assigned To',p.field_exec)}
       </div>
-      ${!dead&&p.schedule_submitted_at?`<div class="reassign-wrap">
-        <label>Re-assign To:</label>
-        <select id="ra_${idx}"><option value="">Select...</option>${atOpts}</select>
-        <button class="btn btn-out btn-sm" onclick="reassign('${p.uid}',${idx})">Update</button>
-      </div>`:''}
-      ${!dead&&p.schedule_submitted_at&&!p.visit_submitted_at?`<div class="resched-wrap">
-        <label>Reschedule Visit:</label>
-        <input type="date" id="rd_${idx}" value="${p.schedule_date?p.schedule_date.split('T')[0]:''}" min="${new Date().toISOString().split('T')[0]}">
-        <input type="time" id="rt_${idx}" value="${p.schedule_time||''}">
-        <button class="btn btn-out btn-sm" onclick="reschedule('${p.uid}',${idx})">Reschedule</button>
+      ${!dead&&p.schedule_submitted_at&&!p.visit_submitted_at?`<div class="update-wrap">
+        <div class="uw-row">
+          <label>Re-assign To:</label>
+          <select id="ra_${idx}"><option value="">Select...</option>${atOpts}</select>
+        </div>
+        <div class="uw-row">
+          <label>Reschedule:</label>
+          <input type="date" id="rd_${idx}" value="${p.schedule_date?p.schedule_date.split('T')[0]:''}" min="${new Date().toISOString().split('T')[0]}">
+          <input type="time" id="rt_${idx}" value="${p.schedule_time||''}">
+        </div>
+        <div class="uw-btns">
+          <button class="btn btn-out btn-sm" onclick="updateProp('${p.uid}',${idx})">Update</button>
+          <button class="btn btn-out btn-sm" onclick="triggerWA('${p.uid}')">📲 WhatsApp</button>
+        </div>
       </div>`:''}`;
 
     return`<div class="prop-card${dead?' dead':''}" id="pc_${idx}">
@@ -167,40 +170,48 @@ function renderProps(){
 
 function toggleCard(idx){document.getElementById('pc_'+idx).classList.toggle('open')}
 
-async function reassign(uid,idx){
-  const sel=document.getElementById('ra_'+idx);
-  const newExec=sel.value;
-  if(!newExec){toast('Select a person','warn');return}
-  if(!confirm(`Re-assign ${uid} to ${newExec}?`))return;
+async function updateProp(uid,idx){
+  const newExec=document.getElementById('ra_'+idx).value;
+  const newDate=document.getElementById('rd_'+idx).value;
+  const newTime=document.getElementById('rt_'+idx).value;
+  if(!newExec&&!newDate&&!newTime){toast('Change at least one field','warn');return}
+  if(newDate){
+    const today=new Date().toISOString().split('T')[0];
+    if(newDate<today){toast('Cannot schedule in the past','err');return}
+  }
+  const parts=[];
+  if(newExec)parts.push(`Re-assign to ${newExec}`);
+  if(newDate||newTime){
+    const dtFmt=newDate?new Date(newDate+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'(same)';
+    let tmFmt='(same)';
+    if(newTime){const[h,m]=newTime.split(':');const hr=parseInt(h);tmFmt=`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`}
+    parts.push(`Reschedule to ${dtFmt} at ${tmFmt}`);
+  }
+  if(!confirm(`${uid}:\n${parts.join('\n')}\n\nProceed?`))return;
+  const body={};
+  if(newExec)body.field_exec=newExec;
+  if(newDate)body.schedule_date=newDate;
+  if(newTime)body.schedule_time=newTime;
   try{
-    const r=await fetch(`${API}/api/visit/reassign/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({field_exec:newExec})});
+    const r=await fetch(`${API}/api/visit/update/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
-    toast(`Re-assigned to ${newExec}`,'ok');
-    // Update local data
-    const p=allProps.find(x=>x.uid===uid);if(p)p.field_exec=newExec;
+    toast('Updated successfully','ok');
+    const p=allProps.find(x=>x.uid===uid);
+    if(p){
+      if(newExec)p.field_exec=newExec;
+      if(newDate)p.schedule_date=newDate;
+      if(newTime)p.schedule_time=newTime;
+    }
     renderProps();
   }catch(e){toast(e.message||'Failed','err')}
 }
 
-async function reschedule(uid,idx){
-  const dateEl=document.getElementById('rd_'+idx);
-  const timeEl=document.getElementById('rt_'+idx);
-  const newDate=dateEl.value;const newTime=timeEl.value;
-  if(!newDate){toast('Select a date','warn');return}
-  if(!newTime){toast('Select a time','warn');return}
-  const today=new Date().toISOString().split('T')[0];
-  if(newDate<today){toast('Cannot schedule in the past','err');return}
-  const dtFmt=new Date(newDate+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const [h,m]=newTime.split(':');const hr=parseInt(h);
-  const tmFmt=`${hr===0?12:hr>12?hr-12:hr}:${m} ${hr>=12?'PM':'AM'}`;
-  if(!confirm(`Reschedule ${uid} to ${dtFmt} at ${tmFmt}?`))return;
+async function triggerWA(uid){
+  if(!confirm(`Resend WhatsApp notification for ${uid}?`))return;
   try{
-    const r=await fetch(`${API}/api/visit/reschedule/${uid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({schedule_date:newDate,schedule_time:newTime})});
+    const r=await fetch(`${API}/api/visit/notify/${uid}`,{method:'POST'});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
-    toast(`Rescheduled to ${dtFmt} at ${tmFmt}`,'ok');
-    const p=allProps.find(x=>x.uid===uid);
-    if(p){p.schedule_date=newDate;p.schedule_time=newTime}
-    renderProps();
+    toast('WhatsApp notification sent','ok');
   }catch(e){toast(e.message||'Failed','err')}
 }
 

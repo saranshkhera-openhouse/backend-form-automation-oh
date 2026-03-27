@@ -1,6 +1,6 @@
 const express=require('express'),router=express.Router();
 const{visibilityFilter}=require('../utils/visibility');
-const{notifyVisitCompleted,notifyVisitReassigned,notifyVisitCancelled}=require('../utils/whatsapp');
+const{notifyVisitCompleted,notifyVisitReassigned,notifyVisitCancelled,notifyVisitScheduled}=require('../utils/whatsapp');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -75,6 +75,44 @@ module.exports=function(pool){
       await pool.query('UPDATE properties SET schedule_date=$1,schedule_time=$2,updated_at=NOW() WHERE uid=$3',[schedule_date,schedule_time,req.params.uid]);
       res.json({success:true,uid:req.params.uid,schedule_date,schedule_time});
     }catch(e){console.error('Reschedule:',e);res.status(500).json({error:e.message})}
+  });
+  // Combined update: reassign + reschedule in one call
+  router.post('/update/:uid',async(req,res)=>{
+    try{
+      const{field_exec,schedule_date,schedule_time}=req.body;
+      const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      if(rows[0].visit_submitted_at)return res.status(400).json({error:'Visit already completed'});
+      const sets=[];const vals=[];let n=1;
+      if(field_exec){sets.push(`field_exec=$${n++}`);vals.push(field_exec)}
+      if(schedule_date){
+        const today=new Date().toISOString().split('T')[0];
+        if(schedule_date<today)return res.status(400).json({error:'Cannot schedule in the past'});
+        sets.push(`schedule_date=$${n++}`);vals.push(schedule_date);
+      }
+      if(schedule_time){sets.push(`schedule_time=$${n++}`);vals.push(schedule_time)}
+      if(!sets.length)return res.status(400).json({error:'Nothing to update'});
+      sets.push(`updated_at=NOW()`);
+      vals.push(req.params.uid);
+      await pool.query(`UPDATE properties SET ${sets.join(',')} WHERE uid=$${n}`,vals);
+      const resp={success:true,uid:req.params.uid};
+      if(field_exec)resp.field_exec=field_exec;
+      if(schedule_date)resp.schedule_date=schedule_date;
+      if(schedule_time)resp.schedule_time=schedule_time;
+      res.json(resp);
+      // Notify if reassigned
+      if(field_exec)notifyVisitReassigned(rows[0],field_exec).catch(e=>console.error('WA reassign notify error:',e));
+    }catch(e){console.error('Update:',e);res.status(500).json({error:e.message})}
+  });
+  // Resend WhatsApp scheduled notification
+  router.post('/notify/:uid',async(req,res)=>{
+    try{
+      const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      if(!rows[0].schedule_submitted_at)return res.status(400).json({error:'Schedule not submitted'});
+      await notifyVisitScheduled(rows[0]);
+      res.json({success:true,uid:req.params.uid});
+    }catch(e){console.error('Notify:',e);res.status(500).json({error:e.message})}
   });
   return router;
 };
