@@ -143,6 +143,8 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='visit_remarks') THEN ALTER TABLE properties ADD COLUMN visit_remarks TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='has_loan') THEN ALTER TABLE properties ADD COLUMN has_loan TEXT DEFAULT 'No'; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='token_remarks_printed') THEN ALTER TABLE properties ADD COLUMN token_remarks_printed TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_email') THEN ALTER TABLE properties ADD COLUMN owner_email TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='co_owner_email') THEN ALTER TABLE properties ADD COLUMN co_owner_email TEXT; END IF;
 END $$;
 `;
 

@@ -27,6 +27,11 @@
         <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
       </div></div>
 
+    <div class="card" style="border-left:3px solid var(--ac)"><div class="card-t">Owner / Co-owner Email</div>
+      <div class="fg"><label>Owner Email <span class="req">*</span></label><input type="email" name="owner_email" id="dOwnerEmail" required placeholder="owner@example.com"><div class="err-msg">Required</div></div>
+      <div class="fg"><label>Co-owner Email</label><input type="email" name="co_owner_email" id="dCoOwnerEmail" placeholder="co-owner@example.com (optional)"></div>
+    </div>
+
     <div class="btn-row">
       <button type="button" class="btn btn-out" id="previewBtn">Preview Deal Terms</button>
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
@@ -74,6 +79,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     // Form 4 own fields (editable)
     if(propData.deal_transfer_date)document.getElementById('dDate').value=propData.deal_transfer_date.split('T')[0];
     if(propData.deal_neft_reference)document.getElementById('dRef').value=propData.deal_neft_reference;
+    if(propData.owner_email)document.getElementById('dOwnerEmail').value=propData.owner_email;
+    if(propData.co_owner_email)document.getElementById('dCoOwnerEmail').value=propData.co_owner_email;
     document.getElementById('dealForm').style.display='block';
     document.getElementById('previewSection').classList.remove('show');
     document.getElementById('previewBtn').textContent='Preview Deal Terms';
@@ -105,7 +112,8 @@ document.getElementById('previewBtn').addEventListener('click',async()=>{
     pRow('Outstanding Loan',fmt(d.outstanding_loan))+pRow('Loan Willingness',d.loan_pay_willingness);
   document.getElementById('pcAccount').innerHTML=
     pRow('Bank Name',document.getElementById('dBank').value)+pRow('A/C No.',document.getElementById('dAc').value)+pRow('IFSC',document.getElementById('dIfsc').value)+
-    pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value);
+    pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value)+
+    pRow('Owner Email',document.getElementById('dOwnerEmail').value)+pRow('Co-owner Email',document.getElementById('dCoOwnerEmail').value);
   let sel=[];
   try{
     const raw=d.documents_available;
