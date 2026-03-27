@@ -150,7 +150,6 @@ function renderProps(){
         </div>
         <div class="uw-btns">
           <button class="btn btn-out btn-sm" onclick="updateProp('${p.uid}',${idx})">Update</button>
-          <button class="btn btn-out btn-sm" onclick="triggerWA('${p.uid}')">📲 WhatsApp</button>
         </div>
       </div>`:''}`;
 
@@ -203,15 +202,8 @@ async function updateProp(uid,idx){
       if(newTime)p.schedule_time=newTime;
     }
     renderProps();
-  }catch(e){toast(e.message||'Failed','err')}
-}
-
-async function triggerWA(uid){
-  if(!confirm(`Resend WhatsApp notification for ${uid}?`))return;
-  try{
-    const r=await fetch(`${API}/api/visit/notify/${uid}`,{method:'POST'});
-    const d=await r.json();if(!r.ok)throw new Error(d.error);
-    toast('WhatsApp notification sent','ok');
+    // Fire WhatsApp notification
+    fetch(`${API}/api/visit/notify/${uid}`,{method:'POST'}).catch(()=>{});
   }catch(e){toast(e.message||'Failed','err')}
 }
 
