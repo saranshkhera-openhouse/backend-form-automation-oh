@@ -127,7 +127,7 @@
 
 <script src="/js/shared.js"></script>
 <script>
-let currentUid=null,loadedData=null,isAdmin=false;
+let currentUid=null,loadedData=null,isAdmin=false,isManager=false;
 const docUrls={pan_front:'',pan_back:'',aadhaar_front:'',aadhaar_back:'',cp_cancelled_cheque:'',ama_signed_photo:''};
 const DOC_MAP={pan_front:'pan_front_url',pan_back:'pan_back_url',aadhaar_front:'aadhaar_front_url',aadhaar_back:'aadhaar_back_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',ama_signed_photo:'ama_signed_photo_url'};
 const ITEM_MAP={pan_front:'pu_panFront',pan_back:'pu_panBack',aadhaar_front:'pu_aadhaarFront',aadhaar_back:'pu_aadhaarBack',cp_cancelled_cheque:'pu_cheque',ama_signed_photo:'pu_ama'};
@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     // Check admin
     const me=await fetch('/auth/me').then(r=>r.json());
     isAdmin=me.is_admin;
+    isManager=me.is_manager;
     // Load UIDs
     const r=await fetch(`${API}/api/cp-bill/uids`);const uids=await r.json();
     const sel=document.getElementById('uidSel');
@@ -183,7 +184,7 @@ async function loadUID(uid){
     }
     document.getElementById('cpBillForm').style.display='block';
     // Show email button only for admins and only if already submitted
-    document.getElementById('emailBtn').style.display=(isAdmin&&d.cp_bill_submitted_at)?'block':'none';
+    document.getElementById('emailBtn').style.display=((isAdmin||isManager)&&d.cp_bill_submitted_at)?'block':'none';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.cp_bill_submitted_at?' (Submitted)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('cpBillForm').style.display='none'}
 }
@@ -240,7 +241,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
     toast('CP Bill submitted!','ok');
-    if(isAdmin)document.getElementById('emailBtn').style.display='block';
+    if(isAdmin||isManager)document.getElementById('emailBtn').style.display='block';
   });
 });
 

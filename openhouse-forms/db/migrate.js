@@ -163,6 +163,8 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_cancelled_cheque_url') THEN ALTER TABLE properties ADD COLUMN cp_cancelled_cheque_url TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_signed_photo_url') THEN ALTER TABLE properties ADD COLUMN ama_signed_photo_url TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_bill_submitted_at') THEN ALTER TABLE properties ADD COLUMN cp_bill_submitted_at TIMESTAMPTZ; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_manager') THEN ALTER TABLE users ADD COLUMN is_manager BOOLEAN DEFAULT FALSE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='managed_team') THEN ALTER TABLE users ADD COLUMN managed_team JSONB DEFAULT '[]'; END IF;
 END $$;
 `;
 

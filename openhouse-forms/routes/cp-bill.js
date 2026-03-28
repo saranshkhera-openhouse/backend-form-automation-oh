@@ -38,11 +38,11 @@ module.exports=function(pool){
     try{
       const userId=req.user?.id;
       if(!userId)return res.status(401).json({error:'Not authenticated'});
-      // Check admin
-      const{rows:uRows}=await pool.query('SELECT email,name,is_admin,google_access_token,google_refresh_token FROM users WHERE id=$1',[userId]);
+      // Check admin or manager
+      const{rows:uRows}=await pool.query('SELECT email,name,is_admin,is_manager,google_access_token,google_refresh_token FROM users WHERE id=$1',[userId]);
       if(!uRows.length)return res.status(401).json({error:'User not found'});
       const user=uRows[0];
-      if(!user.is_admin)return res.status(403).json({error:'Only admins can send CP bill emails'});
+      if(!user.is_admin&&!user.is_manager)return res.status(403).json({error:'Only admins and managers can send CP bill emails'});
       if(!user.google_access_token&&!user.google_refresh_token){
         return res.status(400).json({error:'Gmail not authorized. Please log out and log in again.'});
       }
