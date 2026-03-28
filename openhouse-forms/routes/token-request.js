@@ -47,10 +47,10 @@ module.exports=function(pool){
   // Update owner name (CP → Owner correction)
   router.post('/update-owner/:uid',async(req,res)=>{
     try{
-      const{first_name,last_name,owner_broker_name,contact_no}=req.body;
+      const{first_name,last_name,owner_broker_name,contact_no,cp_name,cp_phone}=req.body;
       if(!owner_broker_name)return res.status(400).json({error:'Name required'});
-      await pool.query('UPDATE properties SET first_name=$1,last_name=$2,owner_broker_name=$3,contact_no=COALESCE($4,contact_no),updated_at=NOW() WHERE uid=$5',
-        [first_name||null,last_name||null,owner_broker_name,contact_no||null,req.params.uid]);
+      await pool.query('UPDATE properties SET first_name=$1,last_name=$2,owner_broker_name=$3,contact_no=COALESCE($4,contact_no),cp_name=COALESCE($5,cp_name),cp_phone=COALESCE($6,cp_phone),updated_at=NOW() WHERE uid=$7',
+        [first_name||null,last_name||null,owner_broker_name,contact_no||null,cp_name||null,cp_phone||null,req.params.uid]);
       res.json({success:true});
     }catch(e){console.error('UpdateOwner:',e);res.status(500).json({error:e.message})}
   });

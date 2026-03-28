@@ -138,4 +138,79 @@ ${p.cheque_image_url ? `<p style="margin-top:16px"><strong>Cancelled Cheque Link
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
-module.exports = { sendTokenRequestEmail, htmlToPdf };
+// Build simple HTML email (no attachment)
+function buildSimpleMimeEmail({ from, to, cc, subject, bodyHtml }) {
+  const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
+  const mime = [
+    'MIME-Version: 1.0',
+    `From: ${from}`,
+    `To: ${to}`,
+    cc ? `Cc: ${cc}` : null,
+    `Subject: ${encodedSubject}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    bodyHtml
+  ].filter(line => line !== null).join('\r\n');
+  return Buffer.from(mime, 'utf-8').toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Send CP Bill email via Gmail API
+async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderName, property }) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+  const p = property;
+  const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
+  const amaStatus = p.ama_signed_photo_url ? 'Signed (attached below)' : 'Not signed yet';
+
+  const photoLinks = [];
+  if(p.pan_front_url) photoLinks.push(`<li><a href="${p.pan_front_url}" target="_blank">PAN Card Front</a></li>`);
+  if(p.pan_back_url) photoLinks.push(`<li><a href="${p.pan_back_url}" target="_blank">PAN Card Back</a></li>`);
+  if(p.aadhaar_front_url) photoLinks.push(`<li><a href="${p.aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
+  if(p.aadhaar_back_url) photoLinks.push(`<li><a href="${p.aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
+  if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">CP Cancelled Cheque</a></li>`);
+  if(p.ama_signed_photo_url) photoLinks.push(`<li><a href="${p.ama_signed_photo_url}" target="_blank">AMA Signed Photo</a></li>`);
+
+  const subject = `CP Bill Generation | ${addr}`;
+  const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
+<p>Hi Accounts Team,</p>
+<p>Kindly prepare the CP bill for the below mentioned property:</p>
+<table style="border-collapse:collapse;font-size:14px;line-height:2">
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Deal Type:</td><td>${p.deal_type||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">CP Name:</td><td>${p.cp_name||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">CP Firm:</td><td>${p.cp_firm||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Mobile Number:</td><td>${p.cp_phone||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Email ID:</td><td>${p.cp_email||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Property Address:</td><td>${addr}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">OH Acquired Model:</td><td>${p.oh_acquired_model||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Agreed Brokerage:</td><td>${p.agreed_brokerage||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">AMA Status:</td><td>${amaStatus}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Deal Value:</td><td>${p.deal_value||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Total Brokerage Amount:</td><td>${p.total_brokerage_amount||'—'}</td></tr>
+  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">To be released now:</td><td>${p.to_be_released_now||'—'}</td></tr>
+</table>
+${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</strong></p><ul style="line-height:2">${photoLinks.join('')}</ul>`:''}
+<p style="margin-top:16px">@Prashant Singh Kindly approve to proceed.</p>
+<p>Best,<br><strong>${senderName}</strong></p>
+</body></html>`;
+
+  const raw = buildSimpleMimeEmail({
+    from: fromEmail,
+    to: 'sahaj.dureja@openhouse.in',
+    cc: 'supply@openhouse.in',
+    subject,
+    bodyHtml
+  });
+
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  console.log(`CP Bill email sent! messageId: ${result.data.id}`);
+  return { messageId: result.data.id, threadId: result.data.threadId };
+}
+
+module.exports = { sendTokenRequestEmail, sendCPBillEmail, htmlToPdf };

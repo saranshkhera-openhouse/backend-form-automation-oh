@@ -293,7 +293,8 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number'];  for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number'];
+  for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
   body.performance_guarantee=parseFloat(body.performance_guarantee)||null;
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
@@ -348,6 +349,9 @@ document.getElementById('ownerBtnRow').addEventListener('click',(e)=>{
     return;
   }
   if(btn.id==='ownerCpBtn'){
+    // Save current owner name/phone as CP before overwriting
+    window._cpNameBefore=document.getElementById('d_owner').value;
+    window._cpPhoneBefore=document.getElementById('d_phone').value;
     document.getElementById('ownerEditWrap').style.display='block';
     document.getElementById('ownerBtnRow').style.display='none';
     document.getElementById('ownerSaveRow').style.display='flex';
@@ -371,7 +375,7 @@ document.getElementById('ownerSaveBtn').addEventListener('click',async()=>{
   const fullName=[first,last].filter(Boolean).join(' ');
   const btn=document.getElementById('ownerSaveBtn');btn.disabled=true;btn.textContent='Saving...';
   try{
-    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName,contact_no:phone||undefined})});
+    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName,contact_no:phone||undefined,cp_name:window._cpNameBefore||null,cp_phone:window._cpPhoneBefore||null})});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
     document.getElementById('d_owner').value=fullName;
     if(loadedData)loadedData.owner_broker_name=fullName;

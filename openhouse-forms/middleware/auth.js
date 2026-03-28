@@ -3,11 +3,11 @@
 // Map routes to form names
 const ROUTE_FORM_MAP = {
   '/schedule': 'schedule', '/visit': 'visit', '/token-request': 'token-request',
-  '/token-deal': 'token-deal', '/final': 'final', '/listing': 'listing'
+  '/token-deal': 'token-deal', '/final': 'final', '/cp-bill': 'cp-bill', '/listing': 'listing'
 };
 const API_FORM_MAP = {
   '/api/schedule': 'schedule', '/api/visit': 'visit', '/api/token-request': 'token-request',
-  '/api/token-deal': 'token-deal', '/api/final': 'final', '/api/listing': 'listing'
+  '/api/token-deal': 'token-deal', '/api/final': 'final', '/api/cp-bill': 'cp-bill', '/api/listing': 'listing'
 };
 
 // Check if user is logged in

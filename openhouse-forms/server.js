@@ -73,13 +73,14 @@ app.use('/api/token-request', isAuthenticated, hasFormAccess, require('./routes/
 app.use('/api/token-deal', isAuthenticated, hasFormAccess, require('./routes/token-deal')(pool));
 app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(pool));
 app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
+app.use('/api/cp-bill', isAuthenticated, hasFormAccess, require('./routes/cp-bill')(pool));
 app.use('/api/cp-inventory', isAuthenticated, require('./routes/cp-inventory')(pool));
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
 
 app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
   try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
     assigned_by,field_exec,token_requested_by,is_dead,
-    schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,listing_submitted_at,created_at
+    schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,cp_bill_submitted_at,listing_submitted_at,created_at
     FROM properties WHERE TRUE${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){console.error('Properties list error:',e.message);res.status(500).json({error:e.message})}
 });
 
@@ -110,7 +111,11 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'listing_asking_price','listing_availability','listing_highlights','listing_description',
       'society_age_years','total_units','maintenance_charges','society_move_in_charges','electricity_charges',
       'water_supply','dg_charges','alpha_beta','beta_pct','loan_status','seller_location',
-      'current_occupancy_pct','circle_rate','parking_number','is_dead']);
+      'current_occupancy_pct','circle_rate','parking_number','is_dead',
+      'cp_name','cp_phone','cp_firm','cp_email','deal_type','oh_acquired_model','agreed_brokerage',
+      'deal_value','total_brokerage_amount','to_be_released_now',
+      'pan_front_url','pan_back_url','aadhaar_front_url','aadhaar_back_url',
+      'cp_cancelled_cheque_url','ama_signed_photo_url']);
     const sets=[];const vals=[];let i=1;
     for(const[k,v]of Object.entries(d)){
       if(!allowed.has(k))continue;
@@ -133,7 +138,7 @@ app.get('/api/my-properties', isAuthenticated, async(req,res)=>{
       demand_price,source,owner_broker_name,contact_no,assigned_by,field_exec,
       schedule_date,schedule_time,is_dead,
       schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,
-      token_deal_submitted_at,final_submitted_at,listing_submitted_at
+      token_deal_submitted_at,final_submitted_at,cp_bill_submitted_at,listing_submitted_at
       FROM properties ${baseWhere} ORDER BY created_at DESC`,vis.params);
     res.json(rows)}catch(e){console.error('MyProps error:',e.message);res.status(500).json({error:e.message})}
 });
@@ -145,6 +150,7 @@ app.get('/token-request', ...sendForm('token-request.html'));
 app.get('/token-deal', ...sendForm('token-deal.html'));
 app.get('/final', ...sendForm('final.html'));
 app.get('/listing', ...sendForm('listing.html'));
+app.get('/cp-bill', ...sendForm('cp-bill.html'));
 app.get('/cp-inventory', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/cp-inventory.html')));
 app.get('/admin', isAuthenticated, isAdmin, (_, r) => r.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/my-properties', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/my-properties.html')));

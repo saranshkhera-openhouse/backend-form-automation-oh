@@ -146,6 +146,23 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_email') THEN ALTER TABLE properties ADD COLUMN owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='co_owner_email') THEN ALTER TABLE properties ADD COLUMN co_owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='co_owner_number') THEN ALTER TABLE properties ADD COLUMN co_owner_number TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_name') THEN ALTER TABLE properties ADD COLUMN cp_name TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_phone') THEN ALTER TABLE properties ADD COLUMN cp_phone TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_firm') THEN ALTER TABLE properties ADD COLUMN cp_firm TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_email') THEN ALTER TABLE properties ADD COLUMN cp_email TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='deal_type') THEN ALTER TABLE properties ADD COLUMN deal_type TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='oh_acquired_model') THEN ALTER TABLE properties ADD COLUMN oh_acquired_model TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='agreed_brokerage') THEN ALTER TABLE properties ADD COLUMN agreed_brokerage TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='deal_value') THEN ALTER TABLE properties ADD COLUMN deal_value TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='total_brokerage_amount') THEN ALTER TABLE properties ADD COLUMN total_brokerage_amount TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='to_be_released_now') THEN ALTER TABLE properties ADD COLUMN to_be_released_now TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='pan_front_url') THEN ALTER TABLE properties ADD COLUMN pan_front_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='pan_back_url') THEN ALTER TABLE properties ADD COLUMN pan_back_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='aadhaar_front_url') THEN ALTER TABLE properties ADD COLUMN aadhaar_front_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='aadhaar_back_url') THEN ALTER TABLE properties ADD COLUMN aadhaar_back_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_cancelled_cheque_url') THEN ALTER TABLE properties ADD COLUMN cp_cancelled_cheque_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_signed_photo_url') THEN ALTER TABLE properties ADD COLUMN ama_signed_photo_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_bill_submitted_at') THEN ALTER TABLE properties ADD COLUMN cp_bill_submitted_at TIMESTAMPTZ; END IF;
 END $$;
 `;
 
