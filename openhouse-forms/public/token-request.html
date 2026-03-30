@@ -69,7 +69,10 @@
       <div class="fg" id="hdWrap" style="display:none"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate"><div class="err-msg">Required</div></div>
       <div class="r2">
         <div class="fg"><label>Guaranteed Sale Price (in Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Performance Guarantee (in ₹)</label><input type="number" name="performance_guarantee" id="pgAmt" step="1"></div>
+        <div class="fg"><label>Performance Guarantee (%)</label><input type="text" name="pg_pct" id="pgPct" inputmode="decimal" placeholder="e.g. 1.5"></div>
+      </div>
+      <div class="fg"><label>Performance Guarantee (in ₹)</label><input type="number" name="performance_guarantee" id="pgAmt" step="1">
+        <div style="font-size:9px;color:var(--tx3);margin-top:2px" id="pgCalcHint"></div></div>
       </div><hr class="div">
       <div class="arrow-row"><div class="fg"><label>Initial Period (in days) <span class="req">*</span></label><input type="number" name="initial_period" required><div class="err-msg">Required</div></div>
         <div class="arrow-sym">→</div>
@@ -198,7 +201,22 @@ document.addEventListener('DOMContentLoaded',async()=>{
     bankSel.addEventListener('change',()=>{document.getElementById('bankOther').style.display=bankSel.value==='Others'?'block':'none'});
     document.getElementById('selOcc').addEventListener('change',e=>{const w=document.getElementById('hdWrap'),d=document.getElementById('hdDate');
       if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
-    // PG is now direct number, no percentage calculation needed
+    // PG bidirectional: % ↔ ₹
+    const gspEl=document.getElementById('gsp'),pgPct=document.getElementById('pgPct'),pgAmt=document.getElementById('pgAmt'),pgHint=document.getElementById('pgCalcHint');
+    let pgLock=false;
+    function calcPGFromPct(){if(pgLock)return;pgLock=true;
+      const g=parseFloat(gspEl.value)||0;const p=parseFloat(pgPct.value)||0;
+      if(g>0&&p>0){const amt=Math.round(g*100000*p/100);pgAmt.value=amt;pgHint.textContent=`${p}% of ₹${(g*100000).toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
+      else{pgHint.textContent=''}
+      pgLock=false}
+    function calcPctFromPG(){if(pgLock)return;pgLock=true;
+      const g=parseFloat(gspEl.value)||0;const a=parseFloat(pgAmt.value)||0;
+      if(g>0&&a>0){const pct=Math.round(a/(g*100000)*100*1000)/1000;pgPct.value=pct;pgHint.textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${(g*100000).toLocaleString('en-IN')}`}
+      else{pgHint.textContent=''}
+      pgLock=false}
+    pgPct.addEventListener('input',calcPGFromPct);
+    gspEl.addEventListener('input',()=>{if(pgPct.value)calcPGFromPct();else if(pgAmt.value)calcPctFromPG()});
+    pgAmt.addEventListener('input',calcPctFromPG);
     document.getElementById('rip').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');this.required=false}});
     document.getElementById('rgp').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');this.required=false}});
     // Loan Yes/No toggle
@@ -266,7 +284,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('registry_status',d.registry_status);sv('occupancy_status',d.occupancy_status);
     if(d.occupancy_status==='Tenant'){document.getElementById('hdWrap').style.display='block';document.getElementById('hdDate').required=true;if(d.key_handover_date)sv('key_handover_date',d.key_handover_date.split('T')[0])}
     sv('guaranteed_sale_price',d.guaranteed_sale_price);
-    if(d.performance_guarantee)document.getElementById('pgAmt').value=d.performance_guarantee;
+    if(d.performance_guarantee){document.getElementById('pgAmt').value=d.performance_guarantee;
+      if(d.guaranteed_sale_price){const pct=Math.round(d.performance_guarantee/(d.guaranteed_sale_price*100000)*100*1000)/1000;document.getElementById('pgPct').value=pct;document.getElementById('pgCalcHint').textContent=`₹${Number(d.performance_guarantee).toLocaleString('en-IN')} = ${pct}% of ₹${(d.guaranteed_sale_price*100000).toLocaleString('en-IN')}`}}
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
     if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');document.getElementById('rip').required=false}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
     if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');document.getElementById('rgp').required=false}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
@@ -293,9 +312,9 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number'];
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','pg_pct'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
-  body.performance_guarantee=parseFloat(body.performance_guarantee)||null;
+  body.performance_guarantee=parseFloat(body.performance_guarantee)||null;delete body.pg_pct;
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
   submitBtn(document.getElementById('draftBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -349,7 +368,6 @@ document.getElementById('ownerBtnRow').addEventListener('click',(e)=>{
     return;
   }
   if(btn.id==='ownerCpBtn'){
-    // Save current owner name/phone as CP before overwriting
     window._cpNameBefore=document.getElementById('d_owner').value;
     window._cpPhoneBefore=document.getElementById('d_phone').value;
     document.getElementById('ownerEditWrap').style.display='block';
