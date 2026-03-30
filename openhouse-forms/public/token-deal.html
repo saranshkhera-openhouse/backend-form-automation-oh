@@ -84,6 +84,16 @@
   </div>
 </div>
 
+<div class="email-overlay" id="successModal">
+  <div style="background:var(--sf);border-radius:16px;width:100%;max-width:420px;margin:auto;box-shadow:0 16px 48px rgba(0,0,0,.3);text-align:center;padding:40px 30px;animation:popIn .3s ease">
+    <div style="font-size:56px;margin-bottom:12px">✅</div>
+    <div style="font-size:20px;font-weight:700;color:var(--tx);margin-bottom:8px">Email Sent Successfully!</div>
+    <div style="font-size:13px;color:var(--tx3);line-height:1.6;margin-bottom:20px">Deal terms email with PDF attachment has been sent to the seller and all CC recipients.</div>
+    <button class="btn btn-dark" onclick="document.getElementById('successModal').classList.remove('open')" style="padding:10px 32px;font-size:14px">OK, Got it</button>
+  </div>
+</div>
+<style>@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}</style>
+
 <script src="/js/shared.js"></script>
 <script>
 let currentUid,propData=null,allDocOptions=[];
@@ -200,11 +210,11 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   document.getElementById('emailPreviewBody').innerHTML=`
 <p><strong>Subject:</strong> Openhouse Offer | ${propRef} | ${sellerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
-<p>Dear ${sellerName},</p>
+<p>Dear <strong>${sellerName}</strong>,</p>
 <p>Greetings from <strong>Openhouse</strong>!</p>
 <p>We are pleased to extend a formal offer for ${propRef}.</p>
 <p>As a token of our commitment, we have transferred ${tokenFmt} via NEFT, bearing Reference No. ${neftRef}, as an advance token towards this transaction. Further to our discussion, we have <strong>ATTACHED THE AGREED DEAL TERMS</strong> for your reference. <strong>Please review the document carefully.</strong></p>
-<p><em>Kindly upload the required documents using the link - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></em></p>
+<p>Kindly upload the required documents using the link - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></p>
 <p>Next Steps:-<br>
 1. Document due diligence within 2 working days<br>
 2. AMA signing<br>
@@ -220,6 +230,7 @@ Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse
 
 function closeEmailModal(){document.getElementById('emailModal').classList.remove('open')}
 document.getElementById('emailModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEmailModal()});
+document.getElementById('successModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.target.classList.remove('open')});
 
 async function confirmSendEmail(){
   const btn=document.getElementById('confirmSendBtn');btn.disabled=true;btn.textContent='Sending...';
@@ -227,6 +238,7 @@ async function confirmSendEmail(){
     const r=await fetch(`${API}/api/token-deal/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
     toast('Email sent to seller!','ok',5000);closeEmailModal();
+    document.getElementById('successModal').classList.add('open');
     document.getElementById('emailBtn').innerHTML='✓ Email Sent';document.getElementById('emailBtn').style.color='var(--grn)';document.getElementById('emailBtn').style.borderColor='var(--grn)';
     setTimeout(()=>{document.getElementById('emailBtn').innerHTML='📧 Send Email';document.getElementById('emailBtn').style.color='var(--ac2)';document.getElementById('emailBtn').style.borderColor='var(--ac2)'},5000);
   }catch(e){toast(e.message||'Failed','err');

@@ -164,11 +164,11 @@ async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, proper
   const subject = `Openhouse Offer | ${propRef} | ${sellerName}`;
 
   const bodyHtml = `<html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.8">
-<p>Dear ${sellerName},</p>
+<p>Dear <strong>${sellerName}</strong>,</p>
 <p>Greetings from <strong>Openhouse</strong>!</p>
 <p>We are pleased to extend a formal offer for ${propRef}.</p>
 <p>As a token of our commitment, we have transferred ${tokenAmtFmt} via NEFT, bearing Reference No. ${neftRef}, as an advance token towards this transaction. Further to our discussion, we have <strong>ATTACHED THE AGREED DEAL TERMS</strong> for your reference. <strong>Please review the document carefully.</strong></p>
-<p><em>Kindly upload the required documents using the link - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></em></p>
+<p>Kindly upload the required documents using the link - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></p>
 <p>Next Steps:-<br>
 1. Document due diligence within 2 working days<br>
 2. AMA signing<br>
@@ -183,8 +183,7 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
 
   // Build recipient list
   const toList = [p.owner_email].filter(Boolean);
-  const ccList = ['sahaj.dureja@openhouse.in'].filter(Boolean);
-  // const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'accounts@openhouse.in', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'accounts@openhouse.in', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
 
   console.log('Building MIME email with PDF attachment...');
   const raw = buildMimeEmail({
