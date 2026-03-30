@@ -73,7 +73,7 @@
       </div>
       <div class="fg"><label>Performance Guarantee (in ₹)</label><input type="number" name="performance_guarantee" id="pgAmt" step="1">
         <div style="font-size:9px;color:var(--tx3);margin-top:2px" id="pgCalcHint"></div></div>
-      </div><hr class="div">
+      <hr class="div">
       <div class="arrow-row"><div class="fg"><label>Initial Period (in days) <span class="req">*</span></label><input type="number" name="initial_period" required><div class="err-msg">Required</div></div>
         <div class="arrow-sym">→</div>
         <div class="fg"><label>Rent Payable (in ₹) <span class="req">*</span></label><input type="number" name="rent_payable_initial_period" id="rip" required><div class="err-msg">Required</div></div></div>
@@ -205,12 +205,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const gspEl=document.getElementById('gsp'),pgPct=document.getElementById('pgPct'),pgAmt=document.getElementById('pgAmt'),pgHint=document.getElementById('pgCalcHint');
     let pgLock=false;
     function calcPGFromPct(){if(pgLock)return;pgLock=true;
-      const g=parseFloat(gspEl.value)||0;const p=parseFloat(pgPct.value)||0;
+      const g=parseFloat(String(gspEl.value).replace(/,/g,''))||0;const p=parseFloat(String(pgPct.value).replace(/,/g,''))||0;
       if(g>0&&p>0){const amt=Math.round(g*100000*p/100);pgAmt.value=amt;pgHint.textContent=`${p}% of ₹${(g*100000).toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
       else{pgHint.textContent=''}
       pgLock=false}
     function calcPctFromPG(){if(pgLock)return;pgLock=true;
-      const g=parseFloat(gspEl.value)||0;const a=parseFloat(pgAmt.value)||0;
+      const g=parseFloat(String(gspEl.value).replace(/,/g,''))||0;const a=parseFloat(String(pgAmt.value).replace(/,/g,''))||0;
       if(g>0&&a>0){const pct=Math.round(a/(g*100000)*100*1000)/1000;pgPct.value=pct;pgHint.textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${(g*100000).toLocaleString('en-IN')}`}
       else{pgHint.textContent=''}
       pgLock=false}
