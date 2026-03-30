@@ -1,5 +1,16 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Deal Terms</title><link rel="stylesheet" href="/css/styles.css"></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Deal Terms</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.email-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.email-overlay.open{display:flex}
+.email-box{background:var(--sf);border-radius:12px;width:100%;max-width:640px;margin:40px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.email-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.email-body{padding:14px 18px;max-height:60vh;overflow-y:auto;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.8;color:#222}
+.email-ftr{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.email-recipients{padding:10px 18px;border-bottom:1px solid var(--bd);font-size:11px;color:var(--tx3);background:var(--bg)}
+.email-recipients strong{color:var(--tx)}
+</style>
+</head>
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
@@ -27,18 +38,23 @@
         <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
       </div></div>
 
-    <div class="card" style="border-left:3px solid var(--ac)"><div class="card-t">Owner / Co-owner Details</div>
-      <div class="fg"><label>Owner Email <span class="req">*</span></label><input type="email" name="owner_email" id="dOwnerEmail" required placeholder="owner@example.com"><div class="err-msg">Required</div></div>
+    <div class="card" style="border-left:3px solid var(--ac)"><div class="card-t">Email Recipients</div>
       <div class="r2">
-        <div class="fg"><label>Co-owner Email</label><input type="email" name="co_owner_email" id="dCoOwnerEmail" placeholder="co-owner@example.com (optional)"></div>
-        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="dCoOwnerNumber" placeholder="Phone number (optional)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
+        <div class="fg"><label>Owner Email <span class="req">*</span></label><input type="email" name="owner_email" id="dOwnerEmail" required placeholder="owner@example.com"><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Co-owner Email</label><input type="email" name="co_owner_email" id="dCoOwnerEmail" placeholder="Optional"></div>
       </div>
+      <div class="r2">
+        <div class="fg"><label>3rd Owner Email</label><input type="email" name="third_owner_email" id="dThirdEmail" placeholder="Optional"></div>
+        <div class="fg"><label>Broker Email</label><input type="email" name="broker_email" id="dBrokerEmail" placeholder="Optional"></div>
+      </div>
+      <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="dCoOwnerNumber" placeholder="Phone number (optional)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
     </div>
 
     <div class="btn-row">
       <button type="button" class="btn btn-out" id="previewBtn">Preview Deal Terms</button>
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
+      <button type="button" class="btn btn-out btn-sm" id="emailBtn" disabled style="flex:none;max-width:none;color:var(--ac2);border-color:var(--ac2)">📧 Send Email</button>
     </div>
 
     <div class="preview-section" id="previewSection">
@@ -55,6 +71,18 @@
   <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
   <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open in New Tab</a></div>
 </div></div>
+
+<div class="email-overlay" id="emailModal">
+  <div class="email-box">
+    <div class="email-hdr"><h3 style="font-size:14px;margin:0">Email Preview</h3><button class="btn btn-out btn-sm" onclick="closeEmailModal()">✕</button></div>
+    <div class="email-recipients" id="emailRecipients"></div>
+    <div class="email-body" id="emailPreviewBody"></div>
+    <div class="email-ftr">
+      <button class="btn btn-out btn-sm" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn btn-dark btn-sm" id="confirmSendBtn" onclick="confirmSendEmail()">✉ Confirm & Send</button>
+    </div>
+  </div>
+</div>
 
 <script src="/js/shared.js"></script>
 <script>
@@ -74,21 +102,23 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
   const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
   try{const r=await fetch(`${API}/api/token-deal/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
     document.getElementById('fUid').value=propData.uid;currentUid=uid;
-    // Prefill from Form 3 (read-only)
     document.getElementById('dealAmt').value=propData.deal_token_amount||propData.token_amount_requested||'';
     document.getElementById('dAc').value=propData.deal_bank_account_number||propData.cheque_account_number||'';
     document.getElementById('dBank').value=propData.deal_bank_name||propData.cheque_bank_name||'';
     document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';
-    // Form 4 own fields (editable) — always reset to avoid stale values from previous UID
     document.getElementById('dDate').value=propData.deal_transfer_date?propData.deal_transfer_date.split('T')[0]:'';
     document.getElementById('dRef').value=propData.deal_neft_reference||'';
     document.getElementById('dOwnerEmail').value=propData.owner_email||'';
     document.getElementById('dCoOwnerEmail').value=propData.co_owner_email||'';
+    document.getElementById('dThirdEmail').value=propData.third_owner_email||'';
+    document.getElementById('dBrokerEmail').value=propData.broker_email||'';
     document.getElementById('dCoOwnerNumber').value=propData.co_owner_number||'';
     document.getElementById('dealForm').style.display='block';
     document.getElementById('previewSection').classList.remove('show');
     document.getElementById('previewBtn').textContent='Preview Deal Terms';
-    document.getElementById('pdfBtn').disabled=!propData.token_deal_submitted_at;
+    const submitted=!!propData.token_deal_submitted_at;
+    document.getElementById('pdfBtn').disabled=!submitted;
+    document.getElementById('emailBtn').disabled=!submitted;
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('dealForm').style.display='none'}}
 
@@ -99,7 +129,6 @@ document.getElementById('previewBtn').addEventListener('click',async()=>{
   if(!propData){toast('Load property first','warn');return}
   const sec=document.getElementById('previewSection');
   if(sec.classList.contains('show')){sec.classList.remove('show');document.getElementById('previewBtn').textContent='Preview Deal Terms';return}
-  // Re-fetch fresh data to get current documents_available
   try{const fr=await fetch(`${API}/api/token-deal/prefill/${currentUid}`);if(fr.ok){propData=await fr.json()}}catch(e){}
   const d=propData;const amt=document.getElementById('dealAmt').value;
   document.getElementById('pcProp').innerHTML=pRow('UID',d.uid)+pRow('Society',d.society_name)+pRow('Locality',d.locality)+
@@ -117,7 +146,9 @@ document.getElementById('previewBtn').addEventListener('click',async()=>{
   document.getElementById('pcAccount').innerHTML=
     pRow('Bank Name',document.getElementById('dBank').value)+pRow('A/C No.',document.getElementById('dAc').value)+pRow('IFSC',document.getElementById('dIfsc').value)+
     pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value)+
-    pRow('Owner Email',document.getElementById('dOwnerEmail').value)+pRow('Co-owner Email',document.getElementById('dCoOwnerEmail').value)+pRow('Co-owner Number',document.getElementById('dCoOwnerNumber').value);
+    pRow('Owner Email',document.getElementById('dOwnerEmail').value)+pRow('Co-owner Email',document.getElementById('dCoOwnerEmail').value)+
+    pRow('3rd Owner Email',document.getElementById('dThirdEmail').value)+pRow('Broker Email',document.getElementById('dBrokerEmail').value)+
+    pRow('Co-owner Number',document.getElementById('dCoOwnerNumber').value);
   let sel=[];
   try{
     const raw=d.documents_available;
@@ -137,7 +168,9 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/token-deal/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    document.getElementById('pdfBtn').disabled=false;toast('Deal Terms submitted!','ok',5000)});
+    document.getElementById('pdfBtn').disabled=false;
+    document.getElementById('emailBtn').disabled=false;
+    toast('Deal Terms submitted!','ok',5000)});
 });
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
@@ -145,5 +178,58 @@ document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)r
   document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
+
+// ── Email Preview & Send ──
+document.getElementById('emailBtn').addEventListener('click',()=>{
+  if(!currentUid||!propData){toast('Load and submit first','warn');return}
+  const ownerEmail=document.getElementById('dOwnerEmail').value;
+  if(!ownerEmail){toast('Owner email is required','err');return}
+  const d=propData;
+  const sellerName=d.owner_broker_name||'Seller';
+  const tower=d.tower_no||'';const unit=d.unit_no||'';const soc=d.society_name||'Property';
+  const propRef=[tower,unit].filter(Boolean).join(' ')+(tower||unit?' - ':'')+soc;
+  const tokenAmt=d.deal_token_amount||d.token_amount_requested;
+  const tokenFmt=tokenAmt?'INR '+Number(tokenAmt).toLocaleString('en-IN')+'/-':'INR [Token Amount]';
+  const neftRef=d.deal_neft_reference||'[Transaction Reference No.]';
+
+  // Recipient display
+  const toList=[ownerEmail].filter(Boolean);
+  const ccList=[document.getElementById('dCoOwnerEmail').value,document.getElementById('dThirdEmail').value,document.getElementById('dBrokerEmail').value].filter(Boolean);
+  document.getElementById('emailRecipients').innerHTML=`<strong>To:</strong> ${toList.join(', ')}${ccList.length?'<br><strong>Cc:</strong> '+ccList.join(', '):''}`;
+
+  document.getElementById('emailPreviewBody').innerHTML=`
+<p>Dear "${sellerName}",</p>
+<p>Greetings from <strong><em>Openhouse</em></strong>!</p>
+<p>We are pleased to extend a formal offer for "${propRef}".</p>
+<p>As a token of our commitment, we have transferred ${tokenFmt} via NEFT, bearing Reference No. "${neftRef}", as an advance token towards this transaction. Further to our discussion, we have <strong>ATTACHED THE AGREED DEAL TERMS</strong> for your reference. <strong>Please review the document carefully and confirm your acknowledgement at your earliest convenience.</strong></p>
+<p><em><u>Kindly upload the required documents using the link</u> - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></em></p>
+<p>Next Steps:-<br>
+1. Document due diligence within 2 working days<br>
+2. AMA signing<br>
+3. Property Handover</p>
+<p>Should you have any questions or require any clarification regarding the above, please do not hesitate to reach out to us. We are here to assist you at every step.</p>
+<p>Warm regards,<br>
+[Authorized Signatory Name]<br>
+[Contact Number]<br>
+Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse.in</a></p>
+<p style="font-size:11px;color:#999;margin-top:12px"><em>📎 Deal Terms PDF will be attached automatically</em></p>`;
+  document.getElementById('emailModal').classList.add('open');
+});
+
+function closeEmailModal(){document.getElementById('emailModal').classList.remove('open')}
+document.getElementById('emailModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEmailModal()});
+
+async function confirmSendEmail(){
+  const btn=document.getElementById('confirmSendBtn');btn.disabled=true;btn.textContent='Sending...';
+  try{
+    const r=await fetch(`${API}/api/token-deal/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    toast('Email sent to seller!','ok',5000);closeEmailModal();
+    document.getElementById('emailBtn').innerHTML='✓ Email Sent';document.getElementById('emailBtn').style.color='var(--grn)';document.getElementById('emailBtn').style.borderColor='var(--grn)';
+    setTimeout(()=>{document.getElementById('emailBtn').innerHTML='📧 Send Email';document.getElementById('emailBtn').style.color='var(--ac2)';document.getElementById('emailBtn').style.borderColor='var(--ac2)'},5000);
+  }catch(e){toast(e.message||'Failed','err');
+    if(e.message&&e.message.includes('log out'))toast('Please logout and login again','warn',8000);
+  }finally{btn.disabled=false;btn.textContent='✉ Confirm & Send'}
+}
 </script>
 </body></html>

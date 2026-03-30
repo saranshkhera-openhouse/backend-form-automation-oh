@@ -138,6 +138,69 @@ ${p.cheque_image_url ? `<p style="margin-top:16px"><strong>Cancelled Cheque Link
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
+// Send Deal Terms email to seller with PDF attachment
+async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml, signatoryName, signatoryPhone }) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+  console.log('Generating Deal Terms PDF via Puppeteer...');
+  const pdfBuffer = await htmlToPdf(pdfHtml);
+  console.log(`PDF generated: ${pdfBuffer.length} bytes`);
+
+  const p = property;
+  const sellerName = p.owner_broker_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Seller';
+  const tower = p.tower_no || '';
+  const unit = p.unit_no || '';
+  const society = p.society_name || 'Property';
+  const propRef = [tower, unit].filter(Boolean).join(' ') + (tower || unit ? ' - ' : '') + society;
+  const tokenAmt = p.deal_token_amount || p.token_amount_requested;
+  const tokenAmtFmt = tokenAmt ? 'INR ' + Number(tokenAmt).toLocaleString('en-IN') + '/-' : 'INR [Token Amount]';
+  const neftRef = p.deal_neft_reference || '[Transaction Reference No.]';
+
+  const subject = `Deal Terms | ${propRef} | ${sellerName}`;
+
+  const bodyHtml = `<html><body style="font-family:'Times New Roman',Times,serif;font-size:14px;color:#222;line-height:1.8">
+<p>Dear "${sellerName}",</p>
+<p>Greetings from <strong><em>Openhouse</em></strong>!</p>
+<p>We are pleased to extend a formal offer for "${propRef}".</p>
+<p>As a token of our commitment, we have transferred ${tokenAmtFmt} via NEFT, bearing Reference No. "${neftRef}", as an advance token towards this transaction. Further to our discussion, we have <strong>ATTACHED THE AGREED DEAL TERMS</strong> for your reference. <strong>Please review the document carefully and confirm your acknowledgement at your earliest convenience.</strong></p>
+<p><em><u>Kindly upload the required documents using the link</u> - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></em></p>
+<p>Next Steps:-<br>
+1. Document due diligence within 2 working days<br>
+2. AMA signing<br>
+3. Property Handover</p>
+<p>Should you have any questions or require any clarification regarding the above, please do not hesitate to reach out to us. We are here to assist you at every step.</p>
+<p>Warm regards,<br>
+${signatoryName}<br>
+${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse.in</a></p>
+</body></html>`;
+
+  const pdfFilename = `Deal_Terms_${p.uid || 'receipt'}.pdf`;
+
+  // Build recipient list
+  const toList = [p.owner_email].filter(Boolean);
+  const ccList = [p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
+
+  console.log('Building MIME email with PDF attachment...');
+  const raw = buildMimeEmail({
+    from: fromEmail,
+    to: toList.join(', '),
+    cc: ccList.length ? ccList.join(', ') : null,
+    subject,
+    bodyHtml,
+    pdfBuffer,
+    pdfFilename
+  });
+
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  console.log(`Deal Terms email sent! messageId: ${result.data.id}`);
+  return { messageId: result.data.id, threadId: result.data.threadId };
+}
+
 // Build simple HTML email (no attachment)
 function buildSimpleMimeEmail({ from, to, cc, subject, bodyHtml }) {
   const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
@@ -213,4 +276,5 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
-module.exports = { sendTokenRequestEmail, sendCPBillEmail, htmlToPdf };
+// Send offer email to property owner with PDF attachment
+module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, htmlToPdf };
