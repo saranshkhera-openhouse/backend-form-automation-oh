@@ -26,8 +26,9 @@ function parseDocs(raw){
 
 function generateReceiptHTML(p, mode='deal', baseUrl=''){
   const today=fmtDate(new Date());
-  const ownerName=p.owner_broker_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'—';
-  const firstName=p.first_name||ownerName.split(' ')[0]||'Owner';
+  const rawOwner=p.owner_broker_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'—';
+  const ownerName=p.co_owner?rawOwner+' & '+p.co_owner:rawOwner;
+  const firstName=p.first_name||rawOwner.split(' ')[0]||'Owner';
   const logoUrl=baseUrl?baseUrl+'/images/logo.png':'/images/logo.png';
 
   const allDocs=['Allotment Letter issued by the Builder','Possession Letter/Certificate by the Builder','Builder Buyer Agreement','Conveyance Deed/Sale Deed/Registry'];
@@ -122,7 +123,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   </div>
   <div class="greeting-strip">
     <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
-    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtAmt(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
+    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
     ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div></div>`:''}
   </div>
   <div class="section-label">Seller Details</div>
