@@ -2,8 +2,10 @@
 
 function fmtDate(d){if(!d)return '—';const dt=new Date(d);const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${String(dt.getDate()).padStart(2,'0')} ${m[dt.getMonth()]} ${dt.getFullYear()}`}
 function fmtAmt(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000)return '₹ '+(n/10000000).toFixed(2)+' Crores';if(n>=100000)return '₹ '+(n/100000).toFixed(2)+' Lakhs';return '₹ '+n.toLocaleString('en-IN')}
-function fmtPG(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000){const x=Math.floor(n/10000)/1000;return '₹ '+parseFloat(x.toFixed(3))+' Crores'}if(n>=100000){const x=Math.floor(n/100)/1000;return '₹ '+parseFloat(x.toFixed(3))+' Lakhs'}return '₹ '+n.toLocaleString('en-IN')}function fmtCurrency(v){if(!v||isNaN(v))return '—';return '₹ '+Number(v).toLocaleString('en-IN')}
-function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+parseFloat((n/100).toFixed(4))+' Crores';return '₹ '+parseFloat(n.toFixed(4))+' Lakhs'}function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function fmtPG(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000){const x=Math.floor(n/10000)/1000;return '₹ '+parseFloat(x.toFixed(3))+' Crores'}if(n>=100000){const x=Math.floor(n/100)/1000;return '₹ '+parseFloat(x.toFixed(3))+' Lakhs'}return '₹ '+n.toLocaleString('en-IN')}
+function fmtCurrency(v){if(!v||isNaN(v))return '—';return '₹ '+Number(v).toLocaleString('en-IN')}
+function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+parseFloat((n/100).toFixed(4))+' Crores';return '₹ '+parseFloat(n.toFixed(4))+' Lakhs'}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
 function pill(val,type){return val?`<span class="pill ${type}">${esc(val)}</span>`:'—'}
 function fval(v,cls=''){if(!v||v==='null')return `<div class="f-value empty">—</div>`;return `<div class="f-value ${cls}">${esc(String(v))}</div>`}
 
@@ -113,81 +115,82 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
 </style></head>
 <body><div class="page">
   <div class="print-bar"><button onclick="window.print()">Print / Save as PDF</button></div>
+  
   <div class="page-1-content">
-  <div class="p1-body">
-  <div class="header">
-    <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
-    <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
-  </div>
-  <div class="greeting-strip">
-    <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
-    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
-    ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div></div>`:''}
-  </div>
-  <div class="section-label">Seller Details</div>
-  <div class="field-grid col2">
-    <div class="field"><div class="f-label">Owner Name</div><div class="f-value">${esc(ownerName)}</div></div>
-    <div class="field"><div class="f-label">Contact</div>${fval(p.contact_no,'mono')}</div>
-  </div>
-  <div class="section-label">Property Details</div>
-  <div class="field-grid col4">
-    <div class="field"><div class="f-label">City</div>${fval(p.city)}</div>
-    <div class="field"><div class="f-label">Society</div>${fval(p.society_name)}</div>
-    <div class="field"><div class="f-label">Tower</div>${fval(p.tower_no)}</div>
-    <div class="field"><div class="f-label">Unit</div>${fval(p.unit_no)}</div>
-  </div>
-  <div class="field-grid col3" style="margin-top:6px">
-    <div class="field"><div class="f-label">Config</div>${fval(p.configuration)}</div>
-    <div class="field"><div class="f-label">Floor</div>${fval(p.floor)}</div>
-    <div class="field"><div class="f-label">Area (sqft)</div>${fval(p.area_sqft?Number(p.area_sqft).toLocaleString('en-IN'):null)}</div>
-  </div>
-  <div class="field-grid col2" style="margin-top:6px">
-    <div class="field"><div class="f-label">Registry Status</div><div class="f-value">${p.registry_status?pill(p.registry_status,p.registry_status==='Registered'?'green':'gold'):'—'}</div></div>
-    <div class="field"><div class="f-label">Occupancy Status</div><div class="f-value">${p.occupancy_status?pill(p.occupancy_status,p.occupancy_status==='Vacant'?'gold':p.occupancy_status==='Tenant'?'red':'green'):'—'}</div></div>
-  </div>
-  ${hdDate?`<div class="field-grid col2" style="margin-top:6px"><div class="field"><div class="f-label">Key Handover Date</div><div class="f-value">${hdDate}</div></div><div class="field"></div></div>`:''}
-  <div class="section-label">Deal Terms</div>
-  <div class="field-grid col2">
-    <div class="field"><div class="f-label">Token Amount</div><div class="f-value">${fmtAmt(p.deal_token_amount||p.token_amount_requested)}</div></div>
-    <div class="field"><div class="f-label">Guaranteed Sale Price</div><div class="f-value">${p.guaranteed_sale_price?fmtLakhs(p.guaranteed_sale_price):'—'}</div></div>
-  </div>
-  ${(p.initial_period||p.grace_period)?`<div class="field-grid col2" style="margin-top:6px">
-    ${p.initial_period&&p.rent_payable_initial_period&&p.rent_payable_initial_period!=='N/A'?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days → ${fmtCurrency(p.rent_payable_initial_period)}/mo</div></div>`
-      :p.initial_period?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days</div></div>`:'<div></div>'}
-    ${p.grace_period&&p.rent_payable_grace_period&&p.rent_payable_grace_period!=='N/A'?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days → ${fmtCurrency(p.rent_payable_grace_period)}/mo</div></div>`
-      :p.grace_period?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days</div></div>`:'<div></div>'}
-  </div>`:''}
-  ${p.has_loan!=='No'&&(p.outstanding_loan||p.bank_name_loan||p.loan_pay_willingness)?`<div class="section-label">Loan Details</div>
-  <div class="field-grid col3">
-    <div class="field"><div class="f-label">Outstanding Loan</div>${fval(p.outstanding_loan?fmtCurrency(p.outstanding_loan):null)}</div>
-    <div class="field"><div class="f-label">Bank (Loan)</div>${fval(p.bank_name_loan)}</div>
-    <div class="field"><div class="f-label">Seller to Pay?</div><div class="f-value">${p.loan_pay_willingness?pill(p.loan_pay_willingness,p.loan_pay_willingness==='Yes'?'green':'red'):'—'}</div></div>
-  </div>`:''}
-  ${availDocs.length?`<div class="section-label">Documents Available</div>
-  <div class="doc-grid">
-    ${availDocs.map(d=>`<div class="doc-item"><div class="doc-box checked"></div>${esc(d.replace('issued by the Builder','').replace('/Certificate by the Builder','').replace('Conveyance Deed/Sale Deed/Registry','Conveyance Deed').trim())}</div>`).join('\n    ')}
-  </div>`:''}
-  ${missingDocs.length?`<div class="section-label" style="margin-top:8px">Documents Missing</div>
-  <div class="doc-grid">${missingDocs.map(d=>`<div class="doc-item missing"><div class="doc-box"></div>${esc(d.replace('issued by the Builder','').replace('/Certificate by the Builder','').replace('Conveyance Deed/Sale Deed/Registry','Conveyance Deed').trim())}</div>`).join('\n    ')}</div>`:''}
-  <div class="section-label">Seller Bank Details</div>
-  <div class="field-grid col3">
-    <div class="field"><div class="f-label">Bank Name</div>${fval(p.cheque_bank_name||neftBank)}</div>
-    <div class="field"><div class="f-label">Account Number</div>${fval(p.cheque_account_number||p.deal_bank_account_number,'mono')}</div>
-    <div class="field"><div class="f-label">IFSC Code</div>${fval(p.cheque_ifsc||p.deal_ifsc_code,'mono')}</div>
-  </div>
-  ${hasNEFT?`<div class="section-label">Token Transaction</div>
-  <div class="token-strip">
-    <div class="token-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-    <div class="token-info"><div class="t-title">Token Paid — ${esc(neftBank||'Bank')}</div><div class="t-ref">NEFT Ref: ${esc(neftRef)}</div></div>
-    <div class="token-date"><div class="td-label">Transfer Date</div><div class="td-val">${fmtDate(neftDate)}</div></div>
-  </div>`:''}
-  ${p.token_remarks_printed?`<div class="section-label">Remarks</div>
-  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#374151;line-height:1.5;white-space:pre-wrap">${esc(p.token_remarks_printed)}</div>`:''}
-  </div><div class="footer">
-    <div><div class="footer-brand">Avano Technologies Private Limited</div>
-      <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
-    <div class="footer-note">Token Receipt<br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
-  </div>
+    <div class="p1-body">
+      <div class="header">
+        <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
+        <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
+      </div>
+      <div class="greeting-strip">
+        <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
+        ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
+        ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div></div>`:''}
+      </div>
+      <div class="section-label">Seller Details</div>
+      <div class="field-grid col2">
+        <div class="field"><div class="f-label">Owner Name</div><div class="f-value">${esc(ownerName)}</div></div>
+        <div class="field"><div class="f-label">Contact</div>${fval(p.contact_no,'mono')}</div>
+      </div>
+      <div class="section-label">Property Details</div>
+      <div class="field-grid col4">
+        <div class="field"><div class="f-label">City</div>${fval(p.city)}</div>
+        <div class="field"><div class="f-label">Society</div>${fval(p.society_name)}</div>
+        <div class="field"><div class="f-label">Tower</div>${fval(p.tower_no)}</div>
+        <div class="field"><div class="f-label">Unit</div>${fval(p.unit_no)}</div>
+      </div>
+      <div class="field-grid col3" style="margin-top:6px">
+        <div class="field"><div class="f-label">Config</div>${fval(p.configuration)}</div>
+        <div class="field"><div class="f-label">Floor</div>${fval(p.floor)}</div>
+        <div class="field"><div class="f-label">Area (sqft)</div>${fval(p.area_sqft?Number(p.area_sqft).toLocaleString('en-IN'):null)}</div>
+      </div>
+      <div class="field-grid col2" style="margin-top:6px">
+        <div class="field"><div class="f-label">Registry Status</div><div class="f-value">${p.registry_status?pill(p.registry_status,p.registry_status==='Registered'?'green':'gold'):'—'}</div></div>
+        <div class="field"><div class="f-label">Occupancy Status</div><div class="f-value">${p.occupancy_status?pill(p.occupancy_status,p.occupancy_status==='Vacant'?'gold':p.occupancy_status==='Tenant'?'red':'green'):'—'}</div></div>
+      </div>
+      ${hdDate?`<div class="field-grid col2" style="margin-top:6px"><div class="field"><div class="f-label">Key Handover Date</div><div class="f-value">${hdDate}</div></div><div class="field"></div></div>`:''}
+      <div class="section-label">Deal Terms</div>
+      <div class="field-grid col2">
+        <div class="field"><div class="f-label">Token Amount</div><div class="f-value">${fmtAmt(p.deal_token_amount||p.token_amount_requested)}</div></div>
+        <div class="field"><div class="f-label">Guaranteed Sale Price</div><div class="f-value">${p.guaranteed_sale_price?fmtLakhs(p.guaranteed_sale_price):'—'}</div></div>
+      </div>
+      ${(p.initial_period||p.grace_period)?`<div class="field-grid col2" style="margin-top:6px">
+        ${p.initial_period&&p.rent_payable_initial_period&&p.rent_payable_initial_period!=='N/A'?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days → ${fmtCurrency(p.rent_payable_initial_period)}/mo</div></div>`
+          :p.initial_period?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days</div></div>`:'<div></div>'}
+        ${p.grace_period&&p.rent_payable_grace_period&&p.rent_payable_grace_period!=='N/A'?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days → ${fmtCurrency(p.rent_payable_grace_period)}/mo</div></div>`
+          :p.grace_period?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days</div></div>`:'<div></div>'}
+      </div>`:''}
+      ${p.has_loan!=='No'&&(p.outstanding_loan||p.bank_name_loan||p.loan_pay_willingness)?`<div class="section-label">Loan Details</div>
+      <div class="field-grid col3">
+        <div class="field"><div class="f-label">Outstanding Loan</div>${fval(p.outstanding_loan?fmtCurrency(p.outstanding_loan):null)}</div>
+        <div class="field"><div class="f-label">Bank (Loan)</div>${fval(p.bank_name_loan)}</div>
+        <div class="field"><div class="f-label">Seller to Pay?</div><div class="f-value">${p.loan_pay_willingness?pill(p.loan_pay_willingness,p.loan_pay_willingness==='Yes'?'green':'red'):'—'}</div></div>
+      </div>`:''}
+      ${availDocs.length?`<div class="section-label">Documents Available</div>
+      <div class="doc-grid">
+        ${availDocs.map(d=>`<div class="doc-item"><div class="doc-box checked"></div>${esc(d.replace('issued by the Builder','').replace('/Certificate by the Builder','').replace('Conveyance Deed/Sale Deed/Registry','Conveyance Deed').trim())}</div>`).join('\n    ')}
+      </div>`:''}
+      ${missingDocs.length?`<div class="section-label" style="margin-top:8px">Documents Missing</div>
+      <div class="doc-grid">${missingDocs.map(d=>`<div class="doc-item missing"><div class="doc-box"></div>${esc(d.replace('issued by the Builder','').replace('/Certificate by the Builder','').replace('Conveyance Deed/Sale Deed/Registry','Conveyance Deed').trim())}</div>`).join('\n    ')}</div>`:''}
+      <div class="section-label">Seller Bank Details</div>
+      <div class="field-grid col3">
+        <div class="field"><div class="f-label">Bank Name</div>${fval(p.cheque_bank_name||neftBank)}</div>
+        <div class="field"><div class="f-label">Account Number</div>${fval(p.cheque_account_number||p.deal_bank_account_number,'mono')}</div>
+        <div class="field"><div class="f-label">IFSC Code</div>${fval(p.cheque_ifsc||p.deal_ifsc_code,'mono')}</div>
+      </div>
+      ${hasNEFT?`<div class="section-label">Token Transaction</div>
+      <div class="token-strip">
+        <div class="token-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="token-info"><div class="t-title">Token Paid — ${esc(neftBank||'Bank')}</div><div class="t-ref">NEFT Ref: ${esc(neftRef)}</div></div>
+        <div class="token-date"><div class="td-label">Transfer Date</div><div class="td-val">${fmtDate(neftDate)}</div></div>
+      </div>`:''}
+      ${p.token_remarks_printed?`<div class="section-label">Remarks</div>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#374151;line-height:1.5;white-space:pre-wrap">${esc(p.token_remarks_printed)}</div>`:''}
+    </div><div class="footer">
+      <div><div class="footer-brand">Avano Technologies Private Limited</div>
+        <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
+      <div class="footer-note">Token Receipt<br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
+    </div>
   </div><div class="page-2-content" style="page-break-before:always">
     <div class="p2-body">
       <div class="section-label">Terms &amp; Conditions</div>
@@ -200,6 +203,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
         </ul>
       </div>
     </div>
+    
     <div class="footer">
       <div><div class="footer-brand">Avano Technologies Private Limited</div>
         <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
