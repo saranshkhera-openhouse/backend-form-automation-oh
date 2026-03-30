@@ -1,9 +1,10 @@
 // Deal Terms PDF (Form 4) - HTML template
 
 function fmtDate(d){if(!d)return '—';const dt=new Date(d);const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${String(dt.getDate()).padStart(2,'0')} ${m[dt.getMonth()]} ${dt.getFullYear()}`}
-function fmtAmt(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000)return '₹ '+(n/10000000).toFixed(2)+' Crores';if(n>=100000)return '₹ '+(n/100000).toFixed(2)+' Lakhs';return '₹ '+n.toLocaleString('en-IN')}
+function fmtAmt(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000)return '₹ '+parseFloat((n/10000000).toFixed(4))+' Crores';if(n>=100000)return '₹ '+parseFloat((n/100000).toFixed(4))+' Lakhs';return '₹ '+n.toLocaleString('en-IN')}
+function fmtPG(v){if(!v||isNaN(v))return '—';const n=Number(v);if(n>=10000000){const x=Math.floor(n/10000)/1000;return '₹ '+parseFloat(x.toFixed(3))+' Crores'}if(n>=100000){const x=Math.floor(n/100)/1000;return '₹ '+parseFloat(x.toFixed(3))+' Lakhs'}return '₹ '+n.toLocaleString('en-IN')}
 function fmtCurrency(v){if(!v||isNaN(v))return '—';return '₹ '+Number(v).toLocaleString('en-IN')}
-function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+(n/100).toFixed(2)+' Crores';return '₹ '+n+' Lakhs'}
+function fmtLakhs(v){if(!v)return '—';const n=Number(v);if(n>=100)return '₹ '+parseFloat((n/100).toFixed(4))+' Crores';return '₹ '+parseFloat(n.toFixed(4))+' Lakhs'}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
 function pill(val,type){return val?`<span class="pill ${type}">${esc(val)}</span>`:'—'}
 function fval(v,cls=''){if(!v||v==='null')return `<div class="f-value empty">—</div>`;return `<div class="f-value ${cls}">${esc(String(v))}</div>`}
@@ -25,8 +26,9 @@ function parseDocs(raw){
 
 function generateReceiptHTML(p, mode='deal', baseUrl=''){
   const today=fmtDate(new Date());
-  const ownerName=p.owner_broker_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'—';
-  const firstName=p.first_name||ownerName.split(' ')[0]||'Owner';
+  const rawOwner=p.owner_broker_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'—';
+  const ownerName=p.co_owner?rawOwner+' & '+p.co_owner:rawOwner;
+  const firstName=p.first_name||rawOwner.split(' ')[0]||'Owner';
   const logoUrl=baseUrl?baseUrl+'/images/logo.png':'/images/logo.png';
 
   const allDocs=['Allotment Letter issued by the Builder','Possession Letter/Certificate by the Builder','Builder Buyer Agreement','Conveyance Deed/Sale Deed/Registry'];
@@ -121,7 +123,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   </div>
   <div class="greeting-strip">
     <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
-    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtAmt(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
+    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
     ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div></div>`:''}
   </div>
   <div class="section-label">Seller Details</div>
@@ -182,7 +184,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
     <div class="token-date"><div class="td-label">Transfer Date</div><div class="td-val">${fmtDate(neftDate)}</div></div>
   </div>`:''}
   ${p.token_remarks_printed?`<div class="section-label">Remarks</div>
-  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#374151;line-height:1.5;white-space:pre-wrap">${esc(p.token_remarks_printed)}</div>`:''}
+  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;font-size:10px;color:#374151;line-height:1.4;white-space:pre-wrap;max-height:80px;overflow:hidden">${esc(p.token_remarks_printed)}</div>`:''}
   </div><div class="footer">
     <div><div class="footer-brand">Avano Technologies Private Limited</div>
       <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
