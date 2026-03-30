@@ -183,6 +183,7 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
 
   // Build recipient list
   const toList = [p.owner_email].filter(Boolean);
+  const ccList = ['sahaj.dureja@openhouse.in'].filter(Boolean);
   // const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'accounts@openhouse.in', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
 
   console.log('Building MIME email with PDF attachment...');
