@@ -26,12 +26,12 @@
 
     <div class="card"><div class="card-t">Area & Amenities</div>
       <div class="r2">
-        <div class="fg"><label>Super Area (sqft)</label><input type="number" name="super_area" id="superArea" step="0.01"></div>
-        <div class="fg"><label>Carpet Area (sqft)</label><input type="number" name="carpet_area" id="carpetArea" step="0.01"></div>
+        <div class="fg"><label>Super Area (sqft) <span class="req">*</span></label><input type="number" name="super_area" id="superArea" step="0.01" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Carpet Area (sqft) <span class="req">*</span></label><input type="number" name="carpet_area" id="carpetArea" step="0.01" required><div class="err-msg">Required</div></div>
       </div>
       <div class="r2">
-        <div class="fg"><label>Gas Pipeline</label><input type="text" name="gas_pipeline" id="gasPipe"></div>
-        <div class="fg"><label>Club Facility</label><input type="text" name="club_facility" id="clubFac"></div>
+        <div class="fg"><label>Gas Pipeline <span class="req">*</span></label><select name="gas_pipeline" id="gasPipe" required><option value="">Select...</option><option>Yes</option><option>No</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Club Facility <span class="req">*</span></label><select name="club_facility" id="clubFac" required><option value="">Select...</option><option>Yes</option><option>No</option></select><div class="err-msg">Required</div></div>
       </div>
     </div>
 
@@ -44,11 +44,10 @@
         <div class="fg"><label>Electricity (₹/unit) <span class="req">*</span></label><input type="number" name="electricity_charges" step="0.01" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>DG Charges (₹/unit) <span class="req">*</span></label><input type="number" name="dg_charges" step="0.01" required><div class="err-msg">Required</div></div>
       </div>
-      <div class="fg"><label>Society Age (Years)</label><input type="number" name="society_age_years" step="0.5"></div>
     </div>
 
     <div class="card"><div class="card-t">Additional Info</div>
-      <div class="fg"><label>Seller Location</label><input type="text" name="seller_location"></div>
+      <div class="fg"><label>Seller Location <span class="req">*</span></label><input type="text" name="seller_location" required><div class="err-msg">Required</div></div>
     </div>
 
     <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit Listing</button>
@@ -75,7 +74,6 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('l_cfg').value=configDisplay(d.configuration,d.extra_area);
     // Editable fields
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
-    sv('society_age_years',d.society_age_years);
     sv('maintenance_charges',d.maintenance_charges);sv('society_move_in_charges',d.society_move_in_charges);
     sv('electricity_charges',d.electricity_charges);sv('dg_charges',d.dg_charges);
     sv('seller_location',d.seller_location);
