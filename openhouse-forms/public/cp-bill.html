@@ -69,7 +69,7 @@
       <div class="r2">
         <div class="fg"><label>Agreed Brokerage (%) <span class="req">*</span></label>
           <div class="calc-hint" id="brkHint" style="min-height:14px"></div>
-          <input type="text" id="f_brokeragePct" inputmode="decimal" required><div class="err-msg">Required</div></div>
+          <input type="text" id="f_brokeragePct" inputmode="decimal" required oninput="if(parseFloat(this.value)>100)this.value=100"><div class="err-msg">Required</div></div>
         <div class="fg"><label>Total Brokerage (₹) <span class="req">*</span></label>
           <div style="min-height:14px"></div>
           <input type="text" name="total_brokerage_amount" id="f_totalBrokerage" required><div class="err-msg">Required</div></div>
