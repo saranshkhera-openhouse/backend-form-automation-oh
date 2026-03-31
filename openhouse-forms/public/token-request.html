@@ -84,7 +84,7 @@
         <div class="fg"><label>Guaranteed Sale Price (in Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Performance Guarantee (%)</label><input type="text" name="pg_pct" id="pgPct" inputmode="decimal" placeholder="e.g. 1.5" oninput="if(parseFloat(this.value)>100)this.value=100"></div>
       </div>
-      <div class="fg"><label>Performance Guarantee (in ₹)</label><input type="number" name="performance_guarantee" id="pgAmt" step="1">
+      <div class="fg"><label>Performance Guarantee (in ₹) <span class="req">*</span></label><input type="number" name="performance_guarantee" id="pgAmt" step="1" required><div class="err-msg">Required</div>
         <div style="font-size:9px;color:var(--tx3);margin-top:2px" id="pgCalcHint"></div></div>
       <hr class="div">
       <div class="arrow-row"><div class="fg"><label>Initial Period (in days) <span class="req">*</span></label><input type="number" name="initial_period" required><div class="err-msg">Required</div></div>
@@ -116,7 +116,7 @@
       </div>
     </div>
 
-    <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available</div>
+    <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available <span class="req">*</span></div>
       <div class="fg" style="margin-bottom:0"><div id="docsSelect"></div></div>
       <div class="fg" id="otherDocWrap" style="display:none;margin-top:8px"><label>Specify Other Documents</label><input type="text" name="other_documents_text" id="otherDocText"></div>
       <div class="fg" style="margin-top:10px"><label>Remarks (This will be PRINTED on PDF)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>

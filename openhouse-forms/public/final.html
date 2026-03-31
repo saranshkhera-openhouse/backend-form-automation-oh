@@ -44,7 +44,7 @@
 
     <div class="fg" id="hdWrap" style="display:none;padding:0 14px;margin-bottom:14px"><div class="card" style="margin:0"><label>Key Handover Date</label><input type="date" name="key_handover_date" id="hdDate"></div></div>
 
-    <div class="card"><div class="fg"><label>Date of AMA</label><input type="date" name="ama_date" id="amaDate"></div></div>
+    <div class="card"><div class="fg"><label>Date of AMA <span class="req">*</span></label><input type="date" name="ama_date" id="amaDate" required><div class="err-msg">Required</div></div></div>
 
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Payment Details</div>
       <div class="r2">
@@ -149,7 +149,14 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('finalForm');if(!valid){toast(`Missing: ${missing.slice(0,4).join(', ')}`,'err');return}
   if(!getRadio('has_loan')){toast('Select Any Loan?','err');return}
-  if(getRadio('has_loan')==='Yes'&&!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
+  if(!document.getElementById('amaDate').value){toast('Date of AMA required','err');return}
+  if(getRadio('has_loan')==='Yes'){
+    if(!document.getElementById('loanApplicant').value.trim()){toast('Applicant Name required','err');return}
+    if(!document.getElementById('selBankLoan').value){toast('Loan Bank Name required','err');return}
+    if(!document.getElementById('loanAc').value.trim()){toast('Loan A/C Number required','err');return}
+    if(!document.querySelector('[name="outstanding_loan"]').value){toast('Outstanding Loan required','err');return}
+    if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
+  }
   const fd=new FormData(document.getElementById('finalForm'));const body=Object.fromEntries(fd.entries());
   body.has_loan=getRadio('has_loan')||'No';
   body.loan_pay_willingness=getRadio('loan_pay_willingness');
