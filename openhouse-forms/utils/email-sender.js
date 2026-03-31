@@ -108,7 +108,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
 
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Greetings of the day!</p>
-<p>Dear accounts@openhouse.in,</p>
+<p>Dear Accounts Team,</p>
 <p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
 <p>Rahool Sureka, please approve the same.</p>
 ${p.cheque_image_url ? `<p style="margin-top:16px"><strong>Cancelled Cheque Link:</strong> <a href="${p.cheque_image_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view cheque</a></p>` : ''}<br>
@@ -242,7 +242,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
 
   const subject = `CP Bill Generation | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
-<p>Hi @accounts@openhouse.in,</p>
+<p>Hi Accounts Team,</p>
 <p>Kindly prepare the CP bill for the below mentioned property:</p>
 <table style="border-collapse:collapse;font-size:14px;line-height:2">
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Deal Type:</td><td>${p.deal_type||'—'}</td></tr>
@@ -259,7 +259,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">To be released now:</td><td>${p.to_be_released_now||'—'}</td></tr>
 </table>
 ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</strong></p><ul style="line-height:2">${photoLinks.join('')}</ul>`:''}
-<p style="margin-top:16px">@prashant@openhouse.in Kindly approve to proceed.</p>
+<p style="margin-top:16px">Prashant Singh Kindly approve to proceed.</p>
 <p>Best,<br><strong>${senderName}</strong></p>
 </body></html>`;
 
