@@ -35,33 +35,6 @@
       </div>
     </div>
 
-    <div class="card"><div class="card-t">Room & Amenities</div>
-      <div class="fg"><label>Acquisition By</label><input type="text" id="l_acq" class="pre" readonly></div>
-      <div class="r3">
-        <div class="fg"><label>No. of Bedrooms</label><input type="text" id="l_bed" class="pre" readonly></div>
-        <div class="fg"><label>No. of Baths</label><input type="text" id="l_bath" class="pre" readonly></div>
-        <div class="fg"><label>No. of Balconies</label><input type="text" id="l_bal" class="pre" readonly></div>
-      </div>
-      <div class="r2">
-        <div class="fg"><label>Possession Status</label><input type="text" id="l_poss" class="pre" readonly></div>
-        <div class="fg"><label>Parking</label><input type="text" id="l_park" class="pre" readonly></div>
-      </div>
-      <div class="fg"><label>Parking Number <span class="req">*</span></label><input type="text" name="parking_number" id="parkNum" required><div class="err-msg">Required</div></div>
-      <div class="fg"><label>Furnishing</label><input type="text" id="l_furn" class="pre" readonly></div>
-    </div>
-
-    <div class="card"><div class="card-t">Building Details</div>
-      <div class="r2">
-        <div class="fg"><label>Total No. of Floors</label><input type="text" id="l_tfloors" class="pre" readonly></div>
-        <div class="fg"><label>Total Flats per Floor</label><input type="text" id="l_tflats" class="pre" readonly></div>
-      </div>
-      <div class="r2">
-        <div class="fg"><label>Exit Facing</label><input type="text" id="l_exit" class="pre" readonly></div>
-        <div class="fg"><label>Balcony Facing</label><input type="text" id="l_balf" class="pre" readonly></div>
-      </div>
-      <div class="fg"><label>Society Age (Years)</label><input type="number" name="society_age_years" step="0.5"></div>
-    </div>
-
     <div class="card"><div class="card-t">Charges & Financial</div>
       <div class="r2">
         <div class="fg"><label>Maintenance (₹/sqft) <span class="req">*</span></label><input type="number" name="maintenance_charges" step="0.01" required><div class="err-msg">Required</div></div>
@@ -71,6 +44,7 @@
         <div class="fg"><label>Electricity (₹/unit) <span class="req">*</span></label><input type="number" name="electricity_charges" step="0.01" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>DG Charges (₹/unit) <span class="req">*</span></label><input type="number" name="dg_charges" step="0.01" required><div class="err-msg">Required</div></div>
       </div>
+      <div class="fg"><label>Society Age (Years)</label><input type="number" name="society_age_years" step="0.5"></div>
     </div>
 
     <div class="card"><div class="card-t">Additional Info</div>
@@ -99,23 +73,9 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('l_unit').value=d.unit_no||'';document.getElementById('l_tower').value=d.tower_no||'';
     document.getElementById('l_floor').value=d.floor??'';document.getElementById('l_area').value=d.area_sqft??'';
     document.getElementById('l_cfg').value=configDisplay(d.configuration,d.extra_area);
-    document.getElementById('l_acq').value=d.assigned_by||'';
-    const cfg=d.configuration||'';const match=cfg.match(/(\d+)/);
-    document.getElementById('l_bed').value=match?match[1]:'';
-    document.getElementById('l_bath').value=d.bathrooms||'';
-    document.getElementById('l_bal').value=d.balconies||'';
-    document.getElementById('l_poss').value=d.possession_status||d.occupancy_status||'';
-    document.getElementById('l_park').value=d.parking||'';
-    if(!d.parking||d.parking==='N/A'||d.parking==='No Parking'){document.getElementById('parkNum').closest('.fg').style.display='none';document.getElementById('parkNum').required=false}else{document.getElementById('parkNum').closest('.fg').style.display='';document.getElementById('parkNum').required=true}
-    document.getElementById('l_furn').value=d.furnishing||'';
-    document.getElementById('l_tfloors').value=d.total_floors_tower||'';
-    document.getElementById('l_tflats').value=d.total_flats_floor||'';
-    document.getElementById('l_exit').value=d.exit_facing||'';
-    let bf='';try{const bd=typeof d.balcony_details==='string'?JSON.parse(d.balcony_details):d.balcony_details||[];if(bd.length)bf=bd[0].facing||''}catch(e){}
-    document.getElementById('l_balf').value=bf;
     // Editable fields
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
-    sv('parking_number',d.parking_number);sv('society_age_years',d.society_age_years);
+    sv('society_age_years',d.society_age_years);
     sv('maintenance_charges',d.maintenance_charges);sv('society_move_in_charges',d.society_move_in_charges);
     sv('electricity_charges',d.electricity_charges);sv('dg_charges',d.dg_charges);
     sv('seller_location',d.seller_location);

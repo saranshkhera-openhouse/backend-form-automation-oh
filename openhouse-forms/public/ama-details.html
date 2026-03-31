@@ -81,11 +81,11 @@
     <!-- Card 3: Deal Summary -->
     <div class="card">
       <div class="card-t">Deal Summary</div>
-      <div class="fg"><label>Performance Guarantee Non Forfeitable <span class="req">*</span></label>
+      <div class="fg"><label>Performance Guarantee Forfeitable <span class="req">*</span></label>
         <div class="radios"><label><input type="radio" name="ama_pg_non_forfeitable" value="Yes"><span>Yes</span></label><label><input type="radio" name="ama_pg_non_forfeitable" value="No"><span>No</span></label></div></div>
       <div class="r2">
-        <div class="fg"><label>Beta Amount Max (%)</label><input type="number" name="ama_beta_max_pct" id="betaMax" step="0.01"></div>
-        <div class="fg"><label>Beta Amount Min (%)</label><input type="number" name="ama_beta_min_pct" id="betaMin" step="0.01"></div>
+        <div class="fg"><label>Beta Amount Max (%)</label><input type="number" name="ama_beta_max_pct" id="betaMax" step="0.01" min="0" max="100"></div>
+        <div class="fg"><label>Beta Amount Min (%)</label><input type="number" name="ama_beta_min_pct" id="betaMin" step="0.01" min="0" max="100"></div>
       </div>
       <div class="r2">
         <div class="fg"><label>Maintenance Charges Alignment</label>
@@ -157,6 +157,14 @@ function buildPropDocs(existing){
   container.querySelectorAll('.doc-toggle button').forEach(btn=>{
     btn.addEventListener('click',function(){
       const key=this.dataset.key;const val=this.dataset.val;
+      const currentStatus=propDocState[key].status;
+      // If clicking same value, deselect
+      if(currentStatus===val){
+        propDocState[key].status='';
+        this.parentElement.querySelectorAll('button').forEach(b=>{b.className=''});
+        document.getElementById('docUp_'+key).classList.remove('show');
+        return;
+      }
       propDocState[key].status=val;
       const toggle=this.parentElement;
       toggle.querySelectorAll('button').forEach(b=>{b.className=''});

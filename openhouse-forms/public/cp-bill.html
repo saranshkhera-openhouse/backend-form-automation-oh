@@ -51,7 +51,7 @@
       <div class="card-t">CP Details</div>
       <div class="r2">
         <div class="fg"><label>CP Name <span class="req">*</span></label><input type="text" name="cp_name" id="f_cpName" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>CP Phone <span class="req">*</span></label><input type="tel" name="cp_phone" id="f_cpPhone" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>CP Phone <span class="req">*</span></label><input type="tel" name="cp_phone" id="f_cpPhone" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^1-9]/g,'').slice(0,1)+this.value.slice(1).replace(/\D/g,'').slice(0,9)" required><div class="err-msg">Required (10 digits, no leading 0)</div></div>
       </div>
       <div class="r2">
         <div class="fg"><label>CP Firm</label><input type="text" name="cp_firm" id="f_cpFirm"></div>
@@ -67,24 +67,18 @@
         <div class="fg"><label>OH Acquired Model</label><input type="text" name="oh_acquired_model" id="f_model" class="pre" readonly></div>
       </div>
       <div class="r2">
-        <div class="fg"><label>Agreed Brokerage (%)</label>
+        <div class="fg"><label>Agreed Brokerage (%) <span class="req">*</span></label>
           <div class="calc-hint" id="brkHint" style="min-height:14px"></div>
-          <input type="text" id="f_brokeragePct" inputmode="decimal" placeholder="e.g. 1.5"></div>
-        <div class="fg"><label>Agreed Brokerage (₹) <span class="req">*</span></label>
+          <input type="text" id="f_brokeragePct" inputmode="decimal" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Total Brokerage (₹) <span class="req">*</span></label>
           <div style="min-height:14px"></div>
-          <input type="text" name="agreed_brokerage" id="f_brokerage" required><div class="err-msg">Required</div></div>
+          <input type="text" name="total_brokerage_amount" id="f_totalBrokerage" required><div class="err-msg">Required</div></div>
       </div>
-      <div class="r3">
-        <div class="fg"><label>Total Brokerage (%)</label>
-          <div class="calc-hint" id="tbrHint" style="min-height:14px"></div>
-          <input type="text" id="f_totalBrokeragePct" inputmode="decimal" placeholder="%"></div>
-        <div class="fg"><label>Total Brokerage Amount (₹)</label>
-          <div style="min-height:14px"></div>
-          <input type="text" name="total_brokerage_amount" id="f_totalBrokerage"></div>
-        <div class="fg"><label>To be released now <span class="req">*</span></label>
-          <div style="min-height:14px"></div>
-          <input type="text" name="to_be_released_now" id="f_release" required><div class="err-msg">Required</div></div>
+      <div class="r2">
+        <div class="fg"><label>Incentive for Visit (₹) <span class="req">*</span></label><input type="number" name="incentive_visit" id="f_incentiveVisit" step="1" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Incentive for Owner Meeting (₹) <span class="req">*</span></label><input type="number" name="incentive_owner_meeting" id="f_incentiveMeeting" step="1" required><div class="err-msg">Required</div></div>
       </div>
+      <div class="fg"><label>Total Amount (₹)</label><input type="text" id="f_totalAmount" class="pre" readonly></div>
     </div>
 
     <div class="card">
@@ -138,38 +132,34 @@ const ITEM_MAP={cp_aadhaar_front:'pu_aadhaarFront',cp_aadhaar_back:'pu_aadhaarBa
 let cloudCfg=null;
 fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
 
-// Bidirectional brokerage calc
-function getDealValue(){return parseFloat(String(document.getElementById('f_dealValue').value).replace(/,/g,''))||0}
-let brkLock=false;
+// Brokerage bidirectional calc
+function getDV(){return parseFloat(String(document.getElementById('f_dealValue').value).replace(/,/g,''))||0}
+let bLock=false;
 document.getElementById('f_brokeragePct').addEventListener('input',function(){
-  if(brkLock)return;brkLock=true;
-  const dv=getDealValue();const p=parseFloat(this.value)||0;
-  if(dv>0&&p>0){const amt=Math.round(dv*p/100);document.getElementById('f_brokerage').value=amt;document.getElementById('brkHint').textContent=`${p}% of ₹${dv.toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
+  if(bLock)return;bLock=true;
+  const dv=getDV();const p=parseFloat(this.value)||0;
+  if(dv>0&&p>0){const amt=Math.round(dv*p/100);document.getElementById('f_totalBrokerage').value=amt;document.getElementById('brkHint').textContent=`${p}% of ₹${dv.toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
   else document.getElementById('brkHint').textContent='';
-  brkLock=false;
-});
-document.getElementById('f_brokerage').addEventListener('input',function(){
-  if(brkLock)return;brkLock=true;
-  const dv=getDealValue();const a=parseFloat(String(this.value).replace(/,/g,''))||0;
-  if(dv>0&&a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}
-  else document.getElementById('brkHint').textContent='';
-  brkLock=false;
-});
-let tbrLock=false;
-document.getElementById('f_totalBrokeragePct').addEventListener('input',function(){
-  if(tbrLock)return;tbrLock=true;
-  const dv=getDealValue();const p=parseFloat(this.value)||0;
-  if(dv>0&&p>0){const amt=Math.round(dv*p/100);document.getElementById('f_totalBrokerage').value=amt;document.getElementById('tbrHint').textContent=`${p}% of ₹${dv.toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
-  else document.getElementById('tbrHint').textContent='';
-  tbrLock=false;
+  bLock=false;calcTotal();
 });
 document.getElementById('f_totalBrokerage').addEventListener('input',function(){
-  if(tbrLock)return;tbrLock=true;
-  const dv=getDealValue();const a=parseFloat(String(this.value).replace(/,/g,''))||0;
-  if(dv>0&&a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_totalBrokeragePct').value=pct;document.getElementById('tbrHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}
-  else document.getElementById('tbrHint').textContent='';
-  tbrLock=false;
+  if(bLock)return;bLock=true;
+  const dv=getDV();const a=parseFloat(String(this.value).replace(/,/g,''))||0;
+  if(dv>0&&a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}
+  else document.getElementById('brkHint').textContent='';
+  bLock=false;calcTotal();
 });
+
+// Auto-sum total
+document.getElementById('f_incentiveVisit').addEventListener('input',calcTotal);
+document.getElementById('f_incentiveMeeting').addEventListener('input',calcTotal);
+function calcTotal(){
+  const tb=parseFloat(String(document.getElementById('f_totalBrokerage').value).replace(/,/g,''))||0;
+  const iv=parseFloat(document.getElementById('f_incentiveVisit').value)||0;
+  const im=parseFloat(document.getElementById('f_incentiveMeeting').value)||0;
+  const total=tb+iv+im;
+  document.getElementById('f_totalAmount').value=total?'₹ '+total.toLocaleString('en-IN'):'';
+}
 
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
@@ -201,25 +191,26 @@ async function loadUID(uid){
     document.getElementById('f_cpPhone').value=d.cp_phone||'';
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
     document.getElementById('f_cpEmail').value=d.cp_email||'';
+    // OH Acquired Model auto-calc
     document.getElementById('f_model').value=d.oh_acquired_model||'';
-    // Auto-calc OH Acquired Model from PG
     if(d.performance_guarantee&&d.guaranteed_sale_price){
       const pgAmt=Number(d.performance_guarantee);const gspLakhs=Number(d.guaranteed_sale_price);
       const pct=Math.round(pgAmt/(gspLakhs*100000)*100*1000)/1000;
       const amtL=pgAmt>=10000000?parseFloat((pgAmt/10000000).toFixed(4))+'Cr':parseFloat((pgAmt/100000).toFixed(4))+'L';
       document.getElementById('f_model').value=`${pct}% (${amtL} amount)`;
     }
+    // Deal value from GSP
     const gsp=d.guaranteed_sale_price;
     document.getElementById('f_dealValue').value=gsp?Math.round(gsp*100000):'';
-    document.getElementById('f_brokerage').value=d.agreed_brokerage||'';
+    // Brokerage
+    document.getElementById('f_brokeragePct').value=d.agreed_brokerage||'';
     document.getElementById('f_totalBrokerage').value=d.total_brokerage_amount||'';
-    document.getElementById('f_release').value=d.to_be_released_now||'';
-    // Recalc percentages
-    document.getElementById('f_brokeragePct').value='';document.getElementById('brkHint').textContent='';
-    document.getElementById('f_totalBrokeragePct').value='';document.getElementById('tbrHint').textContent='';
+    document.getElementById('brkHint').textContent='';
     const dv=parseFloat(document.getElementById('f_dealValue').value)||0;
-    if(dv>0&&d.agreed_brokerage){const a=parseFloat(String(d.agreed_brokerage).replace(/,/g,''))||0;if(a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}}
-    if(dv>0&&d.total_brokerage_amount){const a=parseFloat(String(d.total_brokerage_amount).replace(/,/g,''))||0;if(a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_totalBrokeragePct').value=pct;document.getElementById('tbrHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}}
+    if(dv>0&&d.total_brokerage_amount){const a=parseFloat(String(d.total_brokerage_amount).replace(/,/g,''))||0;if(a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}}
+    document.getElementById('f_incentiveVisit').value=d.incentive_visit||'';
+    document.getElementById('f_incentiveMeeting').value=d.incentive_owner_meeting||'';
+    calcTotal();
     // Doc URLs
     for(const[key,col]of Object.entries(DOC_MAP)){
       docUrls[key]=d[col]||'';
@@ -234,49 +225,53 @@ async function loadUID(uid){
 }
 
 function pickFile(key){document.getElementById('fi_'+key).click()}
-
 async function uploadDoc(input,key){
-  if(!input.files.length)return;
-  if(!cloudCfg){toast('Upload not ready','warn');return}
-  const file=input.files[0];
-  if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
-  const item=document.getElementById(ITEM_MAP[key]);
-  item.querySelector('.pu-label').textContent='Uploading...';
+  if(!input.files.length)return;if(!cloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const item=document.getElementById(ITEM_MAP[key]);item.querySelector('.pu-label').textContent='Uploading...';
   try{
     const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cloudCfg.uploadPreset);fd.append('folder','cp-bill');
     const r=await fetch(`https://api.cloudinary.com/v1_1/${cloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
-    const d=await r.json();
-    if(!d.secure_url)throw new Error('Upload failed');
-    docUrls[key]=d.secure_url;
-    item.classList.add('uploaded');
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    docUrls[key]=d.secure_url;item.classList.add('uploaded');
     const labelMap={cp_aadhaar_front:'Aadhaar Front ✓',cp_aadhaar_back:'Aadhaar Back ✓',cp_pan_card:'PAN Card ✓',cp_cancelled_cheque:'Cheque ✓',cp_ama_signed:'AMA Signed ✓'};
     item.querySelector('.pu-label').textContent=labelMap[key]||'Uploaded ✓';
-    let link=item.querySelector('.pu-link');
-    if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
-    link.href=d.secure_url;
-    toast('Uploaded','ok');
+    let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+    link.href=d.secure_url;toast('Uploaded','ok');
   }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').textContent=key.replace(/cp_/,'').replace(/_/g,' ')}
 }
 
+function validatePhone(val){return /^[1-9]\d{9}$/.test(val)}
+
 document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
+  const cpPhone=document.getElementById('f_cpPhone').value.trim();
+  if(cpPhone&&!validatePhone(cpPhone)){toast('CP Phone must be 10 digits, cannot start with 0','err');return}
   const body={uid:currentUid};
   body.cp_name=document.getElementById('f_cpName').value.trim();
-  body.cp_phone=document.getElementById('f_cpPhone').value.trim();
+  body.cp_phone=cpPhone;
   body.cp_firm=document.getElementById('f_cpFirm').value.trim();
   body.cp_email=document.getElementById('f_cpEmail').value.trim();
   body.deal_type='Acquisition/Supply';
   body.oh_acquired_model=document.getElementById('f_model').value.trim();
-  body.agreed_brokerage=document.getElementById('f_brokerage').value.trim();
+  body.agreed_brokerage=document.getElementById('f_brokeragePct').value.trim();
   body.deal_value=document.getElementById('f_dealValue').value.trim();
   body.total_brokerage_amount=document.getElementById('f_totalBrokerage').value.trim();
-  body.to_be_released_now=document.getElementById('f_release').value.trim();
+  body.incentive_visit=document.getElementById('f_incentiveVisit').value.trim();
+  body.incentive_owner_meeting=document.getElementById('f_incentiveMeeting').value.trim();
+  // Calc total
+  const tb=parseFloat(String(body.total_brokerage_amount).replace(/,/g,''))||0;
+  const iv=parseFloat(body.incentive_visit)||0;
+  const im=parseFloat(body.incentive_owner_meeting)||0;
+  body.total_cp_amount=String(tb+iv+im);
   for(const[key,col]of Object.entries(DOC_MAP)){body[col]=docUrls[key]||null}
 
   if(!body.cp_name){toast('CP Name required','err');return}
   if(!body.cp_phone){toast('CP Phone required','err');return}
-  if(!body.agreed_brokerage){toast('Agreed Brokerage required','err');return}
-  if(!body.to_be_released_now){toast('To be released amount required','err');return}
+  if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
+  if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
+  if(!body.incentive_visit){toast('Incentive for Visit required','err');return}
+  if(!body.incentive_owner_meeting){toast('Incentive for Owner Meeting required','err');return}
 
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -291,12 +286,11 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const addr=[loadedData?.unit_no,loadedData?.tower_no,loadedData?.society_name,loadedData?.locality,loadedData?.city].filter(Boolean).join(', ');
   const amaStatus=docUrls.cp_ama_signed?'Signed (attached below)':'Not signed yet';
   const photoLines=[];
-  if(docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Card Front</a>`);
-  if(docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Card Back</a>`);
+  if(docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
+  if(docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
   if(docUrls.cp_pan_card)photoLines.push(`• <a href="${docUrls.cp_pan_card}" target="_blank">PAN Card</a>`);
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">Cancelled Cheque</a>`);
   if(docUrls.cp_ama_signed)photoLines.push(`• <a href="${docUrls.cp_ama_signed}" target="_blank">AMA Signed (PDF)</a>`);
-
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>Subject:</strong> CP Bill Generation | ${addr}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
@@ -310,11 +304,13 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Email ID:</td><td>${document.getElementById('f_cpEmail').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Property Address:</td><td>${addr}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">OH Acquired Model:</td><td>${document.getElementById('f_model').value||'—'}</td></tr>
-<tr><td style="padding:1px 10px 1px 0;font-weight:600">Agreed Brokerage:</td><td>${document.getElementById('f_brokerage').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">Agreed Brokerage:</td><td>${document.getElementById('f_brokeragePct').value||'—'}%</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">AMA Status:</td><td>${amaStatus}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Deal Value:</td><td>${document.getElementById('f_dealValue').value||'—'}</td></tr>
-<tr><td style="padding:1px 10px 1px 0;font-weight:600">Total Brokerage:</td><td>${document.getElementById('f_totalBrokerage').value||'—'}</td></tr>
-<tr><td style="padding:1px 10px 1px 0;font-weight:600">To be released now:</td><td>${document.getElementById('f_release').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">Total Brokerage:</td><td>₹${document.getElementById('f_totalBrokerage').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">Incentive for Visit:</td><td>₹${document.getElementById('f_incentiveVisit').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">Incentive for Owner Meeting:</td><td>₹${document.getElementById('f_incentiveMeeting').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">Total Amount:</td><td>${document.getElementById('f_totalAmount').value||'—'}</td></tr>
 </table>
 ${photoLines.length?`<p style="margin-top:10px"><strong>Attached Documents:</strong></p>${photoLines.join('<br>')}`:''}
 <p style="margin-top:10px">Prashant Singh, Kindly approve to proceed.</p>
@@ -331,8 +327,7 @@ async function confirmSendEmail(){
   try{
     const r=await fetch(`${API}/api/cp-bill/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
-    toast('Email sent successfully!','ok',5000);
-    closeEmailModal();
+    toast('Email sent successfully!','ok',5000);closeEmailModal();
   }catch(e){toast(e.message||'Failed','err');
     if(e.message&&e.message.includes('log out'))toast('Please logout and login again','warn',8000);
   }finally{btn.disabled=false;btn.textContent='✉ Confirm & Send'}

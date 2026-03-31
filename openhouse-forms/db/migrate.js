@@ -186,6 +186,9 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_submitted_at') THEN ALTER TABLE properties ADD COLUMN ama_submitted_at TIMESTAMPTZ; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='super_area') THEN ALTER TABLE properties ADD COLUMN super_area REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='carpet_area') THEN ALTER TABLE properties ADD COLUMN carpet_area REAL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='incentive_visit') THEN ALTER TABLE properties ADD COLUMN incentive_visit TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='incentive_owner_meeting') THEN ALTER TABLE properties ADD COLUMN incentive_owner_meeting TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='total_cp_amount') THEN ALTER TABLE properties ADD COLUMN total_cp_amount TEXT; END IF;
 END $$;
 `;
 

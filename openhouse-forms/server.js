@@ -120,7 +120,8 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'deal_value','total_brokerage_amount','to_be_released_now',
       'pan_front_url','pan_back_url','aadhaar_front_url','aadhaar_back_url',
       'cp_cancelled_cheque_url','ama_signed_photo_url',
-      'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_ama_signed_url']);
+      'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_ama_signed_url',
+      'incentive_visit','incentive_owner_meeting','total_cp_amount']);
     const sets=[];const vals=[];let i=1;
     for(const[k,v]of Object.entries(d)){
       if(!allowed.has(k))continue;
