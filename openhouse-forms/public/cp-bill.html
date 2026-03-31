@@ -64,7 +64,7 @@
       <div class="r3">
         <div class="fg"><label>Deal Type</label><input type="text" id="f_dealType" value="Acquisition" class="pre" readonly></div>
         <div class="fg"><label>Deal Value (₹)</label><input type="text" name="deal_value" id="f_dealValue" class="pre" readonly></div>
-        <div class="fg"><label>OH Acquired Model</label><input type="text" name="oh_acquired_model" id="f_model"></div>
+        <div class="fg"><label>OH Acquired Model</label><input type="text" name="oh_acquired_model" id="f_model" class="pre" readonly></div>
       </div>
       <div class="r2">
         <div class="fg"><label>Agreed Brokerage (%)</label><input type="text" id="f_brokeragePct" inputmode="decimal" placeholder="e.g. 1.5">
@@ -193,6 +193,13 @@ async function loadUID(uid){
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
     document.getElementById('f_cpEmail').value=d.cp_email||'';
     document.getElementById('f_model').value=d.oh_acquired_model||'';
+    // Auto-calc OH Acquired Model from PG
+    if(d.performance_guarantee&&d.guaranteed_sale_price){
+      const pgAmt=Number(d.performance_guarantee);const gspLakhs=Number(d.guaranteed_sale_price);
+      const pct=Math.round(pgAmt/(gspLakhs*100000)*100*1000)/1000;
+      const amtL=pgAmt>=10000000?parseFloat((pgAmt/10000000).toFixed(4))+'Cr':parseFloat((pgAmt/100000).toFixed(4))+'L';
+      document.getElementById('f_model').value=`${pct}% (${amtL} amount)`;
+    }
     const gsp=d.guaranteed_sale_price;
     document.getElementById('f_dealValue').value=gsp?Math.round(gsp*100000):'';
     document.getElementById('f_brokerage').value=d.agreed_brokerage||'';
