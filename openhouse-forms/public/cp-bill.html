@@ -24,13 +24,13 @@
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
-  <div class="hdr-center"><div class="form-name">CP Bill Generation</div></div>
+  <div class="hdr-center"><div class="form-name">6 CP Bill Generation</div></div>
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
-  <div class="card" style="padding:10px 14px">
-    <label style="font-size:12px;font-weight:600;color:var(--tx3)">Select UID</label>
-    <select id="uidSel" style="font-size:16px;width:100%;margin-top:4px"><option value="">Select UID...</option></select>
+  <div class="card"><div class="card-t">Load Property</div>
+    <div class="load-row"><div class="fg"><label>UID</label><select id="uidSel" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button></div>
     <div id="prefillStatus" class="pf-st"></div>
   </div>
 
@@ -79,6 +79,7 @@
           <div class="calc-hint" id="tbrHint" style="min-height:14px"></div>
           <input type="text" id="f_totalBrokeragePct" inputmode="decimal" placeholder="%"></div>
         <div class="fg"><label>Total Brokerage Amount (₹)</label>
+          <div style="min-height:14px"></div>
           <input type="text" name="total_brokerage_amount" id="f_totalBrokerage"></div>
         <div class="fg"><label>To be released now <span class="req">*</span></label>
           <div style="min-height:14px"></div>
@@ -176,6 +177,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     isAdmin=me.is_admin;isManager=me.is_manager;
     const r=await fetch(`${API}/api/cp-bill/uids`);const uids=await r.json();
     const sel=document.getElementById('uidSel');
+    sel.innerHTML='<option value="">Select UID...</option>';
     uids.forEach(u=>{const o=document.createElement('option');o.value=u.uid;
       o.textContent=`${u.uid} — ${[u.tower_no,u.unit_no].filter(Boolean).join('-')} ${u.society_name||''}${u.cp_bill_submitted_at?' ✓':''}`;sel.appendChild(o)});
     makeSearchable(sel);
@@ -183,7 +185,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   }catch(e){toast('Failed to load','err')}
 });
 
-document.getElementById('uidSel').addEventListener('change',()=>{const uid=document.getElementById('uidSel').value;if(uid)loadUID(uid)});
+document.getElementById('loadBtn').addEventListener('click',()=>{const uid=document.getElementById('uidSel').value;if(!uid){toast('Select UID','warn');return}loadUID(uid)});
 
 async function loadUID(uid){
   const st=document.getElementById('prefillStatus');
