@@ -28,6 +28,7 @@ module.exports=function(pool){
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
         has_loan=$24,token_remarks_printed=$25,co_owner=$26,co_owner_number=$32,
+        loan_applicant_name=$33,loan_co_applicant_name=$34,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -40,7 +41,7 @@ module.exports=function(pool){
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
          d.has_loan||'No',d.token_remarks_printed||null,d.co_owner||null,
          d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null,
-         d.co_owner_number||null]);
+         d.co_owner_number||null,d.loan_applicant_name||null,d.loan_co_applicant_name||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });

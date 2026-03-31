@@ -104,7 +104,7 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'token_requested_by','token_amount_requested','registry_status','occupancy_status','key_handover_date',
       'guaranteed_sale_price','performance_guarantee','initial_period','rent_payable_initial_period',
       'grace_period','rent_payable_grace_period','outstanding_loan','bank_name_loan','loan_account_number',
-      'loan_pay_willingness','has_loan','token_remarks','token_remarks_printed','inclusions','papers_available',
+      'loan_pay_willingness','has_loan','loan_applicant_name','loan_co_applicant_name','token_remarks','token_remarks_printed','inclusions','papers_available',
       'cheque_bank_name','cheque_account_number','cheque_ifsc',
       'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference','owner_email','co_owner_email','co_owner_number','third_owner_email','broker_email',
       'remaining_amount','bank_name','bank_account_number','ifsc_code','token_transfer_date','neft_reference',

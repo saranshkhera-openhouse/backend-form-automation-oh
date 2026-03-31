@@ -87,6 +87,10 @@
       <div class="fg"><label>Any Loan? <span class="req">*</span></label>
         <div class="radios"><label><input type="radio" name="has_loan" value="Yes" id="loanYes"><span>Yes</span></label><label><input type="radio" name="has_loan" value="No" id="loanNo"><span>No</span></label></div></div>
       <div id="loanFields" style="display:none">
+        <div class="r2">
+          <div class="fg"><label>Applicant Name</label><input type="text" name="loan_applicant_name" id="loanApplicant"></div>
+          <div class="fg"><label>Co-applicant Name</label><input type="text" name="loan_co_applicant_name" id="loanCoApplicant"></div>
+        </div>
         <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details above</span></label>
         <div id="loanBankFields">
           <div class="fg"><label>Bank Name</label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
@@ -102,7 +106,7 @@
     <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available</div>
       <div class="fg" style="margin-bottom:0"><div id="docsSelect"></div></div>
       <div class="fg" id="otherDocWrap" style="display:none;margin-top:8px"><label>Specify Other Documents</label><input type="text" name="other_documents_text" id="otherDocText"></div>
-      <div class="fg" style="margin-top:10px"><label>Remarks (This will be PRINTED on PDF; MAX 5 LINES)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
+      <div class="fg" style="margin-top:10px"><label>Remarks (This will be PRINTED on PDF)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
       <div class="fg" style="margin-top:6px"><label>Remarks (For internal team reference)</label><textarea name="token_remarks" rows="2"></textarea></div></div>
 
     <div class="btn-row">
@@ -223,7 +227,13 @@ document.addEventListener('DOMContentLoaded',async()=>{
     document.querySelectorAll('input[name="has_loan"]').forEach(r=>{
       r.addEventListener('change',function(){
         document.getElementById('loanFields').style.display=this.value==='Yes'?'block':'none';
+        if(this.value==='Yes'){
+          if(!document.getElementById('loanApplicant').value)document.getElementById('loanApplicant').value=document.getElementById('d_owner').value||'';
+          if(!document.getElementById('loanCoApplicant').value)document.getElementById('loanCoApplicant').value=document.getElementById('d_coowner').value||'';
+        }
         if(this.value==='No'){
+          document.getElementById('loanApplicant').value='';
+          document.getElementById('loanCoApplicant').value='';
           document.querySelector('[name="outstanding_loan"]').value='';
           document.querySelector('[name="loan_account_number"]').value='';
           document.getElementById('selBankLoan').value='';
@@ -294,6 +304,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const loanRadio=document.querySelector(`input[name="has_loan"][value="${hasLoan}"]`);
     if(loanRadio){loanRadio.checked=true;document.getElementById('loanFields').style.display=hasLoan==='Yes'?'block':'none'}
     if(d.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=d.bank_name_loan;if(d.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
+    document.getElementById('loanApplicant').value=d.loan_applicant_name||d.owner_broker_name||'';
+    document.getElementById('loanCoApplicant').value=d.loan_co_applicant_name||d.co_owner||'';
     sv('outstanding_loan',d.outstanding_loan);sv('loan_account_number',d.loan_account_number);
     sr('loan_pay_willingness',d.loan_pay_willingness);
     sv('token_remarks',d.token_remarks);
@@ -307,12 +319,12 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 function collectBody(){const fd=new FormData(document.getElementById('tokenForm'));const body=Object.fromEntries(fd.entries());
   body.loan_pay_willingness=getRadio('loan_pay_willingness');
   body.has_loan=getRadio('has_loan')||'No';
-  if(body.has_loan==='No'){body.outstanding_loan='';body.bank_name_loan='';body.loan_account_number='';body.loan_pay_willingness=''}
+  if(body.has_loan==='No'){body.outstanding_loan='';body.bank_name_loan='';body.loan_account_number='';body.loan_pay_willingness='';body.loan_applicant_name='';body.loan_co_applicant_name=''}
   body.documents_available=docsMsel.getSelected();
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','pg_pct'];
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','pg_pct','loan_applicant_name','loan_co_applicant_name'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
   body.performance_guarantee=parseFloat(body.performance_guarantee)||null;delete body.pg_pct;
   return body}
