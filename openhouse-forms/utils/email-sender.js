@@ -169,6 +169,7 @@ async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, proper
 <p>We are pleased to extend a formal offer for ${propRef}.</p>
 <p>As a token of our commitment, we have transferred ${tokenAmtFmt} via NEFT, bearing Reference No. ${neftRef}, as an advance token towards this transaction. Further to our discussion, we have <strong>ATTACHED THE AGREED DEAL TERMS</strong> for your reference. <strong>Please review the document carefully.</strong></p>
 <p>Kindly upload the required documents using the link - <a href="https://openhouse.in/login/" style="color:#1a73e8">Seller Dashboard</a></p>
+<p>Login using your mobile number <strong>${p.contact_no||'[Owner Mobile No]'}</strong> &amp; OTP</p>
 <p>Next Steps:-<br>
 1. Document due diligence within 2 working days<br>
 2. AMA signing<br>
@@ -233,12 +234,11 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   const amaStatus = p.ama_signed_photo_url ? 'Signed (attached below)' : 'Not signed yet';
 
   const photoLinks = [];
-  if(p.pan_front_url) photoLinks.push(`<li><a href="${p.pan_front_url}" target="_blank">PAN Card Front</a></li>`);
-  if(p.pan_back_url) photoLinks.push(`<li><a href="${p.pan_back_url}" target="_blank">PAN Card Back</a></li>`);
+  if(p.pan_front_url) photoLinks.push(`<li><a href="${p.pan_front_url}" target="_blank">PAN Card</a></li>`);
   if(p.aadhaar_front_url) photoLinks.push(`<li><a href="${p.aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
   if(p.aadhaar_back_url) photoLinks.push(`<li><a href="${p.aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
   if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">CP Cancelled Cheque</a></li>`);
-  if(p.ama_signed_photo_url) photoLinks.push(`<li><a href="${p.ama_signed_photo_url}" target="_blank">AMA Signed Photo</a></li>`);
+  if(p.ama_signed_photo_url) photoLinks.push(`<li><a href="${p.ama_signed_photo_url}" target="_blank">AMA Signed (PDF)</a></li>`);
 
   const subject = `CP Bill Generation | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">

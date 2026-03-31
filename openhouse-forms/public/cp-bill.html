@@ -11,14 +11,13 @@
 .pu-item.uploaded .pu-label{color:var(--grn)}
 .pu-item .pu-link{font-size:9px;color:var(--ac2);text-decoration:underline;margin-top:2px}
 .pu-item input[type=file]{display:none}
-.email-preview{background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-top:10px;font-size:12px;line-height:1.8;color:var(--tx);white-space:pre-wrap;max-height:50vh;overflow-y:auto}
-.email-preview strong{color:var(--tx)}
 .email-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .email-overlay.open{display:flex}
 .email-box{background:var(--sf);border-radius:12px;width:100%;max-width:640px;margin:40px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
 .email-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)}
 .email-body{padding:14px 18px;max-height:60vh;overflow-y:auto}
 .email-ftr{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.calc-hint{font-size:9px;color:var(--tx3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -62,33 +61,29 @@
     <div class="card">
       <div class="card-t">Deal Information</div>
       <div class="r2">
-        <div class="fg"><label>Deal Type <span class="req">*</span></label>
-          <select name="deal_type" id="f_dealType" required>
-            <option value="">Select...</option><option>Acquisition</option><option>Supply</option>
-          </select><div class="err-msg">Required</div>
-        </div>
+        <div class="fg"><label>Deal Type</label><input type="text" id="f_dealType" value="Acquisition" class="pre" readonly></div>
         <div class="fg"><label>OH Acquired Model</label><input type="text" name="oh_acquired_model" id="f_model"></div>
       </div>
       <div class="r2">
-        <div class="fg"><label>Agreed Brokerage <span class="req">*</span></label><input type="text" name="agreed_brokerage" id="f_brokerage" placeholder="e.g. 60,000/-" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Deal Value</label><input type="text" name="deal_value" id="f_dealValue" placeholder="e.g. INR 80 Lakh"></div>
+        <div class="fg"><label>Deal Value (₹)</label><input type="text" name="deal_value" id="f_dealValue" class="pre" readonly></div>
+        <div class="fg"><label>Agreed Brokerage (%)</label><input type="text" id="f_brokeragePct" inputmode="decimal" placeholder="e.g. 1.5"></div>
       </div>
+      <div class="fg"><label>Agreed Brokerage (₹) <span class="req">*</span></label><input type="text" name="agreed_brokerage" id="f_brokerage" required><div class="err-msg">Required</div>
+        <div class="calc-hint" id="brkHint"></div></div>
       <div class="r2">
-        <div class="fg"><label>Total Brokerage Amount</label><input type="text" name="total_brokerage_amount" id="f_totalBrokerage" placeholder="e.g. INR 60,000/-"></div>
-        <div class="fg"><label>To be released now <span class="req">*</span></label><input type="text" name="to_be_released_now" id="f_release" placeholder="Amount to release" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Total Brokerage (%)</label><input type="text" id="f_totalBrokeragePct" inputmode="decimal" placeholder="%"></div>
+        <div class="fg"><label>Total Brokerage Amount (₹)</label><input type="text" name="total_brokerage_amount" id="f_totalBrokerage"></div>
       </div>
+      <div class="calc-hint" id="tbrHint" style="margin-bottom:6px"></div>
+      <div class="fg"><label>To be released now <span class="req">*</span></label><input type="text" name="to_be_released_now" id="f_release" placeholder="Amount to release" required><div class="err-msg">Required</div></div>
     </div>
 
     <div class="card">
       <div class="card-t">Document Uploads</div>
       <div class="photo-upload">
         <div class="pu-item" id="pu_panFront" onclick="pickFile('pan_front')">
-          <div class="pu-icon">📄</div><div class="pu-label">PAN Card Front</div>
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
           <input type="file" id="fi_pan_front" accept="image/*,.pdf" onchange="uploadDoc(this,'pan_front')">
-        </div>
-        <div class="pu-item" id="pu_panBack" onclick="pickFile('pan_back')">
-          <div class="pu-icon">📄</div><div class="pu-label">PAN Card Back</div>
-          <input type="file" id="fi_pan_back" accept="image/*,.pdf" onchange="uploadDoc(this,'pan_back')">
         </div>
         <div class="pu-item" id="pu_aadhaarFront" onclick="pickFile('aadhaar_front')">
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Front</div>
@@ -102,9 +97,9 @@
           <div class="pu-icon">📄</div><div class="pu-label">CP Cancelled Cheque</div>
           <input type="file" id="fi_cp_cancelled_cheque" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_cancelled_cheque')">
         </div>
-        <div class="pu-item" id="pu_ama" onclick="pickFile('ama_signed_photo')">
-          <div class="pu-icon">📄</div><div class="pu-label">AMA Signed Photo</div>
-          <input type="file" id="fi_ama_signed_photo" accept="image/*,.pdf" onchange="uploadDoc(this,'ama_signed_photo')">
+        <div class="pu-item" id="pu_ama" onclick="pickFile('ama_signed_photo')" style="grid-column:span 2">
+          <div class="pu-icon">📄</div><div class="pu-label">AMA Signed (PDF)</div>
+          <input type="file" id="fi_ama_signed_photo" accept=".pdf,application/pdf" onchange="uploadDoc(this,'ama_signed_photo')">
         </div>
       </div>
     </div>
@@ -128,25 +123,55 @@
 <script src="/js/shared.js"></script>
 <script>
 let currentUid=null,loadedData=null,isAdmin=false,isManager=false;
-const docUrls={pan_front:'',pan_back:'',aadhaar_front:'',aadhaar_back:'',cp_cancelled_cheque:'',ama_signed_photo:''};
-const DOC_MAP={pan_front:'pan_front_url',pan_back:'pan_back_url',aadhaar_front:'aadhaar_front_url',aadhaar_back:'aadhaar_back_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',ama_signed_photo:'ama_signed_photo_url'};
-const ITEM_MAP={pan_front:'pu_panFront',pan_back:'pu_panBack',aadhaar_front:'pu_aadhaarFront',aadhaar_back:'pu_aadhaarBack',cp_cancelled_cheque:'pu_cheque',ama_signed_photo:'pu_ama'};
+const docUrls={pan_front:'',aadhaar_front:'',aadhaar_back:'',cp_cancelled_cheque:'',ama_signed_photo:''};
+const DOC_MAP={pan_front:'pan_front_url',aadhaar_front:'aadhaar_front_url',aadhaar_back:'aadhaar_back_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',ama_signed_photo:'ama_signed_photo_url'};
+const ITEM_MAP={pan_front:'pu_panFront',aadhaar_front:'pu_aadhaarFront',aadhaar_back:'pu_aadhaarBack',cp_cancelled_cheque:'pu_cheque',ama_signed_photo:'pu_ama'};
 let cloudCfg=null;
 fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
 
+// Bidirectional brokerage calc
+function getDealValue(){return parseFloat(String(document.getElementById('f_dealValue').value).replace(/,/g,''))||0}
+let brkLock=false;
+document.getElementById('f_brokeragePct').addEventListener('input',function(){
+  if(brkLock)return;brkLock=true;
+  const dv=getDealValue();const p=parseFloat(this.value)||0;
+  if(dv>0&&p>0){const amt=Math.round(dv*p/100);document.getElementById('f_brokerage').value=amt;document.getElementById('brkHint').textContent=`${p}% of ₹${dv.toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
+  else document.getElementById('brkHint').textContent='';
+  brkLock=false;
+});
+document.getElementById('f_brokerage').addEventListener('input',function(){
+  if(brkLock)return;brkLock=true;
+  const dv=getDealValue();const a=parseFloat(String(this.value).replace(/,/g,''))||0;
+  if(dv>0&&a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}
+  else document.getElementById('brkHint').textContent='';
+  brkLock=false;
+});
+
+let tbrLock=false;
+document.getElementById('f_totalBrokeragePct').addEventListener('input',function(){
+  if(tbrLock)return;tbrLock=true;
+  const dv=getDealValue();const p=parseFloat(this.value)||0;
+  if(dv>0&&p>0){const amt=Math.round(dv*p/100);document.getElementById('f_totalBrokerage').value=amt;document.getElementById('tbrHint').textContent=`${p}% of ₹${dv.toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
+  else document.getElementById('tbrHint').textContent='';
+  tbrLock=false;
+});
+document.getElementById('f_totalBrokerage').addEventListener('input',function(){
+  if(tbrLock)return;tbrLock=true;
+  const dv=getDealValue();const a=parseFloat(String(this.value).replace(/,/g,''))||0;
+  if(dv>0&&a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_totalBrokeragePct').value=pct;document.getElementById('tbrHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}
+  else document.getElementById('tbrHint').textContent='';
+  tbrLock=false;
+});
+
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
-    // Check admin
     const me=await fetch('/auth/me').then(r=>r.json());
-    isAdmin=me.is_admin;
-    isManager=me.is_manager;
-    // Load UIDs
+    isAdmin=me.is_admin;isManager=me.is_manager;
     const r=await fetch(`${API}/api/cp-bill/uids`);const uids=await r.json();
     const sel=document.getElementById('uidSel');
     uids.forEach(u=>{const o=document.createElement('option');o.value=u.uid;
       o.textContent=`${u.uid} — ${[u.tower_no,u.unit_no].filter(Boolean).join('-')} ${u.society_name||''}${u.cp_bill_submitted_at?' ✓':''}`;sel.appendChild(o)});
     makeSearchable(sel);
-    // URL param
     const p=new URLSearchParams(window.location.search);if(p.get('uid')){sel.value=p.get('uid');loadUID(p.get('uid'))}
   }catch(e){toast('Failed to load','err')}
 });
@@ -159,23 +184,30 @@ async function loadUID(uid){
   try{
     const r=await fetch(`${API}/api/cp-bill/prefill/${uid}`);if(!r.ok){const e=await r.json();throw new Error(e.error)}
     const d=await r.json();currentUid=uid;loadedData=d;
-    // Readonly
     document.getElementById('ro_soc').value=d.society_name||'';
     document.getElementById('ro_unit').value=[d.tower_no,d.unit_no].filter(Boolean).join('-')||'';
     document.getElementById('ro_owner').value=d.owner_broker_name||'';
     document.getElementById('ro_city').value=d.city||'';
-    // Prefill CP details
+    // CP details
     document.getElementById('f_cpName').value=d.cp_name||'';
     document.getElementById('f_cpPhone').value=d.cp_phone||'';
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
     document.getElementById('f_cpEmail').value=d.cp_email||'';
-    document.getElementById('f_dealType').value=d.deal_type||'';
     document.getElementById('f_model').value=d.oh_acquired_model||'';
+    // Deal value from guaranteed_sale_price (in Lakhs → convert to ₹)
+    const gsp=d.guaranteed_sale_price;
+    document.getElementById('f_dealValue').value=gsp?Math.round(gsp*100000):'';
+    // Prefill brokerage
     document.getElementById('f_brokerage').value=d.agreed_brokerage||'';
-    document.getElementById('f_dealValue').value=d.deal_value||'';
     document.getElementById('f_totalBrokerage').value=d.total_brokerage_amount||'';
     document.getElementById('f_release').value=d.to_be_released_now||'';
-    // Prefill doc URLs
+    // Recalc percentages if data exists
+    document.getElementById('f_brokeragePct').value='';document.getElementById('brkHint').textContent='';
+    document.getElementById('f_totalBrokeragePct').value='';document.getElementById('tbrHint').textContent='';
+    const dv=parseFloat(document.getElementById('f_dealValue').value)||0;
+    if(dv>0&&d.agreed_brokerage){const a=parseFloat(String(d.agreed_brokerage).replace(/,/g,''))||0;if(a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}}
+    if(dv>0&&d.total_brokerage_amount){const a=parseFloat(String(d.total_brokerage_amount).replace(/,/g,''))||0;if(a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_totalBrokeragePct').value=pct;document.getElementById('tbrHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}}
+    // Doc URLs
     for(const[key,col]of Object.entries(DOC_MAP)){
       docUrls[key]=d[col]||'';
       const item=document.getElementById(ITEM_MAP[key]);
@@ -183,7 +215,6 @@ async function loadUID(uid){
         const link=item.querySelector('.pu-link');if(!link){const a=document.createElement('a');a.className='pu-link';a.href=d[col];a.target='_blank';a.textContent='View';a.onclick=e=>e.stopPropagation();item.appendChild(a)}}
     }
     document.getElementById('cpBillForm').style.display='block';
-    // Show email button only for admins and only if already submitted
     document.getElementById('emailBtn').style.display=((isAdmin||isManager)&&d.cp_bill_submitted_at)?'block':'none';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.cp_bill_submitted_at?' (Submitted)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('cpBillForm').style.display='none'}
@@ -205,7 +236,7 @@ async function uploadDoc(input,key){
     if(!d.secure_url)throw new Error('Upload failed');
     docUrls[key]=d.secure_url;
     item.classList.add('uploaded');
-    const labelMap={pan_front:'PAN Front ✓',pan_back:'PAN Back ✓',aadhaar_front:'Aadhaar Front ✓',aadhaar_back:'Aadhaar Back ✓',cp_cancelled_cheque:'Cheque ✓',ama_signed_photo:'AMA Signed ✓'};
+    const labelMap={pan_front:'PAN Card ✓',aadhaar_front:'Aadhaar Front ✓',aadhaar_back:'Aadhaar Back ✓',cp_cancelled_cheque:'Cheque ✓',ama_signed_photo:'AMA Signed ✓'};
     item.querySelector('.pu-label').textContent=labelMap[key]||'Uploaded ✓';
     let link=item.querySelector('.pu-link');
     if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
@@ -214,7 +245,6 @@ async function uploadDoc(input,key){
   }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').textContent=key.replace(/_/g,' ')}
 }
 
-// Submit
 document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   const body={uid:currentUid};
@@ -222,18 +252,16 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   body.cp_phone=document.getElementById('f_cpPhone').value.trim();
   body.cp_firm=document.getElementById('f_cpFirm').value.trim();
   body.cp_email=document.getElementById('f_cpEmail').value.trim();
-  body.deal_type=document.getElementById('f_dealType').value;
+  body.deal_type='Acquisition';
   body.oh_acquired_model=document.getElementById('f_model').value.trim();
   body.agreed_brokerage=document.getElementById('f_brokerage').value.trim();
   body.deal_value=document.getElementById('f_dealValue').value.trim();
   body.total_brokerage_amount=document.getElementById('f_totalBrokerage').value.trim();
   body.to_be_released_now=document.getElementById('f_release').value.trim();
-  // Doc URLs
   for(const[key,col]of Object.entries(DOC_MAP)){body[col]=docUrls[key]||null}
 
   if(!body.cp_name){toast('CP Name required','err');return}
   if(!body.cp_phone){toast('CP Phone required','err');return}
-  if(!body.deal_type){toast('Deal Type required','err');return}
   if(!body.agreed_brokerage){toast('Agreed Brokerage required','err');return}
   if(!body.to_be_released_now){toast('To be released amount required','err');return}
 
@@ -245,18 +273,16 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   });
 });
 
-// Email preview & send
 document.getElementById('emailBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   const addr=[loadedData?.unit_no,loadedData?.tower_no,loadedData?.society_name,loadedData?.locality,loadedData?.city].filter(Boolean).join(', ');
   const amaStatus=docUrls.ama_signed_photo?'Signed (attached below)':'Not signed yet';
   const photoLines=[];
-  if(docUrls.pan_front)photoLines.push(`• <a href="${docUrls.pan_front}" target="_blank">PAN Card Front</a>`);
-  if(docUrls.pan_back)photoLines.push(`• <a href="${docUrls.pan_back}" target="_blank">PAN Card Back</a>`);
+  if(docUrls.pan_front)photoLines.push(`• <a href="${docUrls.pan_front}" target="_blank">PAN Card</a>`);
   if(docUrls.aadhaar_front)photoLines.push(`• <a href="${docUrls.aadhaar_front}" target="_blank">Aadhaar Front</a>`);
   if(docUrls.aadhaar_back)photoLines.push(`• <a href="${docUrls.aadhaar_back}" target="_blank">Aadhaar Back</a>`);
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">CP Cancelled Cheque</a>`);
-  if(docUrls.ama_signed_photo)photoLines.push(`• <a href="${docUrls.ama_signed_photo}" target="_blank">AMA Signed Photo</a>`);
+  if(docUrls.ama_signed_photo)photoLines.push(`• <a href="${docUrls.ama_signed_photo}" target="_blank">AMA Signed (PDF)</a>`);
 
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>Subject:</strong> CP Bill Generation | ${addr}</p>
@@ -264,7 +290,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <p>Hi Accounts Team,</p>
 <p>Kindly prepare the CP bill for the below mentioned property:</p>
 <table style="font-size:13px;line-height:2">
-<tr><td style="padding:1px 10px 1px 0;font-weight:600">Deal Type:</td><td>${document.getElementById('f_dealType').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">Deal Type:</td><td>Acquisition</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Name:</td><td>${document.getElementById('f_cpName').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Firm:</td><td>${document.getElementById('f_cpFirm').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Mobile Number:</td><td>${document.getElementById('f_cpPhone').value||'—'}</td></tr>
