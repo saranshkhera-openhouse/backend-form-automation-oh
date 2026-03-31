@@ -74,7 +74,8 @@
           <div style="min-height:14px"></div>
           <input type="text" name="total_brokerage_amount" id="f_totalBrokerage" required><div class="err-msg">Required</div></div>
       </div>
-      <div class="r2">
+      <div class="r3">
+        <div class="fg"><label>To be Released Now (₹) <span class="req">*</span></label><input type="number" name="to_be_released_now" id="f_release" step="1" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Incentive for Visit (₹)</label><input type="number" name="incentive_visit" id="f_incentiveVisit" step="1"></div>
         <div class="fg"><label>Incentive for Owner Meeting (₹)</label><input type="number" name="incentive_owner_meeting" id="f_incentiveMeeting" step="1"></div>
       </div>
@@ -151,13 +152,14 @@ document.getElementById('f_totalBrokerage').addEventListener('input',function(){
 });
 
 // Auto-sum total
+document.getElementById('f_release').addEventListener('input',calcTotal);
 document.getElementById('f_incentiveVisit').addEventListener('input',calcTotal);
 document.getElementById('f_incentiveMeeting').addEventListener('input',calcTotal);
 function calcTotal(){
-  const tb=parseFloat(String(document.getElementById('f_totalBrokerage').value).replace(/,/g,''))||0;
+  const rel=parseFloat(document.getElementById('f_release').value)||0;
   const iv=parseFloat(document.getElementById('f_incentiveVisit').value)||0;
   const im=parseFloat(document.getElementById('f_incentiveMeeting').value)||0;
-  const total=tb+iv+im;
+  const total=rel+iv+im;
   document.getElementById('f_totalAmount').value=total?'₹ '+total.toLocaleString('en-IN'):'';
 }
 
@@ -208,6 +210,7 @@ async function loadUID(uid){
     document.getElementById('brkHint').textContent='';
     const dv=parseFloat(document.getElementById('f_dealValue').value)||0;
     if(dv>0&&d.total_brokerage_amount){const a=parseFloat(String(d.total_brokerage_amount).replace(/,/g,''))||0;if(a>0){const pct=Math.round(a/dv*100*1000)/1000;document.getElementById('f_brokeragePct').value=pct;document.getElementById('brkHint').textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${dv.toLocaleString('en-IN')}`}}
+    document.getElementById('f_release').value=d.to_be_released_now||'';
     document.getElementById('f_incentiveVisit').value=d.incentive_visit||'';
     document.getElementById('f_incentiveMeeting').value=d.incentive_owner_meeting||'';
     calcTotal();
@@ -257,19 +260,21 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   body.agreed_brokerage=document.getElementById('f_brokeragePct').value.trim();
   body.deal_value=document.getElementById('f_dealValue').value.trim();
   body.total_brokerage_amount=document.getElementById('f_totalBrokerage').value.trim();
+  body.to_be_released_now=document.getElementById('f_release').value.trim();
   body.incentive_visit=document.getElementById('f_incentiveVisit').value.trim();
   body.incentive_owner_meeting=document.getElementById('f_incentiveMeeting').value.trim();
-  // Calc total
-  const tb=parseFloat(String(body.total_brokerage_amount).replace(/,/g,''))||0;
+  // Calc total = to_be_released + incentive_visit + incentive_owner_meeting
+  const rel=parseFloat(body.to_be_released_now)||0;
   const iv=parseFloat(body.incentive_visit)||0;
   const im=parseFloat(body.incentive_owner_meeting)||0;
-  body.total_cp_amount=String(tb+iv+im);
+  body.total_cp_amount=String(rel+iv+im);
   for(const[key,col]of Object.entries(DOC_MAP)){body[col]=docUrls[key]||null}
 
   if(!body.cp_name){toast('CP Name required','err');return}
   if(!body.cp_phone){toast('CP Phone required','err');return}
   if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
+  if(!body.to_be_released_now){toast('To be Released Now required','err');return}
 
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -306,6 +311,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">AMA Status:</td><td>${amaStatus}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Deal Value:</td><td>${document.getElementById('f_dealValue').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Total Brokerage:</td><td>₹${document.getElementById('f_totalBrokerage').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">To be Released Now:</td><td>₹${document.getElementById('f_release').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Incentive for Visit:</td><td>₹${document.getElementById('f_incentiveVisit').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Incentive for Owner Meeting:</td><td>₹${document.getElementById('f_incentiveMeeting').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Total Amount:</td><td>${document.getElementById('f_totalAmount').value||'—'}</td></tr>
