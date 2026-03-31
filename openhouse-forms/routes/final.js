@@ -27,15 +27,13 @@ module.exports=function(pool){
         outstanding_loan=$10,bank_name_loan=$11,loan_account_number=$12,loan_pay_willingness=$13,
         key_handover_date=COALESCE($15,key_handover_date),
         ama_date=$16,
-        owner_pan_url=$17,owner_aadhaar_front_url=$18,owner_aadhaar_back_url=$19,owner_property_doc_url=$20,
         final_submitted_at=NOW(),updated_at=NOW()
         WHERE uid=$14`,
         [parseFloat(d.remaining_amount)||null,d.bank_account_number,d.bank_name,d.ifsc_code,
          d.token_transfer_date,(d.neft_reference||'').toUpperCase(),
          d.has_loan||'No',d.loan_applicant_name||null,d.loan_co_applicant_name||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
-         d.uid,d.key_handover_date||null,d.ama_date||null,
-         d.owner_pan_url||null,d.owner_aadhaar_front_url||null,d.owner_aadhaar_back_url||null,d.owner_property_doc_url||null]);
+         d.uid,d.key_handover_date||null,d.ama_date||null]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
