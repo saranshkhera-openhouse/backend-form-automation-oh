@@ -340,6 +340,7 @@ function buildModal(p){
     ${ef('Token Amount (₹)','deal_token_amount',p.deal_token_amount,'number')}${ef('Bank Name','deal_bank_name',p.deal_bank_name)}${ef('Account No','deal_bank_account_number',p.deal_bank_account_number)}
     ${ef('IFSC','deal_ifsc_code',p.deal_ifsc_code)}${ef('Transfer Date','deal_transfer_date',p.deal_transfer_date,'date')}${ef('NEFT Ref','deal_neft_reference',p.deal_neft_reference)}
     ${ef('Owner Email','owner_email',p.owner_email)}${ef('Co-owner Email','co_owner_email',p.co_owner_email)}${ef('Co-owner Number','co_owner_number',p.co_owner_number)}
+    ${ef('3rd Owner Email','third_owner_email',p.third_owner_email)}${ef('Broker Email','broker_email',p.broker_email)}
     ${efRO('Submitted',fmtDtFull(p.token_deal_submitted_at))}
   </div></div>`;
 
@@ -354,9 +355,9 @@ function buildModal(p){
     ${ef('CP Email','cp_email',p.cp_email)}${efSel('Deal Type','deal_type',p.deal_type,['Acquisition','Supply'])}${ef('OH Model','oh_acquired_model',p.oh_acquired_model)}
     ${ef('Agreed Brokerage','agreed_brokerage',p.agreed_brokerage)}${ef('Deal Value','deal_value',p.deal_value)}${ef('Total Brokerage','total_brokerage_amount',p.total_brokerage_amount)}
     ${ef('To Release Now','to_be_released_now',p.to_be_released_now)}
-    ${pvLink('PAN Front',p.pan_front_url)}${pvLink('PAN Back',p.pan_back_url)}
-    ${pvLink('Aadhaar Front',p.aadhaar_front_url)}${pvLink('Aadhaar Back',p.aadhaar_back_url)}
-    ${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}${pvLink('AMA Signed Photo',p.ama_signed_photo_url)}
+    ${pvLink('CP Aadhaar Front',p.cp_aadhaar_front_url)}${pvLink('CP Aadhaar Back',p.cp_aadhaar_back_url)}
+    ${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
+    ${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
     ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
   </div></div>`;
 

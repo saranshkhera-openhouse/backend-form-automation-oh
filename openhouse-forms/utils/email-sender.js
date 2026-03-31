@@ -231,14 +231,14 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
 
   const p = property;
   const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
-  const amaStatus = p.ama_signed_photo_url ? 'Signed (attached below)' : 'Not signed yet';
+  const amaStatus = p.cp_ama_signed_url ? 'Signed (attached below)' : 'Not signed yet';
 
   const photoLinks = [];
-  if(p.pan_front_url) photoLinks.push(`<li><a href="${p.pan_front_url}" target="_blank">PAN Card</a></li>`);
-  if(p.aadhaar_front_url) photoLinks.push(`<li><a href="${p.aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
-  if(p.aadhaar_back_url) photoLinks.push(`<li><a href="${p.aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
-  if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">CP Cancelled Cheque</a></li>`);
-  if(p.ama_signed_photo_url) photoLinks.push(`<li><a href="${p.ama_signed_photo_url}" target="_blank">AMA Signed (PDF)</a></li>`);
+  if(p.cp_aadhaar_front_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
+  if(p.cp_aadhaar_back_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
+  if(p.cp_pan_card_url) photoLinks.push(`<li><a href="${p.cp_pan_card_url}" target="_blank">PAN Card</a></li>`);
+  if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">Cancelled Cheque</a></li>`);
+  if(p.cp_ama_signed_url) photoLinks.push(`<li><a href="${p.cp_ama_signed_url}" target="_blank">AMA Signed (PDF)</a></li>`);
 
   const subject = `CP Bill Generation | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">

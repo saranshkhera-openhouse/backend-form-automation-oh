@@ -21,15 +21,15 @@ module.exports=function(pool){
         cp_name=$1,cp_phone=$2,cp_firm=$3,cp_email=$4,
         deal_type=$5,oh_acquired_model=$6,agreed_brokerage=$7,
         deal_value=$8,total_brokerage_amount=$9,to_be_released_now=$10,
-        pan_front_url=$11,pan_back_url=$12,aadhaar_front_url=$13,aadhaar_back_url=$14,
-        cp_cancelled_cheque_url=$15,ama_signed_photo_url=$16,
+        cp_aadhaar_front_url=$11,cp_aadhaar_back_url=$12,
+        cp_pan_card_url=$13,cp_cancelled_cheque_url=$14,cp_ama_signed_url=$15,
         cp_bill_submitted_at=NOW(),updated_at=NOW()
-        WHERE uid=$17`,
+        WHERE uid=$16`,
         [d.cp_name||null,d.cp_phone||null,d.cp_firm||null,d.cp_email||null,
          d.deal_type||null,d.oh_acquired_model||null,d.agreed_brokerage||null,
          d.deal_value||null,d.total_brokerage_amount||null,d.to_be_released_now||null,
-         d.pan_front_url||null,d.pan_back_url||null,d.aadhaar_front_url||null,d.aadhaar_back_url||null,
-         d.cp_cancelled_cheque_url||null,d.ama_signed_photo_url||null,
+         d.cp_aadhaar_front_url||null,d.cp_aadhaar_back_url||null,
+         d.cp_pan_card_url||null,d.cp_cancelled_cheque_url||null,d.cp_ama_signed_url||null,
          d.uid]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('CPBill:',e);res.status(500).json({error:e.message})}

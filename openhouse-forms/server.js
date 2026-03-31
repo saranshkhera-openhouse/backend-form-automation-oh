@@ -106,7 +106,7 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'grace_period','rent_payable_grace_period','outstanding_loan','bank_name_loan','loan_account_number',
       'loan_pay_willingness','has_loan','token_remarks','token_remarks_printed','inclusions','papers_available',
       'cheque_bank_name','cheque_account_number','cheque_ifsc',
-      'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference','owner_email','co_owner_email','co_owner_number',
+      'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference','owner_email','co_owner_email','co_owner_number','third_owner_email','broker_email',
       'remaining_amount','bank_name','bank_account_number','ifsc_code','token_transfer_date','neft_reference',
       'listing_asking_price','listing_availability','listing_highlights','listing_description',
       'society_age_years','total_units','maintenance_charges','society_move_in_charges','electricity_charges',
@@ -115,7 +115,8 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'cp_name','cp_phone','cp_firm','cp_email','deal_type','oh_acquired_model','agreed_brokerage',
       'deal_value','total_brokerage_amount','to_be_released_now',
       'pan_front_url','pan_back_url','aadhaar_front_url','aadhaar_back_url',
-      'cp_cancelled_cheque_url','ama_signed_photo_url']);
+      'cp_cancelled_cheque_url','ama_signed_photo_url',
+      'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_ama_signed_url']);
     const sets=[];const vals=[];let i=1;
     for(const[k,v]of Object.entries(d)){
       if(!allowed.has(k))continue;
