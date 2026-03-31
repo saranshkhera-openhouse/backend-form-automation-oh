@@ -36,6 +36,7 @@ module.exports=function(pool){
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
+  
   router.get('/pdf/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'Not found'});
