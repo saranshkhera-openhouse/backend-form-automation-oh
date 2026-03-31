@@ -263,7 +263,7 @@ function notifyVisitCancelled(property, cancelledBy) {
 // ═══════════════════════════════════════════════════════
 // AMA DETAILS SUBMITTED — flip to true once template is approved
 // ═══════════════════════════════════════════════════════
-const AMA_WA_ENABLED = true; // ← Change to true after Interakt template approval
+const AMA_WA_ENABLED = true; // Template approved: ama_notification
 
 function notifyAMASubmitted(property) {
   if (!AMA_WA_ENABLED) { console.log('WA: AMA notification SKIPPED (template not yet approved)'); return Promise.resolve(); }
@@ -284,8 +284,8 @@ function notifyAMASubmitted(property) {
   // Fixed recipients + BD manager
   const recipients = ['Saurabh', 'Akash Teotia', 'Ashish', 'Prashant', 'Rahool'];
   if(bdManager && bdManager!=='-') recipients.push(bdManager);
-  console.log(`WA: ama_details_submitted | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('ama_details_submitted', bodyValues, recipients);
+  console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
+  return broadcastTemplate('ama_notification', bodyValues, recipients);
 }
 
 module.exports = {
