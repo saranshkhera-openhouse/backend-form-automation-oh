@@ -101,17 +101,17 @@
         <div class="radios"><label><input type="radio" name="has_loan" value="Yes" id="loanYes"><span>Yes</span></label><label><input type="radio" name="has_loan" value="No" id="loanNo"><span>No</span></label></div></div>
       <div id="loanFields" style="display:none">
         <div class="r2">
-          <div class="fg"><label>Applicant Name</label><input type="text" name="loan_applicant_name" id="loanApplicant"></div>
+          <div class="fg"><label>Applicant Name <span class="req">*</span></label><input type="text" name="loan_applicant_name" id="loanApplicant"></div>
           <div class="fg"><label>Co-applicant Name</label><input type="text" name="loan_co_applicant_name" id="loanCoApplicant"></div>
         </div>
         <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details above</span></label>
         <div id="loanBankFields">
-          <div class="fg"><label>Bank Name</label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
+          <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
             <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
-          <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+          <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
         </div>
-        <div class="fg"><label>Outstanding Loan (in ₹)</label><input type="number" name="outstanding_loan"></div>
-        <div class="fg"><label>Willing to pay loan?</label>
+        <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="number" name="outstanding_loan"></div>
+        <div class="fg"><label>Willing to pay loan? <span class="req">*</span></label>
           <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
       </div>
     </div>
@@ -398,6 +398,14 @@ document.getElementById('draftBtn').addEventListener('click',()=>{const body=col
     const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Draft saved!','ok')})});
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  if(!getRadio('has_loan')){toast('Select Any Loan?','err');return}
+  if(getRadio('has_loan')==='Yes'){
+    if(!document.getElementById('loanApplicant').value.trim()){toast('Applicant Name required','err');return}
+    if(!document.getElementById('selBankLoan').value){toast('Loan Bank Name required','err');return}
+    if(!document.querySelector('[name="loan_account_number"]').value.trim()){toast('Loan A/C Number required','err');return}
+    if(!document.querySelector('[name="outstanding_loan"]').value){toast('Outstanding Loan required','err');return}
+    if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
+  }
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
   // Validate owner documents
   const missingOwnerDocs=[];
