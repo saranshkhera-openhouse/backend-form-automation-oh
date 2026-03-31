@@ -173,6 +173,19 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='managed_team') THEN ALTER TABLE users ADD COLUMN managed_team JSONB DEFAULT '[]'; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='third_owner_email') THEN ALTER TABLE properties ADD COLUMN third_owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='broker_email') THEN ALTER TABLE properties ADD COLUMN broker_email TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_sanction_url') THEN ALTER TABLE properties ADD COLUMN ama_sanction_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_soa_url') THEN ALTER TABLE properties ADD COLUMN ama_soa_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_lod_url') THEN ALTER TABLE properties ADD COLUMN ama_lod_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_pg_non_forfeitable') THEN ALTER TABLE properties ADD COLUMN ama_pg_non_forfeitable TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_beta_max_pct') THEN ALTER TABLE properties ADD COLUMN ama_beta_max_pct REAL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_beta_min_pct') THEN ALTER TABLE properties ADD COLUMN ama_beta_min_pct REAL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_maint_alignment') THEN ALTER TABLE properties ADD COLUMN ama_maint_alignment TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_elec_alignment') THEN ALTER TABLE properties ADD COLUMN ama_elec_alignment TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_special_terms') THEN ALTER TABLE properties ADD COLUMN ama_special_terms TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_prop_docs') THEN ALTER TABLE properties ADD COLUMN ama_prop_docs JSONB DEFAULT '{}'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_submitted_at') THEN ALTER TABLE properties ADD COLUMN ama_submitted_at TIMESTAMPTZ; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='super_area') THEN ALTER TABLE properties ADD COLUMN super_area REAL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='carpet_area') THEN ALTER TABLE properties ADD COLUMN carpet_area REAL; END IF;
 END $$;
 `;
 

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Property Details for AMA</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.doc-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.doc-row:last-child{border-bottom:none}
+.doc-name{flex:1;font-size:13px;font-weight:500}
+.doc-toggle{display:flex;gap:4px}
+.doc-toggle button{padding:4px 14px;border:1.5px solid var(--bd);border-radius:16px;background:var(--bg);font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
+.doc-toggle button.active-yes{background:var(--grn);color:#fff;border-color:var(--grn)}
+.doc-toggle button.active-no{background:var(--red,#b33a2e);color:#fff;border-color:var(--red,#b33a2e)}
+.doc-upload{margin-top:6px;display:none}
+.doc-upload.show{display:block}
+.doc-upload-status{font-size:10px;color:var(--grn);margin-top:3px}
+.upload-row{border:1.5px dashed var(--bd);border-radius:8px;padding:10px 14px;text-align:center;cursor:pointer;background:var(--bg);transition:.15s;font-size:11px;color:var(--tx3)}
+.upload-row:hover{border-color:var(--ac)}
+.upload-row.done{border-color:var(--grn);border-style:solid;background:#f0fdf4;color:var(--grn)}
+.upload-row input[type=file]{display:none}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
+  <div class="hdr-center"><div class="form-name">5 Property Details for AMA</div></div>
+  <div class="hdr-right"></div>
+</header>
+<div class="ctn">
+  <div class="card" style="padding:10px 14px">
+    <label style="font-size:12px;font-weight:600;color:var(--tx3)">Select UID</label>
+    <select id="uidSel" style="font-size:16px;width:100%;margin-top:4px"><option value="">Select UID...</option></select>
+    <div id="prefillStatus" class="pf-st"></div>
+  </div>
+
+  <div id="amaForm" style="display:none">
+    <!-- Card 1: Property Info -->
+    <div class="card">
+      <div class="card-t">Property Information</div>
+      <div class="r2">
+        <div class="fg"><label>City</label><input type="text" id="ro_city" class="pre" readonly></div>
+        <div class="fg"><label>Society Name</label><input type="text" id="ro_soc" class="pre" readonly></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Unit No.</label><input type="text" id="ro_unit" class="pre" readonly></div>
+        <div class="fg"><label>BD Manager</label><input type="text" id="ro_bdm" class="pre" readonly></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label id="srcLabel">Source</label><input type="text" id="ro_srcName" class="pre" readonly></div>
+        <div class="fg"><label id="srcPhLabel">Phone</label><input type="text" id="ro_srcPhone" class="pre" readonly></div>
+      </div>
+      <div class="fg"><label>Type of Agreement</label><input type="text" value="AMA" class="pre" readonly></div>
+    </div>
+
+    <!-- Card 2: Loan Details -->
+    <div class="card">
+      <div class="card-t">Loan Details</div>
+      <div class="fg">
+        <label>Sanction Letter</label>
+        <div class="upload-row" id="up_sanction" onclick="document.getElementById('fi_sanction').click()">
+          📄 Upload Sanction Letter
+          <input type="file" id="fi_sanction" accept="image/*,.pdf" onchange="uploadFile(this,'sanction')">
+        </div>
+        <div class="doc-upload-status" id="st_sanction"></div>
+      </div>
+      <div class="fg">
+        <label>Statement of Accounts</label>
+        <div class="upload-row" id="up_soa" onclick="document.getElementById('fi_soa').click()">
+          📄 Upload Statement of Accounts
+          <input type="file" id="fi_soa" accept="image/*,.pdf" onchange="uploadFile(this,'soa')">
+        </div>
+        <div class="doc-upload-status" id="st_soa"></div>
+      </div>
+      <div class="fg">
+        <label>List of Documents (LOD)</label>
+        <div class="upload-row" id="up_lod" onclick="document.getElementById('fi_lod').click()">
+          📄 Upload LOD
+          <input type="file" id="fi_lod" accept="image/*,.pdf" onchange="uploadFile(this,'lod')">
+        </div>
+        <div class="doc-upload-status" id="st_lod"></div>
+      </div>
+    </div>
+
+    <!-- Card 3: Deal Summary -->
+    <div class="card">
+      <div class="card-t">Deal Summary</div>
+      <div class="fg"><label>Performance Guarantee Non Forfeitable <span class="req">*</span></label>
+        <div class="radios"><label><input type="radio" name="ama_pg_non_forfeitable" value="Yes"><span>Yes</span></label><label><input type="radio" name="ama_pg_non_forfeitable" value="No"><span>No</span></label></div></div>
+      <div class="r2">
+        <div class="fg"><label>Beta Amount Max (%)</label><input type="number" name="ama_beta_max_pct" id="betaMax" step="0.01"></div>
+        <div class="fg"><label>Beta Amount Min (%)</label><input type="number" name="ama_beta_min_pct" id="betaMin" step="0.01"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Maintenance Charges Alignment</label>
+          <select name="ama_maint_alignment" id="maintAlign"><option value="">Select...</option><option>Seller</option><option>OH</option></select></div>
+        <div class="fg"><label>Electricity Charges Alignment</label>
+          <select name="ama_elec_alignment" id="elecAlign"><option value="">Select...</option><option>Seller</option><option>OH</option></select></div>
+      </div>
+      <div class="fg"><label>Special Terms other than AMF (Sale Price - Acq Price)</label>
+        <textarea name="ama_special_terms" id="specialTerms" rows="3" placeholder="Fetched from Form 3 remarks..."></textarea></div>
+    </div>
+
+    <!-- Card 4: Property Documents -->
+    <div class="card">
+      <div class="card-t">Property Documents</div>
+      <div id="propDocsContainer"></div>
+    </div>
+
+    <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit AMA Details</button>
+  </div>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+let currentUid=null,loadedData=null,cloudCfg=null;
+const fileUrls={sanction:'',soa:'',lod:''};
+fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
+
+// Property document definitions
+const PROP_DOCS=[
+  {key:'allotment_letter',label:'Allotment Letter'},
+  {key:'bba',label:'BBA (Builder Buyer Agreement)'},
+  {key:'possession_letter',label:'Possession Letter'},
+  {key:'conveyance_deed',label:'Conveyance / Lease Deed / Tri-partite Agreement'},
+  {key:'sale_deed',label:'Sale Deed / Sub-Lease Deed'},
+  {key:'parking_allotment',label:'Parking Allotment Letter (if applicable)'},
+  {key:'gpa',label:'GPA (if applicable)'}
+];
+let propDocState={};
+
+function buildPropDocs(existing){
+  propDocState={};
+  const container=document.getElementById('propDocsContainer');
+  container.innerHTML='';
+  PROP_DOCS.forEach(doc=>{
+    const saved=existing&&existing[doc.key];
+    const status=saved?saved.status:'Yes';
+    const url=saved?saved.url:'';
+    propDocState[doc.key]={status,url};
+
+    const row=document.createElement('div');
+    row.innerHTML=`
+      <div class="doc-row">
+        <div class="doc-name">${doc.label}</div>
+        <div class="doc-toggle">
+          <button type="button" data-key="${doc.key}" data-val="Yes" class="${status==='Yes'?'active-yes':''}">Yes</button>
+          <button type="button" data-key="${doc.key}" data-val="No" class="${status==='No'?'active-no':''}">No</button>
+        </div>
+      </div>
+      <div class="doc-upload ${status==='No'?'show':''}" id="docUp_${doc.key}">
+        <div class="upload-row ${url?'done':''}" id="docRow_${doc.key}" onclick="document.getElementById('docFi_${doc.key}').click()">
+          ${url?'✓ Uploaded — click to replace':'📄 Upload document'}
+          <input type="file" id="docFi_${doc.key}" accept="image/*,.pdf" onchange="uploadPropDoc(this,'${doc.key}')">
+        </div>
+        ${url?`<div class="doc-upload-status"><a href="${url}" target="_blank" style="color:var(--ac2);font-size:10px">View uploaded</a></div>`:''}
+      </div>`;
+    container.appendChild(row);
+  });
+  // Toggle handlers
+  container.querySelectorAll('.doc-toggle button').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      const key=this.dataset.key;const val=this.dataset.val;
+      propDocState[key].status=val;
+      const toggle=this.parentElement;
+      toggle.querySelectorAll('button').forEach(b=>{b.className=''});
+      this.className=val==='Yes'?'active-yes':'active-no';
+      document.getElementById('docUp_'+key).classList.toggle('show',val==='No');
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const r=await fetch(`${API}/api/ama-details/uids`);const uids=await r.json();
+    const sel=document.getElementById('uidSel');
+    uids.forEach(u=>{const o=document.createElement('option');o.value=u.uid;
+      o.textContent=`${u.uid} — ${[u.tower_no,u.unit_no].filter(Boolean).join('-')} ${u.society_name||''}${u.ama_submitted_at?' ✓':''}`;sel.appendChild(o)});
+    makeSearchable(sel);
+    const p=new URLSearchParams(window.location.search);if(p.get('uid')){sel.value=p.get('uid');loadUID(p.get('uid'))}
+  }catch(e){toast('Failed to load','err')}
+});
+
+document.getElementById('uidSel').addEventListener('change',()=>{const uid=document.getElementById('uidSel').value;if(uid)loadUID(uid)});
+
+async function loadUID(uid){
+  const st=document.getElementById('prefillStatus');
+  st.className='pf-st show';st.textContent='Loading...';
+  try{
+    const r=await fetch(`${API}/api/ama-details/prefill/${uid}`);if(!r.ok){const e=await r.json();throw new Error(e.error)}
+    const d=await r.json();currentUid=uid;loadedData=d;
+
+    // Card 1: Property Info
+    document.getElementById('ro_city').value=d.city||'';
+    document.getElementById('ro_soc').value=d.society_name||'';
+    document.getElementById('ro_unit').value=[d.tower_no,d.unit_no].filter(Boolean).join('-')||'';
+    document.getElementById('ro_bdm').value=d.assigned_by||'';
+
+    // Source logic: if source contains CP/Broker → show cp_name/cp_phone, else owner
+    const src=(d.source||'').toLowerCase();
+    const isCP=src.includes('cp')||src.includes('broker')||src.includes('channel');
+    if(isCP){
+      document.getElementById('srcLabel').textContent='Broker Name';
+      document.getElementById('srcPhLabel').textContent='Broker Phone';
+      document.getElementById('ro_srcName').value=d.cp_name||d.owner_broker_name||'';
+      document.getElementById('ro_srcPhone').value=d.cp_phone||d.contact_no||'';
+    }else{
+      document.getElementById('srcLabel').textContent='Seller Name';
+      document.getElementById('srcPhLabel').textContent='Seller Phone';
+      document.getElementById('ro_srcName').value=d.owner_broker_name||'';
+      document.getElementById('ro_srcPhone').value=d.contact_no||'';
+    }
+
+    // Card 2: Loan file URLs
+    fileUrls.sanction=d.ama_sanction_url||'';
+    fileUrls.soa=d.ama_soa_url||'';
+    fileUrls.lod=d.ama_lod_url||'';
+    ['sanction','soa','lod'].forEach(k=>{
+      const row=document.getElementById('up_'+k);const stEl=document.getElementById('st_'+k);
+      if(fileUrls[k]){row.classList.add('done');row.textContent='✓ Uploaded — click to replace';
+        stEl.innerHTML=`<a href="${fileUrls[k]}" target="_blank" style="color:var(--ac2);font-size:10px">View</a>`;
+        const fi=row.querySelector('input');if(!fi){const inp=document.createElement('input');inp.type='file';inp.accept='image/*,.pdf';inp.style.display='none';inp.onchange=function(){uploadFile(this,k)};inp.id='fi_'+k;row.appendChild(inp)}
+      }
+    });
+
+    // Card 3: Deal Summary
+    const pgNF=d.ama_pg_non_forfeitable;
+    if(pgNF){const rb=document.querySelector(`input[name="ama_pg_non_forfeitable"][value="${pgNF}"]`);if(rb)rb.checked=true}
+    document.getElementById('betaMax').value=d.ama_beta_max_pct||'';
+    document.getElementById('betaMin').value=d.ama_beta_min_pct||'';
+    document.getElementById('maintAlign').value=d.ama_maint_alignment||'';
+    document.getElementById('elecAlign').value=d.ama_elec_alignment||'';
+    document.getElementById('specialTerms').value=d.ama_special_terms||d.token_remarks_printed||'';
+
+    // Card 4: Property Documents
+    let existingDocs={};
+    try{existingDocs=typeof d.ama_prop_docs==='string'?JSON.parse(d.ama_prop_docs):d.ama_prop_docs||{}}catch(e){}
+    buildPropDocs(existingDocs);
+
+    document.getElementById('amaForm').style.display='block';
+    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.ama_submitted_at?' (Submitted)':''}`;
+  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('amaForm').style.display='none'}
+}
+
+async function uploadFile(input,key){
+  if(!input.files.length)return;
+  if(!cloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const row=document.getElementById('up_'+key);const stEl=document.getElementById('st_'+key);
+  row.textContent='Uploading...';
+  try{
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cloudCfg.uploadPreset);fd.append('folder','ama-docs');
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${cloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    fileUrls[key]=d.secure_url;
+    row.className='upload-row done';row.textContent='✓ Uploaded — click to replace';
+    const fi=document.createElement('input');fi.type='file';fi.accept='image/*,.pdf';fi.style.display='none';fi.id='fi_'+key;fi.onchange=function(){uploadFile(this,key)};row.appendChild(fi);
+    stEl.innerHTML=`<a href="${d.secure_url}" target="_blank" style="color:var(--ac2);font-size:10px">View</a>`;
+    toast('Uploaded','ok');
+  }catch(e){toast('Upload failed','err');row.textContent='📄 Upload — click to retry';
+    const fi=document.createElement('input');fi.type='file';fi.accept='image/*,.pdf';fi.style.display='none';fi.id='fi_'+key;fi.onchange=function(){uploadFile(this,key)};row.appendChild(fi)}
+}
+
+async function uploadPropDoc(input,key){
+  if(!input.files.length)return;
+  if(!cloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const row=document.getElementById('docRow_'+key);
+  row.textContent='Uploading...';
+  try{
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cloudCfg.uploadPreset);fd.append('folder','ama-prop-docs');
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${cloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    propDocState[key].url=d.secure_url;
+    row.className='upload-row done';row.innerHTML=`✓ Uploaded — click to replace<input type="file" id="docFi_${key}" accept="image/*,.pdf" onchange="uploadPropDoc(this,'${key}')" style="display:none">`;
+    row.parentElement.querySelector('.doc-upload-status')?.remove();
+    const st=document.createElement('div');st.className='doc-upload-status';st.innerHTML=`<a href="${d.secure_url}" target="_blank" style="color:var(--ac2);font-size:10px">View uploaded</a>`;
+    row.parentElement.appendChild(st);
+    toast('Uploaded','ok');
+  }catch(e){toast('Upload failed','err');row.innerHTML=`📄 Upload document<input type="file" id="docFi_${key}" accept="image/*,.pdf" onchange="uploadPropDoc(this,'${key}')" style="display:none">`}
+}
+
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  if(!currentUid){toast('Select a UID','warn');return}
+  const body={uid:currentUid};
+  body.ama_sanction_url=fileUrls.sanction||null;
+  body.ama_soa_url=fileUrls.soa||null;
+  body.ama_lod_url=fileUrls.lod||null;
+  body.ama_pg_non_forfeitable=document.querySelector('input[name="ama_pg_non_forfeitable"]:checked')?.value||null;
+  body.ama_beta_max_pct=document.getElementById('betaMax').value||null;
+  body.ama_beta_min_pct=document.getElementById('betaMin').value||null;
+  body.ama_maint_alignment=document.getElementById('maintAlign').value||null;
+  body.ama_elec_alignment=document.getElementById('elecAlign').value||null;
+  body.ama_special_terms=document.getElementById('specialTerms').value.trim()||null;
+  body.ama_prop_docs=JSON.stringify(propDocState);
+
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/ama-details/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    toast('AMA Details submitted!','ok',5000);
+  });
+});
+</script>
+</body></html>

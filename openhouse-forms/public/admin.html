@@ -142,13 +142,14 @@ let dateFilterStart=null,dateFilterEnd=null,activeStatFilter='';
 
 function fmtDt(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
 function fmtDtFull(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}
-function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.token_submitted_at,p.token_deal_submitted_at,p.final_submitted_at,p.cp_bill_submitted_at,p.listing_submitted_at].filter(Boolean);if(!ts.length)return null;return ts.reduce((a,b)=>new Date(a)>new Date(b)?a:b)}
+function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.token_submitted_at,p.token_deal_submitted_at,p.ama_submitted_at,p.final_submitted_at,p.cp_bill_submitted_at,p.listing_submitted_at].filter(Boolean);if(!ts.length)return null;return ts.reduce((a,b)=>new Date(a)>new Date(b)?a:b)}
 
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead'};
   if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
   if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-fin',key:'cpbill'};
   if(p.final_submitted_at)return{label:'Final',cls:'s-fin',key:'final'};
+  if(p.ama_submitted_at)return{label:'AMA',cls:'s-deal',key:'ama'};
   if(p.token_deal_submitted_at)return{label:'Deal',cls:'s-deal',key:'deal'};
   if(p.token_submitted_at||p.token_is_draft)return{label:p.token_is_draft?'Draft':'Token',cls:'s-tok',key:'token'};
   if(p.visit_submitted_at)return{label:'Visited',cls:'s-vis',key:'visited'};
@@ -209,7 +210,8 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
       if(!p.visit_submitted_at)acts.push(`<a href="/visit?uid=${p.uid}" class="link">Visit</a>`);
       if(p.visit_submitted_at&&!p.token_submitted_at)acts.push(`<a href="/token-request?uid=${p.uid}" class="link">Token</a>`);
       if((p.token_submitted_at||p.token_is_draft)&&!p.token_deal_submitted_at)acts.push(`<a href="/token-deal?uid=${p.uid}" class="link">Deal</a>`);
-      if(p.token_deal_submitted_at&&!p.final_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">Final</a>`);
+      if(p.token_deal_submitted_at&&!p.ama_submitted_at)acts.push(`<a href="/ama-details?uid=${p.uid}" class="link">AMA</a>`);
+      if(p.ama_submitted_at&&!p.final_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">Final</a>`);
       if(p.final_submitted_at&&!p.cp_bill_submitted_at)acts.push(`<a href="/cp-bill?uid=${p.uid}" class="link">CPBill</a>`);
       if(p.final_submitted_at&&!p.listing_submitted_at)acts.push(`<a href="/listing?uid=${p.uid}" class="link">List</a>`);
       if(p.final_submitted_at)acts.push(`<a href="/api/final/pdf/${p.uid}" class="link" target="_blank">PDF</a>`);
@@ -297,7 +299,7 @@ function buildModal(p){
   currentModalUid=p.uid;
   const mb=document.getElementById('modalBody');
   document.getElementById('saveStatus').textContent='';
-  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'Final/PSD',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
+  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'Final/PSD',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
   let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
 
@@ -344,13 +346,22 @@ function buildModal(p){
     ${efRO('Submitted',fmtDtFull(p.token_deal_submitted_at))}
   </div></div>`;
 
-  html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 5)</div><div class="prev-grid">
+  html+=`<div class="prev-section"><div class="prev-section-t">AMA Details (Form 5)</div><div class="prev-grid">
+    ${efSel('PG Non Forfeitable','ama_pg_non_forfeitable',p.ama_pg_non_forfeitable,['Yes','No'])}
+    ${ef('Beta Max %','ama_beta_max_pct',p.ama_beta_max_pct,'number')}${ef('Beta Min %','ama_beta_min_pct',p.ama_beta_min_pct,'number')}
+    ${efSel('Maint Alignment','ama_maint_alignment',p.ama_maint_alignment,['Seller','OH'])}${efSel('Elec Alignment','ama_elec_alignment',p.ama_elec_alignment,['Seller','OH'])}
+    ${efArea('Special Terms','ama_special_terms',p.ama_special_terms)}
+    ${pvLink('Sanction Letter',p.ama_sanction_url)}${pvLink('Statement of Accounts',p.ama_soa_url)}${pvLink('LOD',p.ama_lod_url)}
+    ${efRO('Submitted',fmtDtFull(p.ama_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 6)</div><div class="prev-grid">
     ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Bank Name','bank_name',p.bank_name)}${ef('Account No','bank_account_number',p.bank_account_number)}
     ${ef('IFSC','ifsc_code',p.ifsc_code)}${ef('Transfer Date','token_transfer_date',p.token_transfer_date,'date')}${ef('NEFT Ref','neft_reference',p.neft_reference)}
     ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
   </div></div>`;
 
-  html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 6)</div><div class="prev-grid">
+  html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 7)</div><div class="prev-grid">
     ${ef('CP Name','cp_name',p.cp_name)}${ef('CP Phone','cp_phone',p.cp_phone)}${ef('CP Firm','cp_firm',p.cp_firm)}
     ${ef('CP Email','cp_email',p.cp_email)}${efSel('Deal Type','deal_type',p.deal_type,['Acquisition','Supply'])}${ef('OH Model','oh_acquired_model',p.oh_acquired_model)}
     ${ef('Agreed Brokerage','agreed_brokerage',p.agreed_brokerage)}${ef('Deal Value','deal_value',p.deal_value)}${ef('Total Brokerage','total_brokerage_amount',p.total_brokerage_amount)}
@@ -361,7 +372,7 @@ function buildModal(p){
     ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
   </div></div>`;
 
-  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 7)</div><div class="prev-grid">
+  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 8)</div><div class="prev-grid">
     ${ef('Asking Price (L)','listing_asking_price',p.listing_asking_price,'number')}${ef('Availability','listing_availability',p.listing_availability)}${ef('Society Age (yrs)','society_age_years',p.society_age_years,'number')}
     ${ef('Total Units','total_units',p.total_units,'number')}${ef('Maintenance (₹)','maintenance_charges',p.maintenance_charges,'number')}${ef('Move-in (₹)','society_move_in_charges',p.society_move_in_charges,'number')}
     ${ef('Electricity (₹)','electricity_charges',p.electricity_charges,'number')}${ef('DG Charges (₹)','dg_charges',p.dg_charges,'number')}${ef('Water Supply','water_supply',p.water_supply)}
@@ -395,8 +406,8 @@ document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('c
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fAb').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];loadData()});
 
-const FORM_KEYS=['schedule','visit','token-request','token-deal','final','cp-bill','listing'];
-const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal',final:'PSD','cp-bill':'CP Bill',listing:'Listing'};
+const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','final','cp-bill','listing'];
+const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA',final:'PSD','cp-bill':'CP Bill',listing:'Listing'};
 let allUsers=[];
 async function loadUsers(){try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}}
 function renderUsers(){const tb=document.getElementById('utb');

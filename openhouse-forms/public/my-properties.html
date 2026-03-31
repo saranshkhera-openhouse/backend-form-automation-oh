@@ -60,6 +60,7 @@
       <option value="visited">Visited</option>
       <option value="token">Token Req</option>
       <option value="deal">Deal</option>
+      <option value="ama">AMA</option>
       <option value="final">Final</option>
       <option value="cp_bill">CP Bill</option>
       <option value="listed">Listed</option>
@@ -78,9 +79,10 @@ function fmtTime12(t){if(!t)return'—';const[h,m]=t.split(':');const hr=parseIn
 
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead',step:0};
-  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:7};
-  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-fin',key:'cp_bill',step:6};
-  if(p.final_submitted_at)return{label:'Final',cls:'s-fin',key:'final',step:5};
+  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:8};
+  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-fin',key:'cp_bill',step:7};
+  if(p.final_submitted_at)return{label:'Final',cls:'s-fin',key:'final',step:6};
+  if(p.ama_submitted_at)return{label:'AMA',cls:'s-deal',key:'ama',step:5};
   if(p.token_deal_submitted_at)return{label:'Deal',cls:'s-deal',key:'deal',step:4};
   if(p.token_submitted_at||p.token_is_draft)return{label:p.token_is_draft?'Token (Draft)':'Token Req',cls:'s-tok',key:'token',step:3};
   if(p.visit_submitted_at)return{label:'Visited',cls:'s-vis',key:'visited',step:2};
@@ -88,7 +90,7 @@ function getStage(p){
   return{label:'—',cls:'',key:'',step:0};
 }
 
-const PROG_COLORS={1:'#3b82f6',2:'#6366f1',3:'#f59e0b',4:'#ec4899',5:'#10b981',6:'#10b981',7:'#2d5a3d',0:'#b33a2e'};
+const PROG_COLORS={1:'#3b82f6',2:'#6366f1',3:'#f59e0b',4:'#ec4899',5:'#8b5cf6',6:'#10b981',7:'#10b981',8:'#2d5a3d',0:'#b33a2e'};
 
 function pdv(label,val){
   const isEmpty=val===null||val===undefined||val===''||val==='null';
@@ -110,7 +112,7 @@ function renderProps(){
   list.innerHTML=d.map((p,idx)=>{
     const dead=p.is_dead;
     const stage=p._stage;
-    const progPct=dead?100:Math.round(stage.step/7*100);
+    const progPct=dead?100:Math.round(stage.step/8*100);
     const progColor=PROG_COLORS[stage.step]||'#ccc';
 
     const steps=[
@@ -118,6 +120,7 @@ function renderProps(){
       {n:'Visit',ok:!!p.visit_submitted_at},
       {n:'Token',ok:!!p.token_submitted_at,draft:p.token_is_draft},
       {n:'Deal',ok:!!p.token_deal_submitted_at},
+      {n:'AMA',ok:!!p.ama_submitted_at},
       {n:'Final',ok:!!p.final_submitted_at},
       {n:'CP Bill',ok:!!p.cp_bill_submitted_at},
       {n:'Listing',ok:!!p.listing_submitted_at}
