@@ -259,7 +259,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">To be released now:</td><td>${p.to_be_released_now||'—'}</td></tr>
 </table>
 ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</strong></p><ul style="line-height:2">${photoLinks.join('')}</ul>`:''}
-<p style="margin-top:16px">Prashant Singh Kindly approve to proceed.</p>
+<p style="margin-top:16px">Prashant Singh, Kindly approve to proceed.</p>
 <p>Best,<br><strong>${senderName}</strong></p>
 </body></html>`;
 

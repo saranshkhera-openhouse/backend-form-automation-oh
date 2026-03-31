@@ -317,7 +317,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">To be released now:</td><td>${document.getElementById('f_release').value||'—'}</td></tr>
 </table>
 ${photoLines.length?`<p style="margin-top:10px"><strong>Attached Documents:</strong></p>${photoLines.join('<br>')}`:''}
-<p style="margin-top:10px">@Prashant Singh Kindly approve to proceed.</p>
+<p style="margin-top:10px">Prashant Singh, Kindly approve to proceed.</p>
 </div>`;
   document.getElementById('emailPreviewBody').innerHTML=html;
   document.getElementById('emailModal').classList.add('open');
