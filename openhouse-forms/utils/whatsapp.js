@@ -28,7 +28,9 @@ const NAME_TO_PHONE = {
   'Rahool':             '9899546824',
   'Prashant':           '9289500953',
   'Ashish':             '9555666059',
-  'Saransh Khera':      '8595594789'
+  'Saransh Khera':      '8595594789',
+  'Saurabh':            '9174286625',
+  'Akash Teotia':       '9311338205'
 };
 
 // ═══════════════════════════════════════════════════════
@@ -258,9 +260,37 @@ function notifyVisitCancelled(property, cancelledBy) {
   return broadcastTemplate('visit_cancelled', bodyValues, recipients);
 }
 
+// ═══════════════════════════════════════════════════════
+// AMA DETAILS SUBMITTED — flip to true once template is approved
+// ═══════════════════════════════════════════════════════
+const AMA_WA_ENABLED = true; // ← Change to true after Interakt template approval
+
+function notifyAMASubmitted(property) {
+  if (!AMA_WA_ENABLED) { console.log('WA: AMA notification SKIPPED (template not yet approved)'); return Promise.resolve(); }
+  const p = property;
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  const towerUnit = [p.tower_no, p.unit_no].filter(Boolean).join(' - ') || '-';
+  const bdManager = p.assigned_by || '-';
+  const bdPhone = getPhone(bdManager) || '-';
+  const bodyValues = [
+    p.uid || '-',
+    dateStr,
+    p.society_name || '-',
+    towerUnit,
+    bdManager,
+    bdPhone
+  ];
+  // Fixed recipients + BD manager
+  const recipients = ['Saurabh', 'Akash Teotia', 'Ashish', 'Prashant', 'Rahool'];
+  if(bdManager && bdManager!=='-') recipients.push(bdManager);
+  console.log(`WA: ama_details_submitted | UID: ${p.uid} | To: ${recipients.join(', ')}`);
+  return broadcastTemplate('ama_details_submitted', bodyValues, recipients);
+}
+
 module.exports = {
   sendInterakt, broadcastTemplate, getRecipients,
   notifyVisitScheduled, notifyVisitCompleted, notifyTokenRequest,
-  notifyVisitReassigned, notifyVisitCancelled,
+  notifyVisitReassigned, notifyVisitCancelled, notifyAMASubmitted,
   NAME_TO_PHONE, TOP_MANAGERS, MID_MANAGERS
 };

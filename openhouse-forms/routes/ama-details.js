@@ -1,5 +1,6 @@
 const express=require('express'),router=express.Router();
 const{visibilityFilter}=require('../utils/visibility');
+const{notifyAMASubmitted}=require('../utils/whatsapp');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -29,6 +30,10 @@ module.exports=function(pool){
          d.ama_prop_docs||'{}',
          d.uid]);
       res.json({success:true,uid:d.uid});
+      // Fire-and-forget WhatsApp notification
+      pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
+        if(rows[0])notifyAMASubmitted(rows[0]).catch(e=>console.error('WA AMA notify error:',e));
+      }).catch(e=>console.error('WA AMA fetch error:',e));
     }catch(e){console.error('AMA:',e);res.status(500).json({error:e.message})}
   });
   return router;

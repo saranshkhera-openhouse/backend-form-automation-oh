@@ -75,8 +75,8 @@
           <input type="text" name="total_brokerage_amount" id="f_totalBrokerage" required><div class="err-msg">Required</div></div>
       </div>
       <div class="r2">
-        <div class="fg"><label>Incentive for Visit (₹) <span class="req">*</span></label><input type="number" name="incentive_visit" id="f_incentiveVisit" step="1" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Incentive for Owner Meeting (₹) <span class="req">*</span></label><input type="number" name="incentive_owner_meeting" id="f_incentiveMeeting" step="1" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Incentive for Visit (₹)</label><input type="number" name="incentive_visit" id="f_incentiveVisit" step="1"></div>
+        <div class="fg"><label>Incentive for Owner Meeting (₹)</label><input type="number" name="incentive_owner_meeting" id="f_incentiveMeeting" step="1"></div>
       </div>
       <div class="fg"><label>Total Amount (₹)</label><input type="text" id="f_totalAmount" class="pre" readonly></div>
     </div>
@@ -270,8 +270,6 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!body.cp_phone){toast('CP Phone required','err');return}
   if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
-  if(!body.incentive_visit){toast('Incentive for Visit required','err');return}
-  if(!body.incentive_owner_meeting){toast('Incentive for Owner Meeting required','err');return}
 
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
