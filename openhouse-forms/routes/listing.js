@@ -16,12 +16,12 @@ module.exports=function(pool){
       const d=req.body;const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[d.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query(`UPDATE properties SET
-        society_age_years=$1,maintenance_charges=$2,society_move_in_charges=$3,
-        electricity_charges=$4,dg_charges=$5,
-        seller_location=$6,super_area=$7,carpet_area=$8,
-        gas_pipeline=$9,club_facility=$10,
-        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$11`,
-        [parseFloat(d.society_age_years)||null,parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
+        maintenance_charges=$1,society_move_in_charges=$2,
+        electricity_charges=$3,dg_charges=$4,
+        seller_location=$5,super_area=$6,carpet_area=$7,
+        gas_pipeline=$8,club_facility=$9,
+        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$10`,
+        [parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
          parseFloat(d.electricity_charges)||null,parseFloat(d.dg_charges)||null,
          d.seller_location||null,parseFloat(d.super_area)||null,parseFloat(d.carpet_area)||null,
          d.gas_pipeline||null,d.club_facility||null,d.uid]);
