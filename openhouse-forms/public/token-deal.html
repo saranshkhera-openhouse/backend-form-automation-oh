@@ -37,7 +37,6 @@
         <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="deal_transfer_date" id="dDate" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
       </div>
-      <div class="fg" id="hdWrap" style="display:none"><label>Final Key Handover Date</label><input type="date" name="key_handover_date" id="dHdDate"></div>
     </div>
 
     <div class="card" style="border-left:3px solid var(--ac)"><div class="card-t">Email Recipients</div>
@@ -49,7 +48,6 @@
         <div class="fg"><label>3rd Owner Email</label><input type="email" name="third_owner_email" id="dThirdEmail" placeholder="Optional"></div>
         <div class="fg"><label>Broker Email</label><input type="email" name="broker_email" id="dBrokerEmail" placeholder="Optional"></div>
       </div>
-      <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="dCoOwnerNumber" placeholder="Phone number (optional)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
     </div>
 
     <div class="btn-row">
@@ -120,12 +118,10 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';
     document.getElementById('dDate').value=propData.deal_transfer_date?propData.deal_transfer_date.split('T')[0]:'';
     document.getElementById('dRef').value=propData.deal_neft_reference||'';
-    if(propData.key_handover_date){document.getElementById('hdWrap').style.display='block';document.getElementById('dHdDate').value=propData.key_handover_date.split('T')[0]}else{document.getElementById('hdWrap').style.display='none';document.getElementById('dHdDate').value=''}
     document.getElementById('dOwnerEmail').value=propData.owner_email||'';
     document.getElementById('dCoOwnerEmail').value=propData.co_owner_email||'';
     document.getElementById('dThirdEmail').value=propData.third_owner_email||'';
     document.getElementById('dBrokerEmail').value=propData.broker_email||'';
-    document.getElementById('dCoOwnerNumber').value=propData.co_owner_number||'';
     document.getElementById('dealForm').style.display='block';
     document.getElementById('previewSection').classList.remove('show');
     document.getElementById('previewBtn').textContent='Preview Deal Terms';
@@ -160,8 +156,7 @@ document.getElementById('previewBtn').addEventListener('click',async()=>{
     pRow('Bank Name',document.getElementById('dBank').value)+pRow('A/C No.',document.getElementById('dAc').value)+pRow('IFSC',document.getElementById('dIfsc').value)+
     pRow('Transfer Date',document.getElementById('dDate').value)+pRow('NEFT Ref',document.getElementById('dRef').value)+
     pRow('Owner Email',document.getElementById('dOwnerEmail').value)+pRow('Co-owner Email',document.getElementById('dCoOwnerEmail').value)+
-    pRow('3rd Owner Email',document.getElementById('dThirdEmail').value)+pRow('Broker Email',document.getElementById('dBrokerEmail').value)+
-    pRow('Co-owner Number',document.getElementById('dCoOwnerNumber').value);
+    pRow('3rd Owner Email',document.getElementById('dThirdEmail').value)+pRow('Broker Email',document.getElementById('dBrokerEmail').value);
   let sel=[];
   try{
     const raw=d.documents_available;

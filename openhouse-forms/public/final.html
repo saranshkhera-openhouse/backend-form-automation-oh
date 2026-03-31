@@ -33,6 +33,8 @@
         <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
     </div>
 
+    <div class="fg" id="hdWrap" style="display:none;padding:0 14px;margin-bottom:14px"><div class="card" style="margin:0"><label>Key Handover Date</label><input type="date" name="key_handover_date" id="hdDate"></div></div>
+
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Payment Details</div>
       <div class="r2">
         <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="bank_account_number" id="neftAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
@@ -95,6 +97,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('outstanding_loan',propData.outstanding_loan);
     if(propData.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=propData.bank_name_loan;if(propData.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
     sv('loan_account_number',propData.loan_account_number);sr('loan_pay_willingness',propData.loan_pay_willingness);
+    // Key Handover Date — show only if exists
+    if(propData.key_handover_date){document.getElementById('hdWrap').style.display='block';document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0]}else{document.getElementById('hdWrap').style.display='none';document.getElementById('hdDate').value=''}
     document.getElementById('pdfBtn').disabled=!propData.final_submitted_at;
     document.getElementById('finalForm').style.display='block';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${propData.final_submitted_at?' (Submitted)':''}`;

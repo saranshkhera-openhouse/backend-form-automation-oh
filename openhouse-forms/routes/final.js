@@ -24,12 +24,13 @@ module.exports=function(pool){
         remaining_amount=$1,bank_account_number=$2,bank_name=$3,ifsc_code=$4,
         token_transfer_date=$5,neft_reference=$6,
         outstanding_loan=$7,bank_name_loan=$8,loan_account_number=$9,loan_pay_willingness=$10,
+        key_handover_date=COALESCE($12,key_handover_date),
         final_submitted_at=NOW(),updated_at=NOW()
         WHERE uid=$11`,
         [parseFloat(d.remaining_amount)||null,d.bank_account_number,d.bank_name,d.ifsc_code,
          d.token_transfer_date,(d.neft_reference||'').toUpperCase(),
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
-         d.uid]);
+         d.uid,d.key_handover_date||null]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
