@@ -36,7 +36,9 @@
       <div class="r2">
         <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="deal_transfer_date" id="dDate" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="deal_neft_reference" id="dRef" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
-      </div></div>
+      </div>
+      <div class="fg" id="hdWrap" style="display:none"><label>Key Handover Date</label><input type="date" name="key_handover_date" id="dHdDate"></div>
+    </div>
 
     <div class="card" style="border-left:3px solid var(--ac)"><div class="card-t">Email Recipients</div>
       <div class="r2">
@@ -118,6 +120,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';
     document.getElementById('dDate').value=propData.deal_transfer_date?propData.deal_transfer_date.split('T')[0]:'';
     document.getElementById('dRef').value=propData.deal_neft_reference||'';
+    if(propData.key_handover_date){document.getElementById('hdWrap').style.display='block';document.getElementById('dHdDate').value=propData.key_handover_date.split('T')[0]}else{document.getElementById('hdWrap').style.display='none';document.getElementById('dHdDate').value=''}
     document.getElementById('dOwnerEmail').value=propData.owner_email||'';
     document.getElementById('dCoOwnerEmail').value=propData.co_owner_email||'';
     document.getElementById('dThirdEmail').value=propData.third_owner_email||'';
