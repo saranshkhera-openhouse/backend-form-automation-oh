@@ -9,6 +9,9 @@
 .pu-item .pu-label{font-size:10px;color:var(--tx3);font-weight:500}
 .pu-item.uploaded .pu-label{color:var(--grn)}
 .pu-item .pu-link{font-size:9px;color:var(--ac2);text-decoration:underline;margin-top:2px}
+.pu-item.missing{border-color:var(--red);background:#fef2f2}
+.pu-item.missing .pu-icon{color:var(--red)}
+.pu-item.missing .pu-label{color:var(--red)}
 </style></head>
 <body>
 <header class="hdr">
@@ -121,10 +124,6 @@
 
     <div class="card"><div class="card-t">Owner Documents Upload</div>
       <div class="owner-uploads" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
-        <div class="pu-item" id="pu_ownerPan" onclick="document.getElementById('fi_owner_pan').click()">
-          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
-          <input type="file" id="fi_owner_pan" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_pan')">
-        </div>
         <div class="pu-item" id="pu_ownerAadhaarFront" onclick="document.getElementById('fi_owner_aadhaar_front').click()">
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front</div>
           <input type="file" id="fi_owner_aadhaar_front" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_front')">
@@ -133,9 +132,13 @@
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back</div>
           <input type="file" id="fi_owner_aadhaar_back" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_back')">
         </div>
+        <div class="pu-item" id="pu_ownerPan" onclick="document.getElementById('fi_owner_pan').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
+          <input type="file" id="fi_owner_pan" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_pan')">
+        </div>
         <div class="pu-item" id="pu_ownerPropDoc" onclick="document.getElementById('fi_owner_property_doc').click()">
-          <div class="pu-icon">📄</div><div class="pu-label">Property Ownership Doc</div>
-          <input type="file" id="fi_owner_property_doc" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_property_doc')">
+          <div class="pu-icon">📄</div><div class="pu-label">Property Ownership Doc (PDF)</div>
+          <input type="file" id="fi_owner_property_doc" accept=".pdf,application/pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_property_doc')">
         </div>
       </div>
     </div>
@@ -215,7 +218,7 @@ async function uploadOwnerDoc(input,key){
     const fd=new FormData();fd.append('file',file);fd.append('upload_preset',ownerCloudCfg.uploadPreset);fd.append('folder',`owner-docs/${ownerName}`);
     const r=await fetch(`https://api.cloudinary.com/v1_1/${ownerCloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
     const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
-    ownerDocUrls[key]=d.secure_url;item.classList.add('uploaded');
+    ownerDocUrls[key]=d.secure_url;item.classList.add('uploaded');item.classList.remove('missing');
     item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
     let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
     link.href=d.secure_url;toast('Uploaded','ok');
@@ -396,6 +399,13 @@ document.getElementById('draftBtn').addEventListener('click',()=>{const body=col
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
+  // Validate owner documents
+  const missingOwnerDocs=[];
+  Object.values(OWNER_DOC_ITEM).forEach(id=>document.getElementById(id).classList.remove('missing'));
+  for(const[key,label]of Object.entries(OWNER_DOC_LABEL)){
+    if(!ownerDocUrls[key]){missingOwnerDocs.push(label);document.getElementById(OWNER_DOC_ITEM[key]).classList.add('missing')}
+  }
+  if(missingOwnerDocs.length){toast(`Upload required: ${missingOwnerDocs.join(', ')}`,'err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});
