@@ -267,8 +267,8 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
-    to: 'sahaj.dureja@openhouse.in',
-    cc: 'saransh.khera@openhouse.in',
+    to: 'prashant@openhouse.in',
+    cc: 'supply@openhouse.in,',
     subject,
     bodyHtml
   });
