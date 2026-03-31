@@ -20,14 +20,16 @@ module.exports=function(pool){
       await pool.query(`UPDATE properties SET
         cp_name=$1,cp_phone=$2,cp_firm=$3,cp_email=$4,
         deal_type=$5,oh_acquired_model=$6,agreed_brokerage=$7,
-        deal_value=$8,total_brokerage_amount=$9,to_be_released_now=$10,
-        cp_aadhaar_front_url=$11,cp_aadhaar_back_url=$12,
-        cp_pan_card_url=$13,cp_cancelled_cheque_url=$14,cp_ama_signed_url=$15,
+        deal_value=$8,total_brokerage_amount=$9,
+        incentive_visit=$10,incentive_owner_meeting=$11,total_cp_amount=$12,
+        cp_aadhaar_front_url=$13,cp_aadhaar_back_url=$14,
+        cp_pan_card_url=$15,cp_cancelled_cheque_url=$16,cp_ama_signed_url=$17,
         cp_bill_submitted_at=NOW(),updated_at=NOW()
-        WHERE uid=$16`,
+        WHERE uid=$18`,
         [d.cp_name||null,d.cp_phone||null,d.cp_firm||null,d.cp_email||null,
          d.deal_type||null,d.oh_acquired_model||null,d.agreed_brokerage||null,
-         d.deal_value||null,d.total_brokerage_amount||null,d.to_be_released_now||null,
+         d.deal_value||null,d.total_brokerage_amount||null,
+         d.incentive_visit||null,d.incentive_owner_meeting||null,d.total_cp_amount||null,
          d.cp_aadhaar_front_url||null,d.cp_aadhaar_back_url||null,
          d.cp_pan_card_url||null,d.cp_cancelled_cheque_url||null,d.cp_ama_signed_url||null,
          d.uid]);

@@ -17,12 +17,12 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query(`UPDATE properties SET
         society_age_years=$1,maintenance_charges=$2,society_move_in_charges=$3,
-        electricity_charges=$4,dg_charges=$5,parking_number=$6,
-        seller_location=$7,super_area=$8,carpet_area=$9,
-        gas_pipeline=$10,club_facility=$11,
-        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$12`,
+        electricity_charges=$4,dg_charges=$5,
+        seller_location=$6,super_area=$7,carpet_area=$8,
+        gas_pipeline=$9,club_facility=$10,
+        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$11`,
         [parseFloat(d.society_age_years)||null,parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
-         parseFloat(d.electricity_charges)||null,parseFloat(d.dg_charges)||null,d.parking_number||null,
+         parseFloat(d.electricity_charges)||null,parseFloat(d.dg_charges)||null,
          d.seller_location||null,parseFloat(d.super_area)||null,parseFloat(d.carpet_area)||null,
          d.gas_pipeline||null,d.club_facility||null,d.uid]);
       res.json({success:true,uid:d.uid});
