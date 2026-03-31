@@ -111,7 +111,11 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
 <p>Dear Accounts Team,</p>
 <p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${tower}${tower && unit ? ' -' : ''}${unit} ${society}</strong>. PFA the deal terms.</p>
 <p>Rahool Sureka, please approve the same.</p>
-${p.cheque_image_url ? `<p style="margin-top:16px"><strong>Cancelled Cheque Link:</strong> <a href="${p.cheque_image_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view cheque</a></p>` : ''}<br>
+${p.cheque_image_url ? `<p style="margin-top:16px"><strong>Cancelled Cheque Link:</strong> <a href="${p.cheque_image_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view cheque</a></p>` : ''}
+${p.owner_pan_url ? `<p><strong>PAN Card:</strong> <a href="${p.owner_pan_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view</a></p>` : ''}
+${p.owner_aadhaar_front_url ? `<p><strong>Aadhaar Card Front:</strong> <a href="${p.owner_aadhaar_front_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view</a></p>` : ''}
+${p.owner_aadhaar_back_url ? `<p><strong>Aadhaar Card Back:</strong> <a href="${p.owner_aadhaar_back_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view</a></p>` : ''}
+${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <a href="${p.owner_property_doc_url}" target="_blank" style="color:#1a73e8;text-decoration:underline">Click here to view</a></p>` : ''}<br>
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
 

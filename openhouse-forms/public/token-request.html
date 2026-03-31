@@ -1,5 +1,15 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request Internal</title><link rel="stylesheet" href="/css/styles.css"></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request Internal</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.pu-item{border:2px dashed var(--bd);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:var(--bg);position:relative;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.pu-item:hover{border-color:var(--ac);background:rgba(0,0,0,.01)}
+.pu-item.uploaded{border-color:var(--grn);border-style:solid;background:#f0fdf4}
+.pu-item .pu-icon{font-size:20px;color:var(--tx3)}
+.pu-item.uploaded .pu-icon{color:var(--grn)}
+.pu-item .pu-label{font-size:10px;color:var(--tx3);font-weight:500}
+.pu-item.uploaded .pu-label{color:var(--grn)}
+.pu-item .pu-link{font-size:9px;color:var(--ac2);text-decoration:underline;margin-top:2px}
+</style></head>
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
@@ -109,6 +119,27 @@
       <div class="fg" style="margin-top:10px"><label>Remarks (This will be PRINTED on PDF)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
       <div class="fg" style="margin-top:6px"><label>Remarks (For internal team reference)</label><textarea name="token_remarks" rows="2"></textarea></div></div>
 
+    <div class="card"><div class="card-t">Owner Documents Upload</div>
+      <div class="owner-uploads" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <div class="pu-item" id="pu_ownerPan" onclick="document.getElementById('fi_owner_pan').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
+          <input type="file" id="fi_owner_pan" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_pan')">
+        </div>
+        <div class="pu-item" id="pu_ownerAadhaarFront" onclick="document.getElementById('fi_owner_aadhaar_front').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front</div>
+          <input type="file" id="fi_owner_aadhaar_front" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_front')">
+        </div>
+        <div class="pu-item" id="pu_ownerAadhaarBack" onclick="document.getElementById('fi_owner_aadhaar_back').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back</div>
+          <input type="file" id="fi_owner_aadhaar_back" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_back')">
+        </div>
+        <div class="pu-item" id="pu_ownerPropDoc" onclick="document.getElementById('fi_owner_property_doc').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Property Ownership Doc</div>
+          <input type="file" id="fi_owner_property_doc" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_property_doc')">
+        </div>
+      </div>
+    </div>
+
     <div class="btn-row">
       <button type="button" class="btn btn-amb" id="draftBtn">Save Draft</button>
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
@@ -169,6 +200,28 @@
 <script src="/js/shared.js"></script>
 <script>
 let docsMsel,currentUid,chequeUploader,allOpts,loadedData=null;
+const ownerDocUrls={owner_pan:'',owner_aadhaar_front:'',owner_aadhaar_back:'',owner_property_doc:''};
+const OWNER_DOC_COL={owner_pan:'owner_pan_url',owner_aadhaar_front:'owner_aadhaar_front_url',owner_aadhaar_back:'owner_aadhaar_back_url',owner_property_doc:'owner_property_doc_url'};
+const OWNER_DOC_ITEM={owner_pan:'pu_ownerPan',owner_aadhaar_front:'pu_ownerAadhaarFront',owner_aadhaar_back:'pu_ownerAadhaarBack',owner_property_doc:'pu_ownerPropDoc'};
+const OWNER_DOC_LABEL={owner_pan:'PAN Card',owner_aadhaar_front:'Aadhaar Front',owner_aadhaar_back:'Aadhaar Back',owner_property_doc:'Property Ownership Doc'};
+let ownerCloudCfg=null;
+fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>ownerCloudCfg=c).catch(()=>{});
+async function uploadOwnerDoc(input,key){
+  if(!input.files.length)return;if(!ownerCloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const item=document.getElementById(OWNER_DOC_ITEM[key]);item.querySelector('.pu-label').textContent='Uploading...';
+  try{
+    const ownerName=(document.getElementById('d_owner')?.value||loadedData?.owner_broker_name||'owner').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_');
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',ownerCloudCfg.uploadPreset);fd.append('folder',`owner-docs/${ownerName}`);
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${ownerCloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    ownerDocUrls[key]=d.secure_url;item.classList.add('uploaded');
+    item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
+    let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+    link.href=d.secure_url;toast('Uploaded','ok');
+  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]}
+  input.value='';
+}
 function autoFillBank(ifsc){const bank=bankFromIFSC(ifsc);if(bank){const sel=document.getElementById('ocrBank');for(const o of sel.options){if(o.value===bank){sel.value=bank;return}}}}
 
 function fmtDt(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
@@ -311,6 +364,14 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('token_remarks',d.token_remarks);
     sv('token_remarks_printed',d.token_remarks_printed);
     if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
+    // Prefill owner document uploads
+    for(const[key,col]of Object.entries(OWNER_DOC_COL)){
+      ownerDocUrls[key]=d[col]||'';
+      const item=document.getElementById(OWNER_DOC_ITEM[key]);
+      if(d[col]){item.classList.add('uploaded');item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
+        let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+        link.href=d[col]}
+    }
     document.getElementById('tokenForm').style.display='block';
     document.getElementById('pdfBtn').disabled=!d.token_submitted_at;
     document.getElementById('emailBtn').disabled=!d.token_submitted_at;
@@ -327,6 +388,7 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','pg_pct','loan_applicant_name','loan_co_applicant_name'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
   body.performance_guarantee=parseFloat(body.performance_guarantee)||null;delete body.pg_pct;
+  for(const[key,col]of Object.entries(OWNER_DOC_COL)){body[col]=ownerDocUrls[key]||null}
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
   submitBtn(document.getElementById('draftBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

@@ -189,6 +189,11 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='incentive_visit') THEN ALTER TABLE properties ADD COLUMN incentive_visit TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='incentive_owner_meeting') THEN ALTER TABLE properties ADD COLUMN incentive_owner_meeting TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='total_cp_amount') THEN ALTER TABLE properties ADD COLUMN total_cp_amount TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_date') THEN ALTER TABLE properties ADD COLUMN ama_date DATE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_pan_url') THEN ALTER TABLE properties ADD COLUMN owner_pan_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_aadhaar_front_url') THEN ALTER TABLE properties ADD COLUMN owner_aadhaar_front_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_aadhaar_back_url') THEN ALTER TABLE properties ADD COLUMN owner_aadhaar_back_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_property_doc_url') THEN ALTER TABLE properties ADD COLUMN owner_property_doc_url TEXT; END IF;
 END $$;
 `;
 
