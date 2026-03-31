@@ -268,8 +268,9 @@ const AMA_WA_ENABLED = true; // Template approved: ama_notification
 function notifyAMASubmitted(property) {
   if (!AMA_WA_ENABLED) { console.log('WA: AMA notification SKIPPED (template not yet approved)'); return Promise.resolve(); }
   const p = property;
-  const now = new Date();
-  const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  // Date of Token from Form 4 (deal_transfer_date)
+  let dateStr = '-';
+  if(p.deal_transfer_date){const dt=new Date(p.deal_transfer_date);dateStr=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`}
   const towerUnit = [p.tower_no, p.unit_no].filter(Boolean).join(' - ') || '-';
   const bdManager = p.assigned_by || '-';
   const bdPhone = getPhone(bdManager) || '-';

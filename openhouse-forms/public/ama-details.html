@@ -107,6 +107,16 @@
   </div>
 </div>
 
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:center;justify-content:center;padding:20px" id="successModal">
+  <div style="background:var(--sf);border-radius:16px;width:100%;max-width:420px;box-shadow:0 16px 48px rgba(0,0,0,.3);text-align:center;padding:40px 30px;animation:popIn .3s ease">
+    <div style="font-size:56px;margin-bottom:12px">✅</div>
+    <div style="font-size:18px;font-weight:700;color:var(--tx);margin-bottom:8px">Thank you</div>
+    <div style="font-size:14px;color:var(--tx3);line-height:1.6;margin-bottom:20px">Your request has been forwarded to Legal team.</div>
+    <button class="btn btn-dark" onclick="document.getElementById('successModal').style.display='none'" style="padding:10px 32px;font-size:14px">OK</button>
+  </div>
+</div>
+<style>@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}</style>
+
 <script src="/js/shared.js"></script>
 <script>
 let currentUid=null,loadedData=null,cloudCfg=null;
@@ -302,7 +312,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/ama-details/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    toast('AMA Details submitted! WhatsApp notification sent.','ok',5000);
+    document.getElementById('successModal').style.display='flex';
   });
 });
 </script>
