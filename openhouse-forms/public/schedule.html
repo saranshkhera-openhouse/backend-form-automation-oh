@@ -163,12 +163,22 @@ function isSlotBusy(slotTime){
   return busyWindows.find(w=>selMin<w.endMin&&newEnd>w.startMin)||null;
 }
 
+function isSlotPast(slotTime){
+  const selDate=document.getElementById('schedDate').value;
+  if(!selDate)return false;
+  const today=new Date().toISOString().split('T')[0];
+  if(selDate!==today)return false;
+  const now=new Date();const nowMin=now.getHours()*60+now.getMinutes();
+  return timeToMin(slotTime)<nowMin;
+}
+
 function buildTimePicker(){
   const grid=document.getElementById('ctpSlots');
   grid.innerHTML=SLOTS.map(t=>{
+    const past=isSlotPast(t);
     const hit=isSlotBusy(t);
-    const cls=hit?'ctp-slot ctp-busy':'ctp-slot';
-    const tag=hit?`<span class="ctp-tag">${hit.uid}</span>`:`<span class="ctp-tag">Free</span>`;
+    const cls=past?'ctp-slot ctp-busy':hit?'ctp-slot ctp-busy':'ctp-slot';
+    const tag=past?`<span class="ctp-tag">Passed</span>`:hit?`<span class="ctp-tag">${hit.uid}</span>`:`<span class="ctp-tag">Free</span>`;
     return`<div class="${cls}" data-time="${t}"><span class="ctp-label">${fmtTime12(t)}</span>${tag}</div>`;
   }).join('');
   // Click handlers for free slots
