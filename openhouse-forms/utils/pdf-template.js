@@ -46,7 +46,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
 
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Token Payment Receipt – ${esc(p.uid)}</title>
+<title>– ${esc(p.uid)}</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -119,7 +119,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   <div class="p1-body">
   <div class="header">
     <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
-    <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
+    <div class="header-right"><div class="receipt-tag"></div><div class="receipt-date">Generated: ${today}</div></div>
   </div>
   <div class="greeting-strip">
     <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
