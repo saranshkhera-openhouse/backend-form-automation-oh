@@ -315,9 +315,20 @@ async function loadUID(uid){
     document.getElementById('f_cpPhone').value=d.cp_phone||'';
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
     document.getElementById('f_cpEmail').value=d.cp_email||'';
-    // Restore CP code if exists
-    if(d.cp_code){cpCode=d.cp_code;document.getElementById('cpCodeWrap').style.display='block';document.getElementById('cpCodeWrap').textContent=d.cp_code}
-    else{document.getElementById('cpCodeWrap').style.display='none';cpCode=''}
+    // Restore CP code if exists, otherwise auto-generate for new
+    if(d.cp_code){cpCode=d.cp_code;cpMasterId=null;cpMode='new';
+      document.getElementById('cpCodeWrap').style.display='block';document.getElementById('cpCodeWrap').textContent=d.cp_code;
+      document.getElementById('cpNewBtn').classList.add('active');document.getElementById('cpExistBtn').classList.remove('active');
+      document.getElementById('cpSearchWrap').style.display='none';
+    }else{
+      // Auto-generate next code for properties without one
+      try{const cr=await fetch(`${API}/api/cp-bill/cp-master/next-code`);const cd=await cr.json();cpCode=cd.cp_code;
+        document.getElementById('cpCodeWrap').style.display='block';document.getElementById('cpCodeWrap').textContent=cpCode;
+      }catch(e){cpCode='';document.getElementById('cpCodeWrap').style.display='none'}
+      cpMasterId=null;cpMode='new';
+      document.getElementById('cpNewBtn').classList.add('active');document.getElementById('cpExistBtn').classList.remove('active');
+      document.getElementById('cpSearchWrap').style.display='none';
+    }
     // OH Acquired Model auto-calc
     document.getElementById('f_model').value=d.oh_acquired_model||'';
     if(d.performance_guarantee&&d.guaranteed_sale_price){
