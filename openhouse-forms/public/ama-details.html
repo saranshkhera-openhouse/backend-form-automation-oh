@@ -14,6 +14,7 @@
 .upload-row{border:1.5px dashed var(--bd);border-radius:8px;padding:10px 14px;text-align:center;cursor:pointer;background:var(--bg);transition:.15s;font-size:11px;color:var(--tx3)}
 .upload-row:hover{border-color:var(--ac)}
 .upload-row.done{border-color:var(--grn);border-style:solid;background:#f0fdf4;color:var(--grn)}
+.upload-row.missing{border-color:var(--red);background:#fef2f2;color:var(--red)}
 .upload-row input[type=file]{display:none}
 </style>
 </head>
@@ -53,7 +54,7 @@
     <div class="card">
       <div class="card-t">Loan Details</div>
       <div class="fg">
-        <label>Sanction Letter</label>
+        <label>Sanction Letter <span class="req">*</span></label>
         <div class="upload-row" id="up_sanction" onclick="document.getElementById('fi_sanction').click()">
           📄 Upload Sanction Letter
           <input type="file" id="fi_sanction" accept="image/*,.pdf" onchange="uploadFile(this,'sanction')">
@@ -61,7 +62,7 @@
         <div class="doc-upload-status" id="st_sanction"></div>
       </div>
       <div class="fg">
-        <label>Statement of Accounts</label>
+        <label>Statement of Accounts <span class="req">*</span></label>
         <div class="upload-row" id="up_soa" onclick="document.getElementById('fi_soa').click()">
           📄 Upload Statement of Accounts
           <input type="file" id="fi_soa" accept="image/*,.pdf" onchange="uploadFile(this,'soa')">
@@ -69,7 +70,7 @@
         <div class="doc-upload-status" id="st_soa"></div>
       </div>
       <div class="fg">
-        <label>List of Documents (LOD)</label>
+        <label>List of Documents (LOD) <span class="req">*</span></label>
         <div class="upload-row" id="up_lod" onclick="document.getElementById('fi_lod').click()">
           📄 Upload LOD
           <input type="file" id="fi_lod" accept="image/*,.pdf" onchange="uploadFile(this,'lod')">
@@ -297,6 +298,13 @@ async function uploadPropDoc(input,key){
 
 document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
+  // Validate loan documents
+  const missingLoan=[];
+  ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
+  if(!fileUrls.sanction){missingLoan.push('Sanction Letter');document.getElementById('up_sanction').classList.add('missing')}
+  if(!fileUrls.soa){missingLoan.push('Statement of Accounts');document.getElementById('up_soa').classList.add('missing')}
+  if(!fileUrls.lod){missingLoan.push('LOD');document.getElementById('up_lod').classList.add('missing')}
+  if(missingLoan.length){toast(`Upload required: ${missingLoan.join(', ')}`,'err');return}
   const body={uid:currentUid};
   body.ama_sanction_url=fileUrls.sanction||null;
   body.ama_soa_url=fileUrls.soa||null;

@@ -90,6 +90,23 @@ CREATE TABLE IF NOT EXISTS cp_inventory (
   submitted_at TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_cpi_created ON cp_inventory(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS cp_master (
+  id SERIAL PRIMARY KEY,
+  cp_code TEXT UNIQUE NOT NULL,
+  cp_name TEXT NOT NULL,
+  cp_phone TEXT,
+  cp_firm TEXT,
+  cp_email TEXT,
+  cp_aadhaar_front_url TEXT,
+  cp_aadhaar_back_url TEXT,
+  cp_pan_card_url TEXT,
+  cp_cancelled_cheque_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cpm_code ON cp_master(cp_code);
+CREATE INDEX IF NOT EXISTS idx_cpm_phone ON cp_master(cp_phone);
 `;
 
 const COMPAT_SQL = `
@@ -194,6 +211,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_aadhaar_front_url') THEN ALTER TABLE properties ADD COLUMN owner_aadhaar_front_url TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_aadhaar_back_url') THEN ALTER TABLE properties ADD COLUMN owner_aadhaar_back_url TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='owner_property_doc_url') THEN ALTER TABLE properties ADD COLUMN owner_property_doc_url TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_code') THEN ALTER TABLE properties ADD COLUMN cp_code TEXT; END IF;
 END $$;
 `;
 

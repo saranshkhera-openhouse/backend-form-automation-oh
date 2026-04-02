@@ -119,25 +119,25 @@
     <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available <span class="req">*</span></div>
       <div class="fg" style="margin-bottom:0"><div id="docsSelect"></div></div>
       <div class="fg" id="otherDocWrap" style="display:none;margin-top:8px"><label>Specify Other Documents</label><input type="text" name="other_documents_text" id="otherDocText"></div>
-      <div class="fg" style="margin-top:10px"><label>Remarks (This will be PRINTED on PDF)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
-      <div class="fg" style="margin-top:6px"><label>Remarks (For internal team reference)</label><textarea name="token_remarks" rows="2"></textarea></div></div>
+      <div class="fg" style="margin-top:10px"><label>Remarks (YE SELLER KO DIKHEGA)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
+      <div class="fg" style="margin-top:6px"><label>Remarks (YE INTERNAL TEAM KE LIYE HAI)</label><textarea name="token_remarks" rows="2"></textarea></div></div>
 
     <div class="card"><div class="card-t">Owner Documents Upload</div>
       <div class="owner-uploads" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
         <div class="pu-item" id="pu_ownerAadhaarFront" onclick="document.getElementById('fi_owner_aadhaar_front').click()">
-          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front</div>
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front <span class="req">*</span></div>
           <input type="file" id="fi_owner_aadhaar_front" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_front')">
         </div>
         <div class="pu-item" id="pu_ownerAadhaarBack" onclick="document.getElementById('fi_owner_aadhaar_back').click()">
-          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back</div>
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back <span class="req">*</span></div>
           <input type="file" id="fi_owner_aadhaar_back" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_back')">
         </div>
         <div class="pu-item" id="pu_ownerPan" onclick="document.getElementById('fi_owner_pan').click()">
-          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card <span class="req">*</span></div>
           <input type="file" id="fi_owner_pan" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_pan')">
         </div>
         <div class="pu-item" id="pu_ownerPropDoc" onclick="document.getElementById('fi_owner_property_doc').click()">
-          <div class="pu-icon">📄</div><div class="pu-label">Property Ownership Doc (PDF)</div>
+          <div class="pu-icon">📄</div><div class="pu-label">Property Ownership Doc (PDF) <span class="req">*</span></div>
           <input type="file" id="fi_owner_property_doc" accept=".pdf,application/pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_property_doc')">
         </div>
       </div>
@@ -219,10 +219,10 @@ async function uploadOwnerDoc(input,key){
     const r=await fetch(`https://api.cloudinary.com/v1_1/${ownerCloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
     const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
     ownerDocUrls[key]=d.secure_url;item.classList.add('uploaded');item.classList.remove('missing');
-    item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
+    item.querySelector('.pu-label').innerHTML=OWNER_DOC_LABEL[key]+' ✓ <span class="req">*</span>';
     let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
     link.href=d.secure_url;toast('Uploaded','ok');
-  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]}
+  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').innerHTML=OWNER_DOC_LABEL[key]+' <span class="req">*</span>'}
   input.value='';
 }
 function autoFillBank(ifsc){const bank=bankFromIFSC(ifsc);if(bank){const sel=document.getElementById('ocrBank');for(const o of sel.options){if(o.value===bank){sel.value=bank;return}}}}
@@ -371,7 +371,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     for(const[key,col]of Object.entries(OWNER_DOC_COL)){
       ownerDocUrls[key]=d[col]||'';
       const item=document.getElementById(OWNER_DOC_ITEM[key]);
-      if(d[col]){item.classList.add('uploaded');item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
+      if(d[col]){item.classList.add('uploaded');item.querySelector('.pu-label').innerHTML=OWNER_DOC_LABEL[key]+' ✓ <span class="req">*</span>';
         let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
         link.href=d[col]}
     }

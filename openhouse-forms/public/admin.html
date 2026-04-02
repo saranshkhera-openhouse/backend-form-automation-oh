@@ -14,7 +14,7 @@
 .filter-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center}
 .tbl{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;table-layout:fixed}
 .tbl th,.tbl td{overflow:hidden;text-overflow:ellipsis}
-.tbl .col-sn{width:32px}.tbl .col-uid{width:90px}.tbl .col-stage{width:72px}.tbl .col-act{width:60px}
+.tbl .col-sn{width:42px}.tbl .col-uid{width:90px}.tbl .col-stage{width:72px}.tbl .col-act{width:60px}
 .tbl .col-city{width:70px}.tbl .col-soc{width:140px;white-space:normal;word-break:break-word}.tbl .col-unit{width:70px}
 .tbl .col-owner{width:110px}.tbl .col-phone{width:90px}.tbl .col-name{width:100px}.tbl .col-dt{width:85px}
 .tbl th{position:sticky;top:0;background:var(--bg);z-index:2;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);border-bottom:2px solid var(--bd);cursor:pointer;user-select:none}
@@ -30,7 +30,9 @@
 .stage-pill.s-vis{background:#e0e7ff;color:#3730a3}
 .stage-pill.s-tok{background:#fef3c7;color:#92400e}
 .stage-pill.s-deal{background:#fce7f3;color:#9d174d}
+.stage-pill.s-ama{background:#ede9fe;color:#6d28d9}
 .stage-pill.s-fin{background:#d1fae5;color:#065f46}
+.stage-pill.s-cp{background:#e0f2fe;color:#0369a1}
 .stage-pill.s-lst{background:#e8f2ec;color:#2d5a3d}
 .stage-pill.s-can{background:#fdecea;color:#b33a2e}
 /* Modal */
@@ -85,7 +87,9 @@ tr.row-dead td{color:var(--red)!important;opacity:.7}
     <div class="stat" data-filter="visited" id="stVis"><div class="stat-val" id="sVis">—</div><div class="stat-lbl">Visited</div></div>
     <div class="stat" data-filter="token" id="stTok"><div class="stat-val" id="sTok">—</div><div class="stat-lbl">Token Req</div></div>
     <div class="stat" data-filter="deal" id="stDeal"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal</div></div>
-    <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Final</div></div>
+    <div class="stat" data-filter="ama" id="stAma"><div class="stat-val" id="sAma">—</div><div class="stat-lbl">AMA</div></div>
+    <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">PSD</div></div>
+    <div class="stat" data-filter="cpbill" id="stCp"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
     <div class="stat" data-filter="listed" id="stLst"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
     <div class="stat" data-filter="dead" id="stCan"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
   </div>
@@ -95,11 +99,12 @@ tr.row-dead td{color:var(--red)!important;opacity:.7}
         <input type="text" id="fQ" placeholder="🔍 Search UID, society, owner, phone...  (Ctrl+K)" style="font-size:14px;flex:2">
         <select id="fCity" style="font-size:14px"><option value="">All Cities</option></select>
         <select id="fAb" style="font-size:14px"><option value="">All Assigned By</option></select>
-        <select id="fSt" style="font-size:14px;display:none"><option value="">All Status</option>
+        <select id="fSt" style="font-size:14px"><option value="">All Stages</option>
           <option value="scheduled">Scheduled</option><option value="visited">Visited</option>
           <option value="token">Token Req</option><option value="draft">Draft</option>
-          <option value="deal">Deal Done</option><option value="final">Final</option><option value="listed">Listed</option>
-          <option value="dead">Cancelled</option>
+          <option value="deal">Deal</option><option value="ama">AMA</option>
+          <option value="final">PSD</option><option value="cpbill">CP Bill</option>
+          <option value="listed">Listed</option><option value="dead">Cancelled</option>
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()" title="Refresh data">↻</button>
       </div>
@@ -147,9 +152,9 @@ function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.to
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead'};
   if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
-  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-fin',key:'cpbill'};
-  if(p.final_submitted_at)return{label:'Final',cls:'s-fin',key:'final'};
-  if(p.ama_submitted_at)return{label:'AMA',cls:'s-deal',key:'ama'};
+  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill'};
+  if(p.final_submitted_at)return{label:'PSD',cls:'s-fin',key:'final'};
+  if(p.ama_submitted_at)return{label:'AMA',cls:'s-ama',key:'ama'};
   if(p.token_deal_submitted_at)return{label:'Deal',cls:'s-deal',key:'deal'};
   if(p.token_submitted_at||p.token_is_draft)return{label:p.token_is_draft?'Draft':'Token',cls:'s-tok',key:'token'};
   if(p.visit_submitted_at)return{label:'Visited',cls:'s-vis',key:'visited'};
@@ -170,7 +175,9 @@ async function loadData(){try{const r=await fetch(`${API}/api/properties`);allDa
   document.getElementById('sVis').textContent=allData.filter(p=>p._stage.key==='visited').length;
   document.getElementById('sTok').textContent=allData.filter(p=>p._stage.key==='token').length;
   document.getElementById('sDeal').textContent=allData.filter(p=>p._stage.key==='deal').length;
+  document.getElementById('sAma').textContent=allData.filter(p=>p._stage.key==='ama').length;
   document.getElementById('sFin').textContent=allData.filter(p=>p._stage.key==='final').length;
+  document.getElementById('sCp').textContent=allData.filter(p=>p._stage.key==='cpbill').length;
   document.getElementById('sLst').textContent=allData.filter(p=>p._stage.key==='listed').length;
   document.getElementById('sCan').textContent=allData.filter(p=>p._stage.key==='dead').length;
   document.getElementById('sAll').textContent=allData.length;
@@ -187,7 +194,9 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   else if(st==='token')d=d.filter(p=>p._stage.key==='token');
   else if(st==='draft')d=d.filter(p=>p.token_is_draft&&!p.is_dead);
   else if(st==='deal')d=d.filter(p=>p._stage.key==='deal');
+  else if(st==='ama')d=d.filter(p=>p._stage.key==='ama');
   else if(st==='final')d=d.filter(p=>p._stage.key==='final');
+  else if(st==='cpbill')d=d.filter(p=>p._stage.key==='cpbill');
   else if(st==='listed')d=d.filter(p=>p._stage.key==='listed');
   else if(st==='dead')d=d.filter(p=>p._stage.key==='dead');
   if(dateFilterStart){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();return t>=dateFilterStart.getTime()&&t<dateFilterEnd.getTime()})}
@@ -424,9 +433,9 @@ document.addEventListener('DOMContentLoaded',loadUsers);
   <div class="card" style="padding:0;overflow:hidden">
     <div style="padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
       <div><strong style="font-size:14px">User Management</strong><div style="font-size:10px;color:var(--tx3)">Manage access & permissions</div></div>
-      <!-- <button class="btn btn-dark btn-sm" onclick="addUser()">+ Add User</button> -->
+      <button class="btn btn-dark btn-sm" onclick="addUser()">+ Add User</button>
     </div>
-    <div><table class="tbl"><thead><tr><th style="width:30px">#</th><th>Email</th><th>Name</th><th>Form Access</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <div><table class="tbl"><thead><tr><th style="width:42px">#</th><th>Email</th><th>Name</th><th>Form Access</th><th>Role</th><th>Status</th><th></th></tr></thead>
     <tbody id="utb"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tx3)">Loading...</td></tr></tbody></table></div>
   </div>
 </div>
