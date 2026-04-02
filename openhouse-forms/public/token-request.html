@@ -84,8 +84,12 @@
         <div class="fg"><label>Guaranteed Sale Price (in Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Performance Guarantee (%)</label><input type="text" name="pg_pct" id="pgPct" inputmode="decimal" placeholder="e.g. 1.5" oninput="if(parseFloat(this.value)>100)this.value=100"></div>
       </div>
-      <div class="fg"><label>Performance Guarantee (in ₹) <span class="req">*</span></label><input type="number" name="performance_guarantee" id="pgAmt" step="1" required><div class="err-msg">Required</div>
+      <div class="fg"><label>Performance Guarantee (Forfeitable)(in ₹) <span class="req">*</span></label><input type="number" name="performance_guarantee" id="pgAmt" step="1" required><div class="err-msg">Required</div>
         <div style="font-size:9px;color:var(--tx3);margin-top:2px" id="pgCalcHint"></div></div>
+      <div class="r2">
+        <div class="fg"><label>Total Deposit (in ₹)</label><input type="number" name="total_deposit" id="totalDeposit" step="1"></div>
+        <div class="fg"><label>Refundable Deposit (in ₹)</label><input type="number" name="refundable_deposit" id="refundableDeposit" step="1"></div>
+      </div>
       <hr class="div">
       <div class="arrow-row"><div class="fg"><label>Initial Period (in days) <span class="req">*</span></label><input type="number" name="initial_period" required><div class="err-msg">Required</div></div>
         <div class="arrow-sym">→</div>
@@ -352,6 +356,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('guaranteed_sale_price',d.guaranteed_sale_price);
     if(d.performance_guarantee){document.getElementById('pgAmt').value=d.performance_guarantee;
       if(d.guaranteed_sale_price){const pct=Math.round(d.performance_guarantee/(d.guaranteed_sale_price*100000)*100*1000)/1000;document.getElementById('pgPct').value=pct;document.getElementById('pgCalcHint').textContent=`₹${Number(d.performance_guarantee).toLocaleString('en-IN')} = ${pct}% of ₹${(d.guaranteed_sale_price*100000).toLocaleString('en-IN')}`}}
+    sv('total_deposit',d.total_deposit);sv('refundable_deposit',d.refundable_deposit);
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
     if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');document.getElementById('rip').required=false}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
     if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');document.getElementById('rgp').required=false}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
