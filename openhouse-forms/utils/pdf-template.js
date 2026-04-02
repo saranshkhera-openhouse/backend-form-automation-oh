@@ -205,7 +205,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
     <div class="footer">
       <div><div class="footer-brand">Avano Technologies Private Limited</div>
         <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
-      <div class="footer-note">Token Receipt<br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
+      <div class="footer-note"><br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
     </div>
   </div></div></body></html>`;
 }
