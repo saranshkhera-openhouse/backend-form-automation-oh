@@ -17,7 +17,7 @@ module.exports=function(pool){
     cityMap:{"Gurgaon":"G","Noida":"N","Ghaziabad":"GH"},
     sourceMap:{"CP":"C","Direct":"D"},
     assignedByList: ["Abhishek Rathore", "Aman Dixit", "Animesh Singh","Arti Ahirwar","Deepak Mishra","Deepak Rana", "Kavita Rawat","Nisha Deewan", "Rahul Sheel", "Rupali Prasad", "Sahil Singh", "Shashank Kumar", "Sushmita Roy","Test Sahaj"],
-    assignedToList: ["Aman Dixit" , "Animesh Singh","Ashwani Sharma","Deepak Mishra","Deepak Rana","Nishant Kumar", "Praveen Kumar", "Rahul Sheel", "Rahul Singh", "Sahil Singh","Test Sahaj"]
+    assignedToList: ["Aman Dixit" , "Animesh Singh","Ashwani Sharma","Deepak Mishra","Deepak Rana","Manish Sharma","Nishant Kumar", "Praveen Kumar", "Rahul Sheel", "Rahul Singh", "Sahil Singh","Test Sahaj"]
   };
   router.get('/',(_,r)=>r.json({options:OPT}));
   router.get('/cloudinary',(_,r)=>r.json({cloudName:process.env.CLOUDINARY_CLOUD_NAME||'',uploadPreset:process.env.CLOUDINARY_UPLOAD_PRESET||''}));

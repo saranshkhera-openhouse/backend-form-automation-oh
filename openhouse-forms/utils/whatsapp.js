@@ -30,7 +30,8 @@ const NAME_TO_PHONE = {
   'Saransh Khera':      '8595594789',
   'Saurabh':            '9174286625',
   'Akash Teotia':       '9311338205',
-  'Deepak Rana':        '7428500192'
+  'Deepak Rana':        '7428500192',
+  'Manish Sharma':      '7428500816'
 };
 
 // ═══════════════════════════════════════════════════════
@@ -52,6 +53,8 @@ const MID_MANAGERS = {
 // ═══════════════════════════════════════════════════════
 function getPhone(name) {
   if (!name) return null;
+  // If name is already a phone number (10 digits), return it directly
+  if (/^\d{10}$/.test(name)) return name;
   if (NAME_TO_PHONE[name]) return NAME_TO_PHONE[name];
   const lower = name.toLowerCase();
   for (const [k, v] of Object.entries(NAME_TO_PHONE)) {
@@ -221,6 +224,7 @@ function notifyTokenRequest(property) {
     p.owner_broker_name || '-',
   ];
   const recipients = getRecipients(p, [p.assigned_by, p.token_requested_by]);
+  recipients.push('Saurabh');
   console.log(`WA: token_request | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   return broadcastTemplate('token_request', bodyValues, recipients);
 }
@@ -283,7 +287,7 @@ function notifyAMASubmitted(property) {
     bdPhone
   ];
   // Fixed recipients + BD manager
-  const recipients = ['Saurabh', 'Akash Teotia', 'Ashish', 'Prashant', 'Rahool'];
+  const recipients = ['Saurabh', 'Akash Teotia', 'Ashish', 'Prashant', 'Rahool', '9217709032'];
   if(bdManager && bdManager!=='-') recipients.push(bdManager);
   console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   return broadcastTemplate('ama_notification', bodyValues, recipients);

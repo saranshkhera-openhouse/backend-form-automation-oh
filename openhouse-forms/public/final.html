@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Security Deposit</title><link rel="stylesheet" href="/css/styles.css"></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Amount Confirmation (For Owner)</title><link rel="stylesheet" href="/css/styles.css"></head>
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
-  <div class="hdr-center"><div class="form-name">Pending Security Deposit</div></div>
+  <div class="hdr-center"><div class="form-name">Pending Amount Confirmation (For Owner)</div></div>
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
@@ -15,7 +15,7 @@
   <form id="finalForm" style="display:none"><input type="hidden" name="uid" id="fUid">
     <div class="card"><div class="card-t">Amount Summary</div>
       <div class="r3">
-        <div class="fg"><label>Performance Guarantee</label><input type="text" id="pgAmt" class="pre" readonly></div>
+        <div class="fg"><label>Total Deposit</label><input type="text" id="pgAmt" class="pre" readonly></div>
         <div class="fg"><label>Token Paid</label><input type="text" id="tkAmt" class="pre" readonly></div>
         <div class="fg"><label>Remaining Amount</label><input type="text" id="remAmt" class="pre" readonly style="font-weight:700;color:var(--ac)"></div>
       </div>
@@ -59,13 +59,13 @@
 
     <div class="btn-row">
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
-      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>PG Receipt</button>
+      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>TD Receipt</button>
     </div>
   </form>
 </div>
 
 <div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
-  <div class="pdf-hdr"><h3>Performance Guarantee Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
+  <div class="pdf-hdr"><h3>Total Deposit Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
   <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
   <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open in New Tab</a></div>
 </div></div>
@@ -165,7 +165,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/final/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    document.getElementById('pdfBtn').disabled=false;toast('Submitted! PG Receipt ready.','ok',5000)});
+    document.getElementById('pdfBtn').disabled=false;toast('Submitted! TD Receipt ready.','ok',5000)});
 });
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
