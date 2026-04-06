@@ -1,4 +1,4 @@
-// Performance Guarantee Invoice (Form 5)
+// Total Deposit Invoice (Form 6)
 
 function fmtDate(d){if(!d)return '—';const dt=new Date(d);const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${String(dt.getDate()).padStart(2,'0')} ${m[dt.getMonth()]} ${dt.getFullYear()}`}
 function fmtCur(v){if(!v)return '—';const n=Number(v);if(n>=10000000)return '₹ '+(n/10000000).toFixed(2)+' Crores';return '₹ '+n.toLocaleString('en-IN')}
@@ -17,7 +17,7 @@ function generateInvoiceHTML(p, baseUrl=''){
 
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Performance Guarantee – ${esc(p.uid)}</title>
+<title>Total Deposit – ${esc(p.uid)}</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -62,7 +62,7 @@ function generateInvoiceHTML(p, baseUrl=''){
       <div class="inv-brand"><img src="${logoUrl}" alt="Openhouse" style="height:40px"><span class="inv-co"></span></div>
       <div class="inv-addr">Avano Technologies Private Limited<br>VentureX, Unit No. 202 &amp; 202A, Silverton Tower,<br>Sector 50, Golf Course Extension Road, Gurugram 122018</div>
     </div>
-    <div class="inv-title-block"><div class="inv-title">PERFORMANCE<br>GUARANTEE</div></div>
+    <div class="inv-title-block"><div class="inv-title">TOTAL<br>DEPOSIT</div></div>
   </div>
   <div class="owner-section">
     <div class="owner-label">Owner Details</div>
@@ -82,7 +82,7 @@ function generateInvoiceHTML(p, baseUrl=''){
         <td>${fmtCur(p.deal_token_amount)}</td>
       </tr>
       <tr>
-        <td><strong>Performance Guarantee</strong><br><span class="mono">via A/C ${esc(finalAc)}</span></td>
+        <td><strong>Remaining Amount</strong><br><span class="mono">via A/C ${esc(finalAc)}</span></td>
         <td><span class="mono">${esc(p.neft_reference||'—')}</span></td>
         <td>${fmtDate(p.token_transfer_date)}</td>
         <td>${fmtCur(p.remaining_amount)}</td>
@@ -92,7 +92,7 @@ function generateInvoiceHTML(p, baseUrl=''){
   <div class="inv-totals">
     <div class="inv-totals-box">
       <div class="inv-totals-row"><span class="tl">Token Amount</span><span class="tv">${fmtCur(p.deal_token_amount)}</span></div>
-      <div class="inv-totals-row"><span class="tl">Performance Guarantee</span><span class="tv">${fmtCur(p.remaining_amount)}</span></div>
+      <div class="inv-totals-row"><span class="tl">Remaining Amount</span><span class="tv">${fmtCur(p.remaining_amount)}</span></div>
       <div class="inv-totals-row total"><span class="tl">Total Amount Paid</span><span class="tv">${fmtCur(total)}</span></div>
     </div>
   </div>
