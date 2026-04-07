@@ -124,8 +124,8 @@
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:center;justify-content:center;padding:20px" id="listPropModal">
   <div style="background:var(--sf);border-radius:12px;width:100%;max-width:420px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden;animation:popIn .3s ease">
     <div style="padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)">
-      <div style="font-size:14px;font-weight:700">List Property</div>
-      <div style="font-size:11px;color:var(--tx3);margin-top:2px">Are you sure you want to list this property?</div>
+      <div style="font-size:14px;font-weight:700">Create Seller Dashboard</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:2px">Are you sure you want to create this property in seller dashboard?</div>
     </div>
     <div style="padding:14px 18px;font-size:13px;color:var(--tx2);line-height:1.6" id="listPropBody"></div>
     <div style="padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end">
@@ -279,13 +279,14 @@ async function loadUID(uid){
 // List Property button
 document.getElementById('listPropBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Load a property first','warn');return}
-  document.getElementById('listPropBody').textContent=`UID: ${currentUid}`;
+  const ld=loadedData||{};
+  document.getElementById('listPropBody').innerHTML=`<div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 14px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px"><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Tower</span><div style="font-weight:600">${ld.tower_no||'—'}</div></div><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Unit</span><div style="font-weight:600">${ld.unit_no||'—'}</div></div><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Society</span><div style="font-weight:600">${ld.society_name||'—'}</div></div><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Seller</span><div style="font-weight:600">${ld.owner_broker_name||'—'}</div></div></div></div>`;
   document.getElementById('listPropModal').style.display='flex';
 });
 document.getElementById('listPropConfirmBtn').addEventListener('click',()=>{
   // Placeholder — functionality to be added later
   document.getElementById('listPropModal').style.display='none';
-  toast('List Property action — coming soon','ok');
+  toast('Create Seller Dashboard — coming soon','ok');
 });
 document.getElementById('listPropModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.style.display='none'});
 
