@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Amount Request</title><link rel="stylesheet" href="/css/styles.css"></head>
+<body>
+<header class="hdr">
+  <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
+  <div class="hdr-center"><div class="form-name">Pending Amount Request (For Internal Team)</div></div>
+  <div class="hdr-right"></div>
+</header>
+<div class="ctn">
+  <div class="card"><div class="card-t">Load Property</div>
+    <div class="load-row"><div class="fg"><label>UID</label><select id="selUid" style="font-family:var(--mono)"></select></div>
+      <button type="button" class="btn btn-dark btn-sm" id="loadBtn">Load</button></div>
+    <div class="pf-st" id="pfSt"></div></div>
+
+  <div id="parForm" style="display:none">
+    <div class="card"><div class="card-t">Property Details</div>
+      <div class="r2">
+        <div class="fg"><label>Society</label><input type="text" id="ro_soc" class="pre" readonly></div>
+        <div class="fg"><label>Unit / Tower</label><input type="text" id="ro_unit" class="pre" readonly></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Owner</label><input type="text" id="ro_owner" class="pre" readonly></div>
+        <div class="fg"><label>Co-owner</label><input type="text" id="ro_coowner" class="pre" readonly></div>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-t">Amount Summary</div>
+      <div class="r3">
+        <div class="fg"><label>Total Deposit</label><input type="text" id="ro_totalDeposit" class="pre" readonly></div>
+        <div class="fg"><label>Token Paid</label><input type="text" id="ro_tokenPaid" class="pre" readonly></div>
+        <div class="fg"><label>Remaining</label><input type="text" id="ro_remaining" class="pre" readonly style="font-weight:700;color:var(--ac)"></div>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-t">AMA Details</div>
+      <div class="fg"><label>Date of AMA <span class="req">*</span></label><input type="date" name="ama_date" id="amaDate" required><div class="err-msg">Required</div></div>
+    </div>
+
+    <div class="card" id="splitCard" style="display:none"><div class="card-t">Payment Split</div>
+      <div class="fg"><label>Equal split between owners? <span class="req">*</span></label>
+        <div class="radios"><label><input type="radio" name="equal_split" value="Yes" id="splitYes"><span>Yes</span></label><label><input type="radio" name="equal_split" value="No" id="splitNo"><span>No</span></label></div></div>
+      <div id="splitPreview" style="display:none;margin-top:10px;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);font-size:13px;line-height:1.8">
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit</button>
+    <button type="button" class="btn btn-out" id="emailBtn" style="width:100%;margin-top:8px;display:none;color:var(--ac2);border-color:var(--ac2)">📧 Send to Accounts</button>
+  </div>
+</div>
+
+<script src="/js/shared.js"></script>
+<script>
+let currentUid=null,propData=null,isAdmin=false,isManager=false;
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    const me=await fetch('/auth/me').then(r=>r.json());
+    isAdmin=me.is_admin;isManager=me.is_manager;
+    const r=await fetch(`${API}/api/pending-request/uids`);const uids=await r.json();
+    const sel=document.getElementById('selUid');
+    sel.innerHTML='<option value="">Select UID...</option>';
+    uids.forEach(u=>{const o=document.createElement('option');o.value=u.uid;
+      o.textContent=`${u.uid} — ${[u.tower_no,u.unit_no].filter(Boolean).join('-')} ${u.society_name||''}${u.pending_request_submitted_at?' ✓':''}`;sel.appendChild(o)});
+    makeSearchable(sel);
+    const p=new URLSearchParams(window.location.search);if(p.get('uid')){sel.value=p.get('uid');loadData()}
+  }catch(e){toast('Failed to load','err')}
+});
+
+document.getElementById('loadBtn').addEventListener('click',loadData);
+
+async function loadData(){
+  const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
+  const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
+  try{
+    const r=await fetch(`${API}/api/pending-request/prefill/${uid}`);if(!r.ok){const e=await r.json();throw new Error(e.error)}
+    propData=await r.json();currentUid=uid;
+
+    document.getElementById('ro_soc').value=propData.society_name||'';
+    document.getElementById('ro_unit').value=[propData.tower_no,propData.unit_no].filter(Boolean).join('-')||'';
+    document.getElementById('ro_owner').value=propData.owner_broker_name||'';
+    document.getElementById('ro_coowner').value=propData.co_owner||'—';
+
+    const td=Number(propData.total_deposit)||0;
+    const tk=Number(propData.deal_token_amount)||0;
+    const rem=td-tk;
+    document.getElementById('ro_totalDeposit').value=td?'₹ '+td.toLocaleString('en-IN'):'—';
+    document.getElementById('ro_tokenPaid').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';
+    document.getElementById('ro_remaining').value=rem>0?'₹ '+rem.toLocaleString('en-IN'):'₹ 0';
+
+    // AMA date prefill
+    if(propData.ama_date)document.getElementById('amaDate').value=propData.ama_date.split('T')[0];
+
+    // Show split card only if co-owner exists
+    const hasCoOwner=!!(propData.co_owner&&propData.co_owner.trim());
+    document.getElementById('splitCard').style.display=hasCoOwner?'block':'none';
+    if(!hasCoOwner){document.getElementById('splitNo').checked=true}
+
+    document.getElementById('parForm').style.display='block';
+    document.getElementById('emailBtn').style.display=propData.pending_request_submitted_at?'block':'none';
+    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${propData.pending_request_submitted_at?' (Submitted)':''}`;
+  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('parForm').style.display='none'}
+}
+
+// Equal split toggle — show preview
+document.querySelectorAll('input[name="equal_split"]').forEach(r=>{
+  r.addEventListener('change',function(){
+    const preview=document.getElementById('splitPreview');
+    if(this.value==='Yes'&&propData){
+      const td=Number(propData.total_deposit)||0;
+      const tk=Number(propData.deal_token_amount)||0;
+      const half=Math.round(td/2);
+      const firstOwner=half-tk;
+      preview.innerHTML=`<div><strong>${propData.owner_broker_name||'First Owner'}:</strong> ₹ ${firstOwner>0?firstOwner.toLocaleString('en-IN'):'0'} <span style="font-size:11px;color:var(--tx3)">(₹ ${half.toLocaleString('en-IN')} − ₹ ${tk.toLocaleString('en-IN')} token)</span></div>
+        <div><strong>${propData.co_owner||'Co-owner'}:</strong> ₹ ${half.toLocaleString('en-IN')}</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:6px">Where ₹ ${half.toLocaleString('en-IN')} × 2 = ₹ ${td.toLocaleString('en-IN')} (Total Deposit)</div>`;
+      preview.style.display='block';
+    }else{preview.style.display='none'}
+  });
+});
+
+// Submit
+document.getElementById('submitBtn').addEventListener('click',()=>{
+  if(!currentUid){toast('Select a UID','warn');return}
+  const amaDate=document.getElementById('amaDate').value;
+  if(!amaDate){toast('AMA Date required','err');return}
+  const hasCoOwner=document.getElementById('splitCard').style.display!=='none';
+  if(hasCoOwner&&!document.querySelector('input[name="equal_split"]:checked')){toast('Select equal split option','err');return}
+
+  const body={uid:currentUid,ama_date:amaDate};
+  submitBtn(document.getElementById('submitBtn'),async()=>{
+    const r=await fetch(`${API}/api/pending-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const res=await r.json();if(!r.ok)throw new Error(res.error);
+    document.getElementById('emailBtn').style.display='block';
+    toast('Submitted!','ok');
+  });
+});
+
+// Send email
+document.getElementById('emailBtn').addEventListener('click',async()=>{
+  if(!currentUid){toast('Load a property first','warn');return}
+  if(!confirm('Send pending amount request email to Accounts?'))return;
+  const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
+  try{
+    const splitVal=document.querySelector('input[name="equal_split"]:checked')?.value||'No';
+    const r=await fetch(`${API}/api/pending-request/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({equal_split:splitVal})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    toast('Email sent to Accounts!','ok',5000);btn.innerHTML='✓ Email Sent';btn.style.borderColor='var(--grn)';btn.style.color='var(--grn)';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
+  }catch(e){toast(e.message||'Failed to send','err');btn.innerHTML=orig;btn.disabled=false;
+    if(e.message&&e.message.includes('log out'))toast('Please logout and login again','warn',8000)}
+});
+</script>
+</body></html>

@@ -415,8 +415,8 @@ document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('c
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fAb').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];loadData()});
 
-const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','final','cp-bill','listing'];
-const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA',final:'PSD','cp-bill':'CP Bill',listing:'Listing'};
+const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','pending-request','final','cp-bill','listing'];
+const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA','pending-request':'Pend Req',final:'PSD','cp-bill':'CP Bill',listing:'Listing'};
 let allUsers=[],userSortCol='email',userSortDir='asc';
 async function loadUsers(){try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}}
 function getUserRole(u){return u.is_admin?3:u.is_top_manager?2:u.is_manager?1:0}

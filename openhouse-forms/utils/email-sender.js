@@ -283,5 +283,57 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
+async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, equalSplit }) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+  const p = property;
+  const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
+  const td = Number(p.total_deposit) || 0;
+  const tk = Number(p.deal_token_amount) || 0;
+  const amaDate = p.ama_date ? new Date(p.ama_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+  let amountLines = '';
+  if (equalSplit === 'Yes' && p.co_owner && p.co_owner.trim()) {
+    const half = Math.round(td / 2);
+    const firstAmt = half - tk;
+    amountLines = `<ul style="line-height:2;font-size:14px">
+      <li><strong>${p.owner_broker_name || 'First Owner'}:</strong> INR ${firstAmt > 0 ? firstAmt.toLocaleString('en-IN') : '0'} (INR ${half.toLocaleString('en-IN')} − INR ${tk.toLocaleString('en-IN')} Token)</li>
+      <li><strong>${p.co_owner}:</strong> INR ${half.toLocaleString('en-IN')}</li>
+    </ul>
+    <p style="font-size:12px;color:#666">Where, 2 × INR ${half.toLocaleString('en-IN')} = INR ${td.toLocaleString('en-IN')} is Total Deposit (this line is for your ref)</p>`;
+  } else {
+    const rem = td - tk;
+    amountLines = `<ul style="line-height:2;font-size:14px">
+      <li><strong>${p.owner_broker_name || 'Owner'}:</strong> INR ${rem > 0 ? rem.toLocaleString('en-IN') : '0'} (INR ${td.toLocaleString('en-IN')} − INR ${tk.toLocaleString('en-IN')} Token)</li>
+    </ul>`;
+  }
+
+  const subject = `Pending Amount Request | ${addr}`;
+  const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
+<p>Hi Accounts Team,</p>
+<p>The AMA for this property has been signed on <strong>${amaDate}</strong>. Please process the remaining amount as follows:</p>
+<p><strong>Property:</strong> ${addr}</p>
+${amountLines}
+<p>Regards,<br><strong>${senderName}</strong></p>
+</body></html>`;
+
+  const raw = buildSimpleMimeEmail({
+    from: fromEmail,
+    to: process.env.ACCOUNTS_EMAIL || 'accounts@openhouse.in',
+    cc: 'supply@openhouse.in,akash.teotia@openhouse.in,saurabh@openhouse.in',
+    subject,
+    bodyHtml
+  });
+
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  console.log(`Pending amount email sent! messageId: ${result.data.id}`);
+  return { messageId: result.data.id, threadId: result.data.threadId };
+}
+
 // Send offer email to property owner with PDF attachment
-module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, htmlToPdf };
+module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, htmlToPdf };

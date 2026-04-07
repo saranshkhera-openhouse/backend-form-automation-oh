@@ -194,6 +194,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_top_manager') THEN ALTER TABLE users ADD COLUMN is_top_manager BOOLEAN DEFAULT FALSE; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='seller_residential_status') THEN ALTER TABLE properties ADD COLUMN seller_residential_status TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='sellers_available_on_registry') THEN ALTER TABLE properties ADD COLUMN sellers_available_on_registry TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='pending_request_submitted_at') THEN ALTER TABLE properties ADD COLUMN pending_request_submitted_at TIMESTAMPTZ; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='third_owner_email') THEN ALTER TABLE properties ADD COLUMN third_owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='broker_email') THEN ALTER TABLE properties ADD COLUMN broker_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_sanction_url') THEN ALTER TABLE properties ADD COLUMN ama_sanction_url TEXT; END IF;
@@ -250,7 +251,7 @@ const SEED_USER_ROLES = {
   'praveen.kumar@openhouse.in':      { phone:'9289996737', can_visit:true },
   'rahul.singh@openhouse.in':        { phone:'9217710683', can_visit:true },
   'saurabh@openhouse.in':            { phone:'9174286625' },
-  'sahaj.dureja@openhouse.in':       { phone:'8003297088', can_assign:true, can_visit:true },
+  'sahaj.dureja@openhouse.in':       { phone:'8003297088' },
   'saransh.khera@openhouse.in':      { phone:'8595594789' },
   'vaibhav.dwivedi@openhouse.in':    { phone:'' },
 };

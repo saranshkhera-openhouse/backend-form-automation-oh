@@ -72,6 +72,7 @@ app.use('/api/visit', isAuthenticated, hasFormAccess, require('./routes/visit')(
 app.use('/api/token-request', isAuthenticated, hasFormAccess, require('./routes/token-request')(pool));
 app.use('/api/token-deal', isAuthenticated, hasFormAccess, require('./routes/token-deal')(pool));
 app.use('/api/ama-details', isAuthenticated, hasFormAccess, require('./routes/ama-details')(pool));
+app.use('/api/pending-request', isAuthenticated, hasFormAccess, require('./routes/pending-request')(pool));
 app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(pool));
 app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
 app.use('/api/cp-bill', isAuthenticated, hasFormAccess, require('./routes/cp-bill')(pool));
@@ -157,6 +158,7 @@ app.get('/visit', ...sendForm('visit.html'));
 app.get('/token-request', ...sendForm('token-request.html'));
 app.get('/token-deal', ...sendForm('token-deal.html'));
 app.get('/ama-details', ...sendForm('ama-details.html'));
+app.get('/pending-request', ...sendForm('pending-request.html'));
 app.get('/final', ...sendForm('final.html'));
 app.get('/listing', ...sendForm('listing.html'));
 app.get('/cp-bill', ...sendForm('cp-bill.html'));
@@ -170,6 +172,44 @@ async function start() {
     await pool.query(MIGRATION_SQL); console.log('Migration done');
     await pool.query(COMPAT_SQL); console.log('Compat done, DB ready');
     require('./utils/whatsapp').init(pool);
+    // Auto-seed user phone/roles if not yet populated
+    const needSeed=await pool.query(`SELECT COUNT(*) as c FROM users WHERE phone IS NOT NULL AND phone!=''`);
+    if(parseInt(needSeed.rows[0].c)===0){
+      console.log('Seeding user phones & roles...');
+      const SEED={
+        'rahool@openhouse.in':{phone:'9899546824',is_top_manager:true},
+        'ashish@openhouse.in':{phone:'9555666059',is_top_manager:true},
+        'prashant@openhouse.in':{phone:'9289500953',is_top_manager:true},
+        'abhishek.rathore@openhouse.in':{phone:'9452441498',can_assign:true},
+        'aman.dixit@openhouse.in':{phone:'9266533475',can_assign:true,can_visit:true},
+        'animesh.singh@openhouse.in':{phone:'9810826481',can_assign:true,can_visit:true},
+        'arti.ahirwar@openhouse.in':{phone:'9289500948',can_assign:true},
+        'deepak.mishra@openhouse.in':{phone:'8130724002',can_assign:true,can_visit:true},
+        'deepak.rana@openhouse.in':{phone:'7428500192',can_assign:true,can_visit:true},
+        'kavita.rawat@openhouse.in':{phone:'9311338216',can_assign:true},
+        'nisha.deewan@openhouse.in':{phone:'9211599292',can_assign:true},
+        'rahul.sheel@openhouse.in':{phone:'9289311664',can_assign:true,can_visit:true},
+        'rupali.prasad@openhouse.in':{phone:'9289996738',can_assign:true},
+        'sahil.singh@openhouse.in':{phone:'9217275007',can_assign:true,can_visit:true},
+        'shashank.kumar@openhouse.in':{phone:'9205658886',can_assign:true},
+        'sushmita.roy@openhouse.in':{phone:'9821700377',can_assign:true},
+        'ashwani.sharma@openhouse.in':{phone:'9217710686',can_visit:true},
+        'manish.sharma@openhouse.in':{phone:'7428500816',can_visit:true},
+        'nishant.kumar@openhouse.in':{phone:'8130733966',can_visit:true},
+        'praveen.kumar@openhouse.in':{phone:'9289996737',can_visit:true},
+        'rahul.singh@openhouse.in':{phone:'9217710683',can_visit:true},
+        'saurabh@openhouse.in':{phone:'9174286625'},
+        'sahaj.dureja@openhouse.in':{phone:'8003297088'},
+        'saransh.khera@openhouse.in':{phone:'8595594789'},
+        'akash.teotia@openhouse.in':{phone:'9311338205'},
+      };
+      for(const[email,d]of Object.entries(SEED)){
+        try{await pool.query(`UPDATE users SET phone=COALESCE(NULLIF($1,''),phone),can_assign=COALESCE($2,can_assign),can_visit=COALESCE($3,can_visit),is_top_manager=COALESCE($4,is_top_manager) WHERE LOWER(email)=LOWER($5)`,
+          [d.phone||null,d.can_assign||false,d.can_visit||false,d.is_top_manager||false,email]);
+        }catch(e){console.error(`Seed ${email}:`,e.message)}
+      }
+      console.log('User roles seeded');
+    }
     const { rows } = await pool.query('SELECT COUNT(*)as c FROM master_societies');
     if (parseInt(rows[0].c) === 0) { for (const [c, l, s] of SOCIETIES) await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING', [c, l, s]); console.log(`Seeded ${SOCIETIES.length} societies`); }
     const uc = await pool.query('SELECT COUNT(*)as c FROM users');

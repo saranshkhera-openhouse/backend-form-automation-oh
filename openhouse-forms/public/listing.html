@@ -82,7 +82,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('electricity_charges',d.electricity_charges);sv('dg_charges',d.dg_charges);
     sv('seller_location',d.seller_location);
     // Area & Amenities prefill
-    document.getElementById('superArea').value=d.super_area||'';
+    document.getElementById('superArea').value=d.super_area||d.area_sqft||'';
     document.getElementById('carpetArea').value=d.carpet_area||'';
     document.getElementById('gasPipe').value=d.gas_pipeline||'';
     document.getElementById('clubFac').value=d.club_facility||'';
