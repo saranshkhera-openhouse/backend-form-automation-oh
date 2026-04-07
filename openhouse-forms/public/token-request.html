@@ -80,9 +80,8 @@
         <div class="fg"><label>Occupancy <span class="req">*</span></label><select name="occupancy_status" id="selOcc" required><option value="">Select...</option><option>Vacant</option><option>Tenant</option><option>Owner Staying</option></select><div class="err-msg">Required</div></div>
       </div>
       <div class="fg" id="hdWrap" style="display:none"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate"><div class="err-msg">Required</div></div>
-      <div class="r2">
-        <div class="fg"><label>Guaranteed Sale Price (in Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Total GSP Amount (₹) <span class="req">*</span></label><input type="text" id="gspTotal" class="pre" readonly></div>      </div>
+      <div class="fg"><label>Guaranteed Sale Price (in Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:2px" id="gspHint"></div></div>
       <div class="r3">
         <div class="fg"><label>Total Deposit (%) <span class="req">*</span></label><input type="text" id="tdPct" inputmode="decimal" placeholder="%"></div>
         <div class="fg"><label>PG - Forfeitable (%) <span class="req">*</span></label><input type="text" id="pgPct" inputmode="decimal" placeholder="%"></div>
@@ -270,13 +269,13 @@ document.addEventListener('DOMContentLoaded',async()=>{
     document.getElementById('selOcc').addEventListener('change',e=>{const w=document.getElementById('hdWrap'),d=document.getElementById('hdDate');
       if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
     // ══ GSP + Deposit bidirectional calc ══
-    const gspEl=document.getElementById('gsp'),gspTotalEl=document.getElementById('gspTotal');
+    const gspEl=document.getElementById('gsp'),gspHintEl=document.getElementById('gspHint');
     const tdPct=document.getElementById('tdPct'),pgPct=document.getElementById('pgPct'),rdPct=document.getElementById('rdPct');
     const tdAmt=document.getElementById('totalDeposit'),pgAmt=document.getElementById('pgAmt'),rdAmt=document.getElementById('refundableDeposit');
     const depositHint=document.getElementById('depositCalcHint');
     let calcLock=false;
     function getGspTotal(){return(parseFloat(String(gspEl.value).replace(/,/g,''))||0)*100000}
-    function updateGspDisplay(){const t=getGspTotal();gspTotalEl.value=t?'₹ '+t.toLocaleString('en-IN'):''}
+    function updateGspDisplay(){const t=getGspTotal();gspHintEl.textContent=t?'₹ '+t.toLocaleString('en-IN'):''}
 
     // % → ₹
     function pctToAmt(pctEl,amtEl){if(calcLock)return;calcLock=true;const g=getGspTotal();const p=parseFloat(pctEl.value)||0;
@@ -387,7 +386,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('guaranteed_sale_price',d.guaranteed_sale_price);
     // Populate GSP total + all deposit fields
     const gspVal=parseFloat(d.guaranteed_sale_price)||0;const gspT=gspVal*100000;
-    document.getElementById('gspTotal').value=gspT?'₹ '+gspT.toLocaleString('en-IN'):'';
+    document.getElementById('gspHint').textContent=gspT?'₹ '+gspT.toLocaleString('en-IN'):'';
     if(d.performance_guarantee){document.getElementById('pgAmt').value=d.performance_guarantee;if(gspT>0)document.getElementById('pgPct').value=Math.round(d.performance_guarantee/gspT*100*1000)/1000}
     if(d.total_deposit){document.getElementById('totalDeposit').value=d.total_deposit;if(gspT>0)document.getElementById('tdPct').value=Math.round(d.total_deposit/gspT*100*1000)/1000}
     if(d.refundable_deposit){document.getElementById('refundableDeposit').value=d.refundable_deposit;if(gspT>0)document.getElementById('rdPct').value=Math.round(d.refundable_deposit/gspT*100*1000)/1000}
@@ -440,13 +439,6 @@ document.getElementById('draftBtn').addEventListener('click',()=>{const body=col
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   if(!getRadio('has_loan')){toast('Select Any Loan?','err');return}
-  if(getRadio('has_loan')==='Yes'){
-    if(!document.getElementById('loanApplicant').value.trim()){toast('Applicant Name required','err');return}
-    if(!document.getElementById('selBankLoan').value){toast('Loan Bank Name required','err');return}
-    if(!document.querySelector('[name="loan_account_number"]').value.trim()){toast('Loan A/C Number required','err');return}
-    if(!document.querySelector('[name="outstanding_loan"]').value){toast('Outstanding Loan required','err');return}
-    if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
-  }
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
   // Validate owner documents
   const missingOwnerDocs=[];

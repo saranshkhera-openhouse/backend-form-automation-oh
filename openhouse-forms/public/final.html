@@ -22,27 +22,23 @@
       <input type="hidden" name="remaining_amount" id="remHidden">
     </div>
 
-    <div class="card"><div class="card-t">Loan Details</div>
-      <div class="fg"><label>Any Loan? <span class="req">*</span></label>
-        <div class="radios"><label><input type="radio" name="has_loan" value="Yes" id="loanYes"><span>Yes</span></label><label><input type="radio" name="has_loan" value="No" id="loanNo"><span>No</span></label></div></div>
-      <div id="loanFields" style="display:none">
-        <div class="r2">
-          <div class="fg"><label>Applicant Name <span class="req">*</span></label><input type="text" name="loan_applicant_name" id="loanApplicant"></div>
-          <div class="fg"><label>Co-applicant Name</label><input type="text" name="loan_co_applicant_name" id="loanCoApplicant"></div>
-        </div>
-        <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details below</span></label>
-        <div id="loanBankFields">
-          <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
-            <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
-          <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" id="loanAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
-        </div>
-        <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="number" name="outstanding_loan" id="loanAmt"></div>
-        <div class="fg"><label>Willing to pay loan? <span class="req">*</span></label>
-          <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
+    <div class="card" id="loanCard" style="display:none"><div class="card-t">Loan Details</div>
+      <div class="r2">
+        <div class="fg"><label>Applicant Name <span class="req">*</span></label><input type="text" name="loan_applicant_name" id="loanApplicant"></div>
+        <div class="fg"><label>Co-applicant Name</label><input type="text" name="loan_co_applicant_name" id="loanCoApplicant"></div>
       </div>
+      <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details below</span></label>
+      <div id="loanBankFields">
+        <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
+          <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
+        <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" id="loanAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+      </div>
+      <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="number" name="outstanding_loan" id="loanAmt"></div>
+      <div class="fg"><label>Willing to pay loan? <span class="req">*</span></label>
+        <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
     </div>
 
-    <div class="fg" id="hdWrap" style="display:none;padding:0 14px;margin-bottom:14px"><div class="card" style="margin:0"><label>Key Handover Date</label><input type="date" name="key_handover_date" id="hdDate"></div></div>
+    <div class="card"><div class="fg"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate" required><div class="err-msg">Required</div></div></div>
 
     <div class="card"><div class="fg"><label>Date of AMA <span class="req">*</span></label><input type="date" name="ama_date" id="amaDate" required><div class="err-msg">Required</div></div></div>
 
@@ -79,23 +75,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const bankSel=document.getElementById('selBankLoan');
     allOpts.banks.forEach(b=>{bankSel.innerHTML+=`<option value="${b}">${b}</option>`});
     bankSel.addEventListener('change',()=>{document.getElementById('bankOther').style.display=bankSel.value==='Others'?'block':'none'});
-    // Loan Yes/No toggle
-    document.querySelectorAll('input[name="has_loan"]').forEach(r=>{
-      r.addEventListener('change',function(){
-        document.getElementById('loanFields').style.display=this.value==='Yes'?'block':'none';
-        if(this.value==='Yes'){
-          if(!document.getElementById('loanApplicant').value)document.getElementById('loanApplicant').value=propData?.owner_broker_name||'';
-          if(!document.getElementById('loanCoApplicant').value)document.getElementById('loanCoApplicant').value=propData?.co_owner||'';
-        }else{
-          document.getElementById('loanApplicant').value='';
-          document.getElementById('loanCoApplicant').value='';
-          document.querySelector('[name="outstanding_loan"]').value='';
-          document.querySelector('[name="loan_account_number"]').value='';
-          document.getElementById('selBankLoan').value='';
-          document.querySelectorAll('input[name="loan_pay_willingness"]').forEach(x=>x.checked=false);
-        }
-      });
-    });
     // "Same as bank details below" — copies from Payment Details section
     document.getElementById('loanCopy').addEventListener('change',function(){
       if(this.checked){document.getElementById('loanBankFields').style.display='none';
@@ -128,17 +107,20 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
     if(propData.token_transfer_date)sv('token_transfer_date',propData.token_transfer_date.split('T')[0]);
     sv('neft_reference',propData.neft_reference);
-    // Prefill loan from DB (saved from Form 3)
+    // Prefill loan from DB — auto-detect, no toggle
     const hasLoan=propData.has_loan||((propData.bank_name_loan||propData.outstanding_loan||propData.loan_account_number)?'Yes':'No');
-    const loanRadio=document.querySelector(`input[name="has_loan"][value="${hasLoan}"]`);
-    if(loanRadio){loanRadio.checked=true;document.getElementById('loanFields').style.display=hasLoan==='Yes'?'block':'none'}
-    document.getElementById('loanApplicant').value=propData.loan_applicant_name||propData.owner_broker_name||'';
-    document.getElementById('loanCoApplicant').value=propData.loan_co_applicant_name||propData.co_owner||'';
-    if(propData.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=propData.bank_name_loan;if(propData.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
-    sv('loan_account_number',propData.loan_account_number);sv('outstanding_loan',propData.outstanding_loan);
-    sr('loan_pay_willingness',propData.loan_pay_willingness);
-    // Key Handover Date — show only if exists
-    if(propData.key_handover_date){document.getElementById('hdWrap').style.display='block';document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0]}else{document.getElementById('hdWrap').style.display='none';document.getElementById('hdDate').value=''}
+    if(hasLoan==='Yes'){
+      document.getElementById('loanCard').style.display='block';
+      document.getElementById('loanApplicant').value=propData.loan_applicant_name||propData.owner_broker_name||'';
+      document.getElementById('loanCoApplicant').value=propData.loan_co_applicant_name||propData.co_owner||'';
+      if(propData.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=propData.bank_name_loan;if(propData.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
+      sv('loan_account_number',propData.loan_account_number);sv('outstanding_loan',propData.outstanding_loan);
+      sr('loan_pay_willingness',propData.loan_pay_willingness);
+    }else{
+      document.getElementById('loanCard').style.display='none';
+    }
+    // Key Handover Date — always show, prefill if exists
+    if(propData.key_handover_date)document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0];
     // Date of AMA prefill
     if(propData.ama_date)document.getElementById('amaDate').value=propData.ama_date.split('T')[0];
     document.getElementById('pdfBtn').disabled=!propData.final_submitted_at;
@@ -148,8 +130,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('finalForm');if(!valid){toast(`Missing: ${missing.slice(0,4).join(', ')}`,'err');return}
-  if(!getRadio('has_loan')){toast('Select Any Loan?','err');return}
-  if(getRadio('has_loan')==='Yes'){
+  const hasLoan=document.getElementById('loanCard').style.display!=='none';
+  if(hasLoan){
     if(!document.getElementById('loanApplicant').value.trim()){toast('Applicant Name required','err');return}
     if(!document.getElementById('selBankLoan').value){toast('Loan Bank Name required','err');return}
     if(!document.getElementById('loanAc').value.trim()){toast('Loan A/C Number required','err');return}
@@ -157,9 +139,9 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
   }
   const fd=new FormData(document.getElementById('finalForm'));const body=Object.fromEntries(fd.entries());
-  body.has_loan=getRadio('has_loan')||'No';
+  body.has_loan=hasLoan?'Yes':'No';
   body.loan_pay_willingness=getRadio('loan_pay_willingness');
-  if(body.has_loan==='No'){body.outstanding_loan='';body.bank_name_loan='';body.loan_account_number='';body.loan_pay_willingness='';body.loan_applicant_name='';body.loan_co_applicant_name=''}
+  if(!hasLoan){body.outstanding_loan='';body.bank_name_loan='';body.loan_account_number='';body.loan_pay_willingness='';body.loan_applicant_name='';body.loan_co_applicant_name=''}
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   ['remaining_amount','outstanding_loan'].forEach(k=>{if(body[k])body[k]=body[k].replace(/,/g,'')});
   submitBtn(document.getElementById('submitBtn'),async()=>{

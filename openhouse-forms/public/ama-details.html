@@ -53,8 +53,8 @@
       <div class="fg"><label>Type of Agreement</label><input type="text" value="AMA" class="pre" readonly></div>
     </div>
 
-    <!-- Card 2: Loan Details -->
-    <div class="card">
+    <!-- Card 2: Loan Details (hidden if no loan) -->
+    <div class="card" id="loanDocsCard">
       <div class="card-t">Loan Details</div>
       <div class="fg">
         <label>Sanction Letter</label>
@@ -256,6 +256,10 @@ async function loadUID(uid){
       }
     });
 
+    // Hide loan docs card if no loan
+    const hasLoan=d.has_loan||((d.bank_name_loan||d.outstanding_loan||d.loan_account_number)?'Yes':'No');
+    document.getElementById('loanDocsCard').style.display=hasLoan==='Yes'?'block':'none';
+
     // Card 3: Deal Summary
     const pgNF=d.ama_pg_non_forfeitable;
     if(pgNF){const rb=document.querySelector(`input[name="ama_pg_non_forfeitable"][value="${pgNF}"]`);if(rb)rb.checked=true}
@@ -330,13 +334,16 @@ async function uploadPropDoc(input,key){
 
 document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
-  // Validate loan documents
-  const missingLoan=[];
-  ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
-  if(!fileUrls.sanction){missingLoan.push('Sanction Letter');document.getElementById('up_sanction').classList.add('missing')}
-  if(!fileUrls.soa){missingLoan.push('Statement of Accounts');document.getElementById('up_soa').classList.add('missing')}
-  if(!fileUrls.lod){missingLoan.push('LOD');document.getElementById('up_lod').classList.add('missing')}
-  if(missingLoan.length){toast(`Upload required: ${missingLoan.join(', ')}`,'err');return}
+  // Validate loan documents (only if loan card is visible)
+  const loanVisible=document.getElementById('loanDocsCard').style.display!=='none';
+  if(loanVisible){
+    const missingLoan=[];
+    ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
+    if(!fileUrls.sanction){missingLoan.push('Sanction Letter');document.getElementById('up_sanction').classList.add('missing')}
+    if(!fileUrls.soa){missingLoan.push('Statement of Accounts');document.getElementById('up_soa').classList.add('missing')}
+    if(!fileUrls.lod){missingLoan.push('LOD');document.getElementById('up_lod').classList.add('missing')}
+    if(missingLoan.length){toast(`Upload required: ${missingLoan.join(', ')}`,'err');return}
+  }
   const body={uid:currentUid};
   body.ama_sanction_url=fileUrls.sanction||null;
   body.ama_soa_url=fileUrls.soa||null;

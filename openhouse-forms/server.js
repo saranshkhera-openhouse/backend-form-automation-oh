@@ -123,7 +123,7 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_ama_signed_url',
       'incentive_visit','incentive_owner_meeting','total_cp_amount',
       'ama_date','owner_pan_url','owner_aadhaar_front_url','owner_aadhaar_back_url','owner_property_doc_url','cp_code',
-      'total_deposit','refundable_deposit']);
+      'total_deposit','refundable_deposit','seller_residential_status','sellers_available_on_registry']);
     const sets=[];const vals=[];let i=1;
     for(const[k,v]of Object.entries(d)){
       if(!allowed.has(k))continue;
@@ -169,6 +169,7 @@ async function start() {
   try {
     await pool.query(MIGRATION_SQL); console.log('Migration done');
     await pool.query(COMPAT_SQL); console.log('Compat done, DB ready');
+    require('./utils/whatsapp').init(pool);
     const { rows } = await pool.query('SELECT COUNT(*)as c FROM master_societies');
     if (parseInt(rows[0].c) === 0) { for (const [c, l, s] of SOCIETIES) await pool.query('INSERT INTO master_societies(city,locality,society_name)VALUES($1,$2,$3)ON CONFLICT DO NOTHING', [c, l, s]); console.log(`Seeded ${SOCIETIES.length} societies`); }
     const uc = await pool.query('SELECT COUNT(*)as c FROM users');

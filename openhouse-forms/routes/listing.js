@@ -20,11 +20,13 @@ module.exports=function(pool){
         electricity_charges=$3,dg_charges=$4,
         seller_location=$5,super_area=$6,carpet_area=$7,
         gas_pipeline=$8,club_facility=$9,
-        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$10`,
+        seller_residential_status=$10,sellers_available_on_registry=$11,
+        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$12`,
         [parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
          parseFloat(d.electricity_charges)||null,parseFloat(d.dg_charges)||null,
          d.seller_location||null,parseFloat(d.super_area)||null,parseFloat(d.carpet_area)||null,
-         d.gas_pipeline||null,d.club_facility||null,d.uid]);
+         d.gas_pipeline||null,d.club_facility||null,
+         d.seller_residential_status||null,d.sellers_available_on_registry||null,d.uid]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Listing:',e);res.status(500).json({error:e.message})}
   });

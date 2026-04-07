@@ -188,6 +188,12 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_bill_submitted_at') THEN ALTER TABLE properties ADD COLUMN cp_bill_submitted_at TIMESTAMPTZ; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_manager') THEN ALTER TABLE users ADD COLUMN is_manager BOOLEAN DEFAULT FALSE; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='managed_team') THEN ALTER TABLE users ADD COLUMN managed_team JSONB DEFAULT '[]'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='phone') THEN ALTER TABLE users ADD COLUMN phone TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='can_assign') THEN ALTER TABLE users ADD COLUMN can_assign BOOLEAN DEFAULT FALSE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='can_visit') THEN ALTER TABLE users ADD COLUMN can_visit BOOLEAN DEFAULT FALSE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_top_manager') THEN ALTER TABLE users ADD COLUMN is_top_manager BOOLEAN DEFAULT FALSE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='seller_residential_status') THEN ALTER TABLE properties ADD COLUMN seller_residential_status TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='sellers_available_on_registry') THEN ALTER TABLE properties ADD COLUMN sellers_available_on_registry TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='third_owner_email') THEN ALTER TABLE properties ADD COLUMN third_owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='broker_email') THEN ALTER TABLE properties ADD COLUMN broker_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_sanction_url') THEN ALTER TABLE properties ADD COLUMN ama_sanction_url TEXT; END IF;
@@ -218,3 +224,62 @@ END $$;
 `;
 
 module.exports = { MIGRATION_SQL, COMPAT_SQL };
+
+// One-time seed: populate phone, can_assign, can_visit, is_top_manager from old hardcoded data
+// Run via: node db/migrate.js seed
+const SEED_USER_ROLES = {
+  'rahool@openhouse.in':             { phone:'9899546824', is_top_manager:true },
+  'ashish@openhouse.in':             { phone:'9555666059', is_top_manager:true },
+  'prashant@openhouse.in':           { phone:'9289500953', is_top_manager:true },
+  'abhishek.rathore@openhouse.in':   { phone:'9452441498', can_assign:true },
+  'aman.dixit@openhouse.in':         { phone:'9266533475', can_assign:true, can_visit:true },
+  'animesh.singh@openhouse.in':      { phone:'9810826481', can_assign:true, can_visit:true },
+  'arti.ahirwar@openhouse.in':       { phone:'9289500948', can_assign:true },
+  'deepak.mishra@openhouse.in':       { phone:'8130724002', can_assign:true, can_visit:true },
+  'deepak.rana@openhouse.in':         { phone:'7428500192', can_assign:true, can_visit:true },
+  'kavita.rawat@openhouse.in':       { phone:'9311338216', can_assign:true },
+  'nisha.deewan@openhouse.in':       { phone:'9211599292', can_assign:true },
+  'rahul.sheel@openhouse.in':        { phone:'9289311664', can_assign:true, can_visit:true },
+  'rupali.prasad@openhouse.in':      { phone:'9289996738', can_assign:true },
+  'sahil.singh@openhouse.in':        { phone:'9217275007', can_assign:true, can_visit:true },
+  'shashank.kumar@openhouse.in':     { phone:'9205658886', can_assign:true },
+  'sushmita.roy@openhouse.in':       { phone:'9821700377', can_assign:true },
+  'ashwani.sharma@openhouse.in':     { phone:'9217710686', can_visit:true },
+  'manish.sharma@openhouse.in':      { phone:'7428500816', can_visit:true },
+  'nishant.kumar@openhouse.in':      { phone:'8130733966', can_visit:true },
+  'praveen.kumar@openhouse.in':      { phone:'9289996737', can_visit:true },
+  'rahul.singh@openhouse.in':        { phone:'9217710683', can_visit:true },
+  'saurabh@openhouse.in':            { phone:'9174286625' },
+  'sahaj.dureja@openhouse.in':       { phone:'8003297088', can_assign:true, can_visit:true },
+  'saransh.khera@openhouse.in':      { phone:'8595594789' },
+  'vaibhav.dwivedi@openhouse.in':    { phone:'' },
+};
+
+async function seedUserRoles() {
+  console.log('Seeding user roles from hardcoded data...');
+  for (const [email, data] of Object.entries(SEED_USER_ROLES)) {
+    try {
+      await pool.query(
+        `UPDATE users SET
+          phone=COALESCE(NULLIF($1,''),phone),
+          can_assign=COALESCE($2,can_assign),
+          can_visit=COALESCE($3,can_visit),
+          is_top_manager=COALESCE($4,is_top_manager)
+        WHERE LOWER(email)=$5 AND phone IS NULL`,
+        [data.phone||null, data.can_assign||false, data.can_visit||false, data.is_top_manager||false, email]
+      );
+    } catch(e) { console.error(`Seed ${email}:`, e.message); }
+  }
+  console.log('User roles seeded.');
+}
+
+if (require.main === module) {
+  (async () => {
+    try {
+      await pool.query(MIGRATION_SQL); console.log('Migration done');
+      await pool.query(COMPAT_SQL); console.log('Compat done');
+      if (process.argv[2] === 'seed') await seedUserRoles();
+      process.exit(0);
+    } catch(e) { console.error(e); process.exit(1); }
+  })();
+}

@@ -1,67 +1,51 @@
 // WhatsApp notification via Interakt API (Official WhatsApp Business API)
+// All team data now pulled from users table in DB
 const https = require('https');
 
-// ═══════════════════════════════════════════════════════
-// TEAM DIRECTORY — phone numbers (10 digits, no country code)
-// ═══════════════════════════════════════════════════════
-const NAME_TO_PHONE = {
-  'Akash Pandit':       '8595594789',
-  'Deepak Mishra':      '8130724002',
-  'Praveen Kumar':      '9289996737',
-  'Shashank Kumar':     '9205658886',
-  'Rupali Prasad':      '9289996738',
-  'Sushmita Roy':       '9821700377',
-  'Sahaj Dureja':       '8003297088',
-  'Test Sahaj':         '8003297088',
-  'Abhishek Rathore':   '9452441498',
-  'Aman Dixit':         '9266533475',
-  'Animesh Singh':      '9810826481',
-  'Arti Ahirwar':       '9289500948',
-  'Kavita Rawat':       '9311338216',
-  'Nisha Deewan':       '9211599292',
-  'Nishant Kumar':      '8130733966',
-  'Rahul Sheel':        '9289311664',
-  'Rahul Singh':        '9217710683',
-  'Sahil Singh':        '9217275007',
-  'Ashwani Sharma':     '9217710686',
-  'Rahool':             '9899546824',
-  'Prashant':           '9289500953',
-  'Ashish':             '9555666059',
-  'Saransh Khera':      '8595594789',
-  'Saurabh':            '9174286625',
-  'Akash Teotia':       '9311338205',
-  'Deepak Rana':        '7428500192',
-  'Manish Sharma':      '7428500816'
-};
+let _pool = null;
+function init(pool) { _pool = pool; }
 
 // ═══════════════════════════════════════════════════════
-// HIERARCHY — who sees what
+// DB LOOKUPS (replace hardcoded maps)
 // ═══════════════════════════════════════════════════════
-// Top managers: get ALL notifications across entire system
-const TOP_MANAGERS = ['Rahool', 'Ashish','Prashant'];
 
-// Mid managers: get notifications for themselves + their team
-const MID_MANAGERS = {
-  'Abhishek Rathore':     ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh'],
-  'Animesh Singh':        ['Nishant Kumar','Rahul Sheel','Sushmita Roy'],
-  'Sahaj Dureja':         ['Test Sahaj'],
-  'Saransh Khera':        ['Test Sahaj'],
-};
+async function getPhone(name) {
+  if (!name || !_pool) return null;
+  try {
+    const { rows } = await _pool.query(
+      `SELECT phone FROM users WHERE LOWER(name)=LOWER($1) AND phone IS NOT NULL AND phone!='' AND is_active=TRUE LIMIT 1`,
+      [name.trim()]
+    );
+    return rows.length ? rows[0].phone : null;
+  } catch(e) { console.error('getPhone error:', e.message); return null; }
+}
+
+async function getTopManagers() {
+  if (!_pool) return [];
+  try {
+    const { rows } = await _pool.query(`SELECT name FROM users WHERE is_top_manager=TRUE AND is_active=TRUE`);
+    return rows.map(r => r.name).filter(Boolean);
+  } catch(e) { console.error('getTopManagers error:', e.message); return []; }
+}
+
+async function getMidManagers() {
+  if (!_pool) return {};
+  try {
+    const { rows } = await _pool.query(`SELECT name, managed_team FROM users WHERE is_manager=TRUE AND is_active=TRUE`);
+    const map = {};
+    rows.forEach(r => {
+      if (r.name) {
+        const team = typeof r.managed_team === 'string' ? JSON.parse(r.managed_team || '[]') : r.managed_team || [];
+        if (team.length) map[r.name] = team;
+      }
+    });
+    return map;
+  } catch(e) { console.error('getMidManagers error:', e.message); return {}; }
+}
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════
-function getPhone(name) {
-  if (!name) return null;
-  // If name is already a phone number (10 digits), return it directly
-  if (/^\d{10}$/.test(name)) return name;
-  if (NAME_TO_PHONE[name]) return NAME_TO_PHONE[name];
-  const lower = name.toLowerCase();
-  for (const [k, v] of Object.entries(NAME_TO_PHONE)) {
-    if (k.toLowerCase() === lower) return v;
-  }
-  return null;
-}
 
 function nameMatch(a, b) {
   if (!a || !b) return false;
@@ -69,8 +53,7 @@ function nameMatch(a, b) {
 }
 
 // Get all people who should receive a notification for this property
-// directRecipients: names who are directly relevant (e.g. field_exec, assigned_by)
-function getRecipients(property, directRecipients) {
+async function getRecipients(property, directRecipients) {
   const recipients = new Set();
   const involved = [
     property.assigned_by, property.field_exec, property.token_requested_by,
@@ -81,10 +64,12 @@ function getRecipients(property, directRecipients) {
   directRecipients.forEach(name => { if (name) recipients.add(name); });
 
   // 2. Top managers get everything
-  TOP_MANAGERS.forEach(mgr => recipients.add(mgr));
+  const topMgrs = await getTopManagers();
+  topMgrs.forEach(mgr => recipients.add(mgr));
 
   // 3. Mid managers get notified if any involved person is in their team
-  for (const [mgr, team] of Object.entries(MID_MANAGERS)) {
+  const midMgrs = await getMidManagers();
+  for (const [mgr, team] of Object.entries(midMgrs)) {
     const isInvolved = involved.some(name => nameMatch(name, mgr)) ||
                        involved.some(name => team.some(member => nameMatch(name, member)));
     if (isInvolved) recipients.add(mgr);
@@ -98,7 +83,7 @@ async function broadcastTemplate(templateName, bodyValues, recipients) {
   const sentPhones = new Set();
   const results = [];
   for (const name of recipients) {
-    const phone = getPhone(name);
+    const phone = await getPhone(name);
     if (!phone) { console.log(`WA: No phone for "${name}", skipping`); continue; }
     if (sentPhones.has(phone)) { console.log(`WA: Already sent to ${phone} (${name}), skipping dupe`); continue; }
     sentPhones.add(phone);
@@ -174,128 +159,74 @@ function fmtTime(t) {
 // NOTIFICATION FUNCTIONS
 // ═══════════════════════════════════════════════════════
 
-// ── Form 1: Visit Scheduled ──
-// Direct: field_exec | Umbrella: top managers + mid managers if team involved
 function notifyVisitScheduled(property) {
   const p = property;
-  const bodyValues = [
-    p.uid || '-',
-    fmtDate(p.schedule_date),
-    fmtTime(p.schedule_time),
-    p.field_exec || '-',
-    p.assigned_by || '-',
-    p.society_name || '-',
-    p.tower_no || '-',
-    p.unit_no || '-',
-  ];
-  const recipients = getRecipients(p, [p.field_exec]);
-  console.log(`WA: visit_scheduled | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('visit_scheduled', bodyValues, recipients);
+  const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),p.field_exec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
+  return getRecipients(p, [p.field_exec]).then(r => {
+    console.log(`WA: visit_scheduled | UID: ${p.uid} | To: ${r.join(', ')}`);
+    return broadcastTemplate('visit_scheduled', bodyValues, r);
+  });
 }
 
-// ── Form 2: Visit Completed ──
-// Direct: assigned_by | Umbrella: top + mid managers
 function notifyVisitCompleted(property) {
   const p = property;
-  const bodyValues = [
-    p.uid || '-',
-    p.society_name || '-',
-    p.tower_no || '-',
-    p.unit_no || '-',
-    p.field_exec || '-',
-    p.assigned_by || '-',
-  ];
-  const recipients = getRecipients(p, [p.assigned_by]);
-  console.log(`WA: visit_completed_1v | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('visit_completed_1v', bodyValues, recipients);
+  const bodyValues = [p.uid||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.field_exec||'-',p.assigned_by||'-'];
+  return getRecipients(p, [p.assigned_by]).then(r => {
+    console.log(`WA: visit_completed_1v | UID: ${p.uid} | To: ${r.join(', ')}`);
+    return broadcastTemplate('visit_completed_1v', bodyValues, r);
+  });
 }
 
-// ── Form 3: Token Request Submitted ──
-// Direct: assigned_by + token_requested_by | Umbrella: top + mid managers
 function notifyTokenRequest(property) {
   const p = property;
   const amt = p.token_amount_requested ? '₹' + Number(p.token_amount_requested).toLocaleString('en-IN') : '-';
-  const bodyValues = [
-    amt,
-    p.society_name || '-',
-    p.tower_no || '-',
-    p.unit_no || '-',
-    p.token_requested_by || '-',
-    p.owner_broker_name || '-',
-  ];
-  const recipients = getRecipients(p, [p.assigned_by, p.token_requested_by]);
-  recipients.push('Saurabh');
-  console.log(`WA: token_request | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('token_request', bodyValues, recipients);
+  const bodyValues = [amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
+  return getRecipients(p, [p.assigned_by, p.token_requested_by, 'Saurabh']).then(r => {
+    console.log(`WA: token_request | UID: ${p.uid} | To: ${r.join(', ')}`);
+    return broadcastTemplate('token_request', bodyValues, r);
+  });
 }
 
-// ── Reassign: Visit Re-assigned ──
-// Direct: new field_exec + assigned_by | Umbrella: top + mid managers
 function notifyVisitReassigned(property, newExec) {
   const p = property;
-  const bodyValues = [
-    p.uid || '-',
-    fmtDate(p.schedule_date),
-    fmtTime(p.schedule_time),
-    newExec || '-',
-    p.assigned_by || '-',
-    p.society_name || '-',
-    p.tower_no || '-',
-    p.unit_no || '-',
-  ];
-  const recipients = getRecipients(p, [newExec, p.assigned_by]);
-  console.log(`WA: visit_reassigned | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('visit_reassigned', bodyValues, recipients);
+  const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),newExec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
+  return getRecipients(p, [newExec, p.assigned_by]).then(r => {
+    console.log(`WA: visit_reassigned | UID: ${p.uid} | To: ${r.join(', ')}`);
+    return broadcastTemplate('visit_reassigned', bodyValues, r);
+  });
 }
 
-// ── Cancel: Visit Cancelled ──
-// Direct: assigned_by + field_exec | Umbrella: top + mid managers
 function notifyVisitCancelled(property, cancelledBy) {
   const p = property;
-  const bodyValues = [
-    p.uid || '-',
-    p.society_name || '-',
-    p.tower_no || '-',
-    p.unit_no || '-',
-    cancelledBy || '-',
-  ];
-  const recipients = getRecipients(p, [p.assigned_by, p.field_exec]);
-  console.log(`WA: visit_cancelled | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('visit_cancelled', bodyValues, recipients);
+  const bodyValues = [p.uid||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-',cancelledBy||'-'];
+  return getRecipients(p, [p.assigned_by, p.field_exec]).then(r => {
+    console.log(`WA: visit_cancelled | UID: ${p.uid} | To: ${r.join(', ')}`);
+    return broadcastTemplate('visit_cancelled', bodyValues, r);
+  });
 }
 
-// ═══════════════════════════════════════════════════════
-// AMA DETAILS SUBMITTED — flip to true once template is approved
-// ═══════════════════════════════════════════════════════
-const AMA_WA_ENABLED = true; // Template approved: ama_notification
-
-function notifyAMASubmitted(property) {
-  if (!AMA_WA_ENABLED) { console.log('WA: AMA notification SKIPPED (template not yet approved)'); return Promise.resolve(); }
+async function notifyAMASubmitted(property) {
   const p = property;
-  // Date of Token from Form 4 (deal_transfer_date)
   let dateStr = '-';
   if(p.deal_transfer_date){const dt=new Date(p.deal_transfer_date);dateStr=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`}
   const towerUnit = [p.tower_no, p.unit_no].filter(Boolean).join(' - ') || '-';
   const bdManager = p.assigned_by || '-';
-  const bdPhone = getPhone(bdManager) || '-';
-  const bodyValues = [
-    p.uid || '-',
-    dateStr,
-    p.society_name || '-',
-    towerUnit,
-    bdManager,
-    bdPhone
-  ];
-  // Fixed recipients + BD manager
-  const recipients = ['Saurabh', 'Akash Teotia', 'Ashish', 'Prashant', 'Rahool', '9217709032'];
+  const bdPhone = await getPhone(bdManager) || '-';
+  const bodyValues = [p.uid||'-', dateStr, p.society_name||'-', towerUnit, bdManager, bdPhone];
+  // Fixed recipients: Saurabh, Akash Teotia + top managers + BD manager
+  const topMgrs = await getTopManagers();
+  const recipients = [...new Set(['Saurabh', 'Akash Teotia', ...topMgrs])];
   if(bdManager && bdManager!=='-') recipients.push(bdManager);
   console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('ama_notification', bodyValues, recipients);
+  const results = await broadcastTemplate('ama_notification', bodyValues, recipients);
+  // Additional fixed phone for AMA notifications
+  await sendInterakt('9217709032', 'ama_notification', bodyValues);
+  return results;
 }
 
 module.exports = {
+  init, getPhone, getTopManagers, getMidManagers,
   sendInterakt, broadcastTemplate, getRecipients,
   notifyVisitScheduled, notifyVisitCompleted, notifyTokenRequest,
-  notifyVisitReassigned, notifyVisitCancelled, notifyAMASubmitted,
-  NAME_TO_PHONE, TOP_MANAGERS, MID_MANAGERS
+  notifyVisitReassigned, notifyVisitCancelled, notifyAMASubmitted
 };

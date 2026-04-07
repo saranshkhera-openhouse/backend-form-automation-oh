@@ -16,10 +16,21 @@ module.exports=function(pool){
     yesNo:["Yes","No"],
     cityMap:{"Gurgaon":"G","Noida":"N","Ghaziabad":"GH"},
     sourceMap:{"CP":"C","Direct":"D"},
-    assignedByList: ["Abhishek Rathore", "Aman Dixit", "Animesh Singh","Arti Ahirwar","Deepak Mishra","Deepak Rana", "Kavita Rawat","Nisha Deewan", "Rahul Sheel", "Rupali Prasad", "Sahil Singh", "Shashank Kumar", "Sushmita Roy","Test Sahaj"],
-    assignedToList: ["Aman Dixit" , "Animesh Singh","Ashwani Sharma","Deepak Mishra","Deepak Rana","Manish Sharma","Nishant Kumar", "Praveen Kumar", "Rahul Sheel", "Rahul Singh", "Sahil Singh","Test Sahaj"]
+    assignedByList: [],
+    assignedToList: []
   };
-  router.get('/',(_,r)=>r.json({options:OPT}));
+  router.get('/',async(_,r)=>{
+    try{
+      const abRows=await pool.query(`SELECT name FROM users WHERE can_assign=TRUE AND is_active=TRUE ORDER BY name`);
+      const atRows=await pool.query(`SELECT name FROM users WHERE can_visit=TRUE AND is_active=TRUE ORDER BY name`);
+      OPT.assignedByList=abRows.rows.map(x=>x.name).filter(Boolean);
+      OPT.assignedToList=atRows.rows.map(x=>x.name).filter(Boolean);
+      // Fallback: if DB has no roles yet, keep hardcoded defaults
+      if(!OPT.assignedByList.length)OPT.assignedByList=["Abhishek Rathore","Aman Dixit","Animesh Singh","Arti Ahirwar","Deepak Mishra","Deepak Rana","Kavita Rawat","Nisha Deewan","Rahul Sheel","Rupali Prasad","Sahil Singh","Shashank Kumar","Sushmita Roy","Test Sahaj"];
+      if(!OPT.assignedToList.length)OPT.assignedToList=["Aman Dixit","Animesh Singh","Ashwani Sharma","Deepak Mishra","Deepak Rana","Manish Sharma","Nishant Kumar","Praveen Kumar","Rahul Sheel","Rahul Singh","Sahil Singh","Test Sahaj"];
+      r.json({options:OPT});
+    }catch(e){r.json({options:OPT})}
+  });
   router.get('/cloudinary',(_,r)=>r.json({cloudName:process.env.CLOUDINARY_CLOUD_NAME||'',uploadPreset:process.env.CLOUDINARY_UPLOAD_PRESET||''}));
   router.get('/cities',async(_,r)=>{try{const{rows}=await pool.query('SELECT DISTINCT city FROM master_societies ORDER BY city');r.json(rows.map(x=>x.city))}catch(e){r.status(500).json({error:e.message})}});
   router.get('/societies',async(q,r)=>{try{if(!q.query.city)return r.status(400).json({error:'city required'});const{rows}=await pool.query('SELECT DISTINCT society_name FROM master_societies WHERE city=$1 ORDER BY society_name',[q.query.city]);r.json(rows.map(x=>x.society_name))}catch(e){r.status(500).json({error:e.message})}});

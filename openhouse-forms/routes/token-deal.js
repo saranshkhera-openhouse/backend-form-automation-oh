@@ -2,7 +2,7 @@ const express=require('express'),router=express.Router();
 const{generateReceiptHTML}=require('../utils/pdf-template');
 const{sendDealTermsEmail}=require('../utils/email-sender');
 const{visibilityFilter}=require('../utils/visibility');
-const{NAME_TO_PHONE}=require('../utils/whatsapp');
+const{getPhone}=require('../utils/whatsapp');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -56,10 +56,7 @@ module.exports=function(pool){
       const baseUrl=process.env.APP_URL||'';
       const pdfHtml=generateReceiptHTML(p,'deal',baseUrl);
       const signatoryName=user.name||user.email.split('@')[0];
-      let signatoryPhone='';
-      for(const[name,phone]of Object.entries(NAME_TO_PHONE)){
-        if(name.toLowerCase()===signatoryName.toLowerCase()||signatoryName.toLowerCase().includes(name.toLowerCase())){signatoryPhone=phone;break}
-      }
+      const signatoryPhone=await getPhone(signatoryName)||'';
       const result=await sendDealTermsEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
         fromEmail:user.email,property:p,pdfHtml,signatoryName,signatoryPhone

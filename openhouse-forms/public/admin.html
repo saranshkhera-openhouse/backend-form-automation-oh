@@ -419,23 +419,37 @@ const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','
 const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA',final:'PSD','cp-bill':'CP Bill',listing:'Listing'};
 let allUsers=[],userSortCol='email',userSortDir='asc';
 async function loadUsers(){try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}}
-function getUserRole(u){return u.is_admin?2:u.is_manager?1:0}
+function getUserRole(u){return u.is_admin?3:u.is_top_manager?2:u.is_manager?1:0}
 function renderUsers(){
   let sorted=[...allUsers];
   if(userSortCol==='email')sorted.sort((a,b)=>{const va=(a.email||'').toLowerCase(),vb=(b.email||'').toLowerCase();return va<vb?(userSortDir==='asc'?-1:1):va>vb?(userSortDir==='asc'?1:-1):0});
   else if(userSortCol==='name')sorted.sort((a,b)=>{const va=(a.name||'').toLowerCase(),vb=(b.name||'').toLowerCase();return va<vb?(userSortDir==='asc'?-1:1):va>vb?(userSortDir==='asc'?1:-1):0});
   else if(userSortCol==='role')sorted.sort((a,b)=>{const va=getUserRole(a),vb=getUserRole(b);return userSortDir==='asc'?va-vb:vb-va});
-  // Update sort indicators on user table
   document.querySelectorAll('#userTbl th[data-us]').forEach(th=>{th.classList.remove('sorted-asc','sorted-desc');if(th.dataset.us===userSortCol)th.classList.add(userSortDir==='asc'?'sorted-asc':'sorted-desc')});
   const tb=document.getElementById('utb');
-  tb.innerHTML=sorted.map((u,idx)=>{const forms=(u.allowed_forms||[]).includes('*')?'<span class="badge ok">ALL</span>':(u.allowed_forms||[]).map(f=>`<span class="badge ok">${FORM_LABELS[f]||f}</span>`).join(' ')||'<span class="badge wait">None</span>';
-    return`<tr><td style="font-size:10px;color:var(--tx3);text-align:center">${idx+1}</td><td>${u.email}</td><td>${u.name||'—'}</td><td>${forms}</td><td>${u.is_admin?'<span class="badge ok">Admin</span>':u.is_manager?'<span class="badge" style="background:#dbeafe;color:#1e40af">Manager</span>':'—'}</td><td>${u.is_active?'<span class="badge ok">Active</span>':'<span class="badge draft">Disabled</span>'}</td><td><!-- <button class="btn btn-out btn-sm" onclick="editUser(${u.id})" style="font-size:10px">✏ Edit</button> --></td></tr>`}).join('')}
+  tb.innerHTML=sorted.map((u,idx)=>{
+    const forms=(u.allowed_forms||[]).includes('*')?'<span class="badge ok">ALL</span>':(u.allowed_forms||[]).map(f=>`<span class="badge ok">${FORM_LABELS[f]||f}</span>`).join(' ')||'<span class="badge wait">None</span>';
+    const roles=[];
+    if(u.is_admin)roles.push('<span class="badge ok">Admin</span>');
+    if(u.is_top_manager)roles.push('<span class="badge" style="background:#fef3c7;color:#92400e">Top Mgr</span>');
+    if(u.is_manager)roles.push('<span class="badge" style="background:#dbeafe;color:#1e40af">Manager</span>');
+    const flags=[];
+    if(u.can_assign)flags.push('<span class="badge" style="background:#ede9fe;color:#6d28d9">BD</span>');
+    if(u.can_visit)flags.push('<span class="badge" style="background:#e0f2fe;color:#0369a1">Field</span>');
+    return`<tr><td style="font-size:10px;color:var(--tx3);text-align:center">${idx+1}</td><td>${u.email}</td><td>${u.name||'—'}</td><td style="font-family:var(--mono);font-size:10px">${u.phone||'—'}</td><td>${forms}</td><td>${roles.join(' ')||'—'}</td><td>${flags.join(' ')||'—'}</td><td>${u.is_active?'<span class="badge ok">Active</span>':'<span class="badge draft">Disabled</span>'}</td><td><!-- <button class="btn btn-out btn-sm" onclick="editUser(${u.id})" style="font-size:10px">✏ Edit</button> --></td></tr>`}).join('')}
 // User table sort click handlers
 document.querySelectorAll('#userTbl th[data-us]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.us;if(userSortCol===c)userSortDir=userSortDir==='asc'?'desc':'asc';else{userSortCol=c;userSortDir='asc'}renderUsers()})});
-async function addUser(){const email=prompt('Enter email:');if(!email)return;const name=prompt('Name (optional):');const allForms=confirm('ALL form access?');let forms=allForms?['*']:[];if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`Access to ${FORM_LABELS[k]}?`))forms.push(k)})}const admin=confirm('Admin?');const manager=!admin&&confirm('Manager?');
-  try{const r=await fetch('/auth/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,name,allowed_forms:forms,is_admin:admin,is_manager:manager})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Added!')}catch(e){alert('Error: '+e.message)}}
-async function editUser(id){const u=allUsers.find(x=>x.id===id);if(!u)return;const allForms=confirm(`Edit ${u.email}\n\nALL form access?`);let forms=allForms?['*']:[];if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`${FORM_LABELS[k]}? ${(u.allowed_forms||[]).includes(k)||(u.allowed_forms||[]).includes('*')?'(YES)':'(NO)'}`))forms.push(k)})}const admin=confirm(`Admin? ${u.is_admin?'(Currently YES)':'(Currently NO)'}`);const manager=!admin&&confirm(`Manager? ${u.is_manager?'(Currently YES)':'(Currently NO)'}`);
-  try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({allowed_forms:forms,is_admin:admin,is_manager:manager})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Updated!')}catch(e){alert('Error: '+e.message)}}
+async function addUser(){const email=prompt('Enter email:');if(!email)return;const name=prompt('Name (optional):');const phone=prompt('Phone (10 digits, optional):');const allForms=confirm('ALL form access?');let forms=allForms?['*']:[];if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`Access to ${FORM_LABELS[k]}?`))forms.push(k)})}const admin=confirm('Admin?');const topMgr=!admin&&confirm('Top Manager? (gets all WhatsApp notifications)');const manager=!admin&&confirm('Manager? (manages a team)');const canAssign=confirm('Can Assign Visits? (appears in Assigned By)');const canVisit=confirm('Can Do Visits? (appears in Assigned To)');
+  try{const r=await fetch('/auth/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,name,phone,allowed_forms:forms,is_admin:admin,is_top_manager:topMgr,is_manager:manager,can_assign:canAssign,can_visit:canVisit})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Added!')}catch(e){alert('Error: '+e.message)}}
+async function editUser(id){const u=allUsers.find(x=>x.id===id);if(!u)return;
+  const name=prompt(`Name:`,u.name||'');const phone=prompt(`Phone (10 digits):`,u.phone||'');
+  const allForms=confirm(`Edit ${u.email}\n\nALL form access?`);let forms=allForms?['*']:[];if(!allForms){FORM_KEYS.forEach(k=>{if(confirm(`${FORM_LABELS[k]}? ${(u.allowed_forms||[]).includes(k)||(u.allowed_forms||[]).includes('*')?'(YES)':'(NO)'}`))forms.push(k)})}
+  const admin=confirm(`Admin? ${u.is_admin?'(Currently YES)':'(Currently NO)'}`);
+  const topMgr=!admin&&confirm(`Top Manager? ${u.is_top_manager?'(Currently YES)':'(Currently NO)'}`);
+  const manager=!admin&&confirm(`Manager? ${u.is_manager?'(Currently YES)':'(Currently NO)'}`);
+  const canAssign=confirm(`Can Assign Visits? ${u.can_assign?'(Currently YES)':'(Currently NO)'}`);
+  const canVisit=confirm(`Can Do Visits? ${u.can_visit?'(Currently YES)':'(Currently NO)'}`);
+  try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,allowed_forms:forms,is_admin:admin,is_top_manager:topMgr,is_manager:manager,can_assign:canAssign,can_visit:canVisit})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers();alert('Updated!')}catch(e){alert('Error: '+e.message)}}
 async function toggleUser(id,active){if(!confirm(`${active?'Enable':'Disable'} this user?`))return;try{const r=await fetch(`/auth/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_active:active})});const d=await r.json();if(!r.ok)throw new Error(d.error);loadUsers()}catch(e){alert('Error: '+e.message)}}
 document.addEventListener('DOMContentLoaded',loadUsers);
 </script>
@@ -445,8 +459,8 @@ document.addEventListener('DOMContentLoaded',loadUsers);
       <div><strong style="font-size:14px">User Management</strong><div style="font-size:10px;color:var(--tx3)">Manage access & permissions</div></div>
       <!-- <button class="btn btn-dark btn-sm" onclick="addUser()">+ Add User</button> -->
     </div>
-    <div><table class="tbl" id="userTbl"><thead><tr><th style="width:42px">#</th><th data-us="email" style="cursor:pointer">Email</th><th data-us="name" style="cursor:pointer">Name</th><th>Form Access</th><th data-us="role" style="cursor:pointer">Role</th><th>Status</th><th></th></tr></thead>
-    <tbody id="utb"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--tx3)">Loading...</td></tr></tbody></table></div>
+    <div><table class="tbl" id="userTbl"><thead><tr><th style="width:42px">#</th><th data-us="email" style="cursor:pointer">Email</th><th data-us="name" style="cursor:pointer">Name</th><th>Phone</th><th>Form Access</th><th data-us="role" style="cursor:pointer">Role</th><th>Flags</th><th>Status</th><th></th></tr></thead>
+    <tbody id="utb"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--tx3)">Loading...</td></tr></tbody></table></div>
   </div>
 </div>
 <div class="ctn wide" style="margin-top:14px;text-align:center;padding-bottom:20px">

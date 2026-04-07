@@ -48,6 +48,10 @@
 
     <div class="card"><div class="card-t">Additional Info</div>
       <div class="fg"><label>Seller Location <span class="req">*</span></label><input type="text" name="seller_location" required><div class="err-msg">Required</div></div>
+      <div class="r2">
+        <div class="fg"><label>Seller Residential Status <span class="req">*</span></label><select name="seller_residential_status" id="selResStatus" required><option value="">Select...</option><option>RI</option><option>NRI</option></select><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Sellers Available on Registry <span class="req">*</span></label><select name="sellers_available_on_registry" id="selRegistry" required><option value="">Select...</option><option>Yes</option><option>No</option></select><div class="err-msg">Required</div></div>
+      </div>
     </div>
 
     <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit Listing</button>
@@ -82,6 +86,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('carpetArea').value=d.carpet_area||'';
     document.getElementById('gasPipe').value=d.gas_pipeline||'';
     document.getElementById('clubFac').value=d.club_facility||'';
+    document.getElementById('selResStatus').value=d.seller_residential_status||'';
+    document.getElementById('selRegistry').value=d.sellers_available_on_registry||'';
     document.getElementById('listForm').style.display='block';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('listForm').style.display='none'}}
