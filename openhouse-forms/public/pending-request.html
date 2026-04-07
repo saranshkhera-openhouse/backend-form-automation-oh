@@ -81,7 +81,7 @@ async function loadData(){
     document.getElementById('ro_coowner').value=propData.co_owner||'—';
 
     const td=Number(propData.total_deposit)||0;
-    const tk=Number(propData.deal_token_amount)||0;
+    const tk=Number(propData.token_amount_requested)||0;
     const rem=td-tk;
     document.getElementById('ro_totalDeposit').value=td?'₹ '+td.toLocaleString('en-IN'):'—';
     document.getElementById('ro_tokenPaid').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';
@@ -110,9 +110,8 @@ document.querySelectorAll('input[name="equal_split"]').forEach(r=>{
       const tk=Number(propData.deal_token_amount)||0;
       const half=Math.round(td/2);
       const firstOwner=half-tk;
-      preview.innerHTML=`<div><strong>${propData.owner_broker_name||'First Owner'}:</strong> ₹ ${firstOwner>0?firstOwner.toLocaleString('en-IN'):'0'} <span style="font-size:11px;color:var(--tx3)">(₹ ${half.toLocaleString('en-IN')} − ₹ ${tk.toLocaleString('en-IN')} token)</span></div>
-        <div><strong>${propData.co_owner||'Co-owner'}:</strong> ₹ ${half.toLocaleString('en-IN')}</div>
-        <div style="font-size:10px;color:var(--tx3);margin-top:6px">Where ₹ ${half.toLocaleString('en-IN')} × 2 = ₹ ${td.toLocaleString('en-IN')} (Total Deposit)</div>`;
+      preview.innerHTML=`<div><strong>${propData.owner_broker_name||'First Owner'}:</strong> ₹ ${firstOwner>0?firstOwner.toLocaleString('en-IN'):'0'}</div>
+        <div><strong>${propData.co_owner||'Co-owner'}:</strong> ₹ ${half.toLocaleString('en-IN')}</div>`;
       preview.style.display='block';
     }else{preview.style.display='none'}
   });
