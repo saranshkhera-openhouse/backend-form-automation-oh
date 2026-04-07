@@ -34,7 +34,10 @@
   <div id="amaForm" style="display:none">
     <!-- Card 1: Property Info -->
     <div class="card">
-      <div class="card-t">Property Information</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-t" style="margin:0">Property Information</div>
+        <button type="button" class="btn btn-sm" id="listPropBtn" style="background:#fdecea;color:#b33a2e;border:1px solid #f0c4c0;font-size:11px;display:none">List Property</button>
+      </div>
       <div class="r2">
         <div class="fg"><label>City</label><input type="text" id="ro_city" class="pre" readonly></div>
         <div class="fg"><label>Society Name</label><input type="text" id="ro_soc" class="pre" readonly></div>
@@ -117,6 +120,20 @@
   </div>
 </div>
 <style>@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}</style>
+
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:center;justify-content:center;padding:20px" id="listPropModal">
+  <div style="background:var(--sf);border-radius:12px;width:100%;max-width:420px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden;animation:popIn .3s ease">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)">
+      <div style="font-size:14px;font-weight:700">List Property</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:2px">Are you sure you want to list this property?</div>
+    </div>
+    <div style="padding:14px 18px;font-size:13px;color:var(--tx2);line-height:1.6" id="listPropBody"></div>
+    <div style="padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-out btn-sm" onclick="document.getElementById('listPropModal').style.display='none'">Cancel</button>
+      <button class="btn btn-dark btn-sm" id="listPropConfirmBtn">Submit</button>
+    </div>
+  </div>
+</div>
 
 <script src="/js/shared.js"></script>
 <script>
@@ -254,9 +271,23 @@ async function loadUID(uid){
     buildPropDocs(existingDocs);
 
     document.getElementById('amaForm').style.display='block';
+    document.getElementById('listPropBtn').style.display='inline-flex';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.ama_submitted_at?' (Submitted)':''}`;
-  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('amaForm').style.display='none'}
+  }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('amaForm').style.display='none';document.getElementById('listPropBtn').style.display='none'}
 }
+
+// List Property button
+document.getElementById('listPropBtn').addEventListener('click',()=>{
+  if(!currentUid){toast('Load a property first','warn');return}
+  document.getElementById('listPropBody').textContent=`UID: ${currentUid}`;
+  document.getElementById('listPropModal').style.display='flex';
+});
+document.getElementById('listPropConfirmBtn').addEventListener('click',()=>{
+  // Placeholder — functionality to be added later
+  document.getElementById('listPropModal').style.display='none';
+  toast('List Property action — coming soon','ok');
+});
+document.getElementById('listPropModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.style.display='none'});
 
 async function uploadFile(input,key){
   if(!input.files.length)return;
@@ -300,7 +331,9 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   // Validate loan documents
   const missingLoan=[];
-  ['lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
+  ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
+  if(!fileUrls.sanction){missingLoan.push('Sanction Letter');document.getElementById('up_sanction').classList.add('missing')}
+  if(!fileUrls.soa){missingLoan.push('Statement of Accounts');document.getElementById('up_soa').classList.add('missing')}
   if(!fileUrls.lod){missingLoan.push('LOD');document.getElementById('up_lod').classList.add('missing')}
   if(missingLoan.length){toast(`Upload required: ${missingLoan.join(', ')}`,'err');return}
   const body={uid:currentUid};
