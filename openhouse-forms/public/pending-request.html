@@ -107,7 +107,7 @@ document.querySelectorAll('input[name="equal_split"]').forEach(r=>{
     const preview=document.getElementById('splitPreview');
     if(this.value==='Yes'&&propData){
       const td=Number(propData.total_deposit)||0;
-      const tk=Number(propData.deal_token_amount)||0;
+      const tk=Number(propData.token_amount_requested)||0;
       const half=Math.round(td/2);
       const firstOwner=half-tk;
       preview.innerHTML=`<div><strong>${propData.owner_broker_name||'First Owner'}:</strong> ₹ ${firstOwner>0?firstOwner.toLocaleString('en-IN'):'0'}</div>
