@@ -294,7 +294,7 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
   const p = property;
   const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
   const td = Number(p.total_deposit) || 0;
-  const tk = Number(p.deal_token_amount) || 0;
+  const tk = Number(p.token_amount_requested) || 0;
   const amaDate = p.ama_date ? new Date(p.ama_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   let amountLines = '';
@@ -302,14 +302,13 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
     const half = Math.round(td / 2);
     const firstAmt = half - tk;
     amountLines = `<ul style="line-height:2;font-size:14px">
-      <li><strong>${p.owner_broker_name || 'First Owner'}:</strong> INR ${firstAmt > 0 ? firstAmt.toLocaleString('en-IN') : '0'} (INR ${half.toLocaleString('en-IN')} − INR ${tk.toLocaleString('en-IN')} Token)</li>
+      <li><strong>${p.owner_broker_name || 'First Owner'}:</strong> INR ${firstAmt > 0 ? firstAmt.toLocaleString('en-IN') : '0'}</li>
       <li><strong>${p.co_owner}:</strong> INR ${half.toLocaleString('en-IN')}</li>
-    </ul>
-    <p style="font-size:12px;color:#666">Where, 2 × INR ${half.toLocaleString('en-IN')} = INR ${td.toLocaleString('en-IN')} is Total Deposit (this line is for your ref)</p>`;
+    </ul>`;
   } else {
     const rem = td - tk;
     amountLines = `<ul style="line-height:2;font-size:14px">
-      <li><strong>${p.owner_broker_name || 'Owner'}:</strong> INR ${rem > 0 ? rem.toLocaleString('en-IN') : '0'} (INR ${td.toLocaleString('en-IN')} − INR ${tk.toLocaleString('en-IN')} Token)</li>
+      <li><strong>${p.owner_broker_name || 'Owner'}:</strong> INR ${rem > 0 ? rem.toLocaleString('en-IN') : '0'}</li>
     </ul>`;
   }
 
@@ -324,8 +323,8 @@ ${amountLines}
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
-    to: process.env.ACCOUNTS_EMAIL || 'accounts@openhouse.in',
-    cc: 'supply@openhouse.in,akash.teotia@openhouse.in,saurabh@openhouse.in',
+    to: process.env.ACCOUNTS_EMAIL || 'saranshkhera5@gmail.com',
+    cc: '',
     subject,
     bodyHtml
   });
