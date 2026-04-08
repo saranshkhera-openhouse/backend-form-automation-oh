@@ -1,5 +1,13 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Amount Confirmation (For Owner)</title><link rel="stylesheet" href="/css/styles.css"></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Amount Confirmation (For Owner)</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.email-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.email-overlay.open{display:flex}
+.email-box{background:var(--sf);border-radius:12px;width:100%;max-width:640px;margin:40px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.email-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.email-body{padding:16px;max-height:60vh;overflow-y:auto}
+.email-ftr{padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+</style></head>
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
@@ -45,6 +53,17 @@
     </div>
     <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Send Mail to Owner(s)</button>
   </form>
+</div>
+
+<div class="email-overlay" id="emailModal">
+  <div class="email-box">
+    <div class="email-hdr"><h3 style="font-size:14px;margin:0">Email Preview</h3><button class="btn btn-out btn-sm" onclick="closeEmailModal()">✕</button></div>
+    <div class="email-body" id="emailPreviewBody"></div>
+    <div class="email-ftr">
+      <button class="btn btn-out btn-sm" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn btn-dark btn-sm" id="confirmSendBtn">✉ Confirm & Send</button>
+    </div>
+  </div>
 </div>
 
 <div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
@@ -116,20 +135,42 @@ document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)r
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
 
-// Send email to owner
-document.getElementById('emailBtn').addEventListener('click',async()=>{
+// Send email to owner — show preview first
+document.getElementById('emailBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Load a property first','warn');return}
   if(!propData?.owner_email){toast('Owner email not found. Set it in Deal Terms form.','err');return}
-  if(!confirm(`Send payment confirmation email to ${propData.owner_email}?`))return;
-  const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
+  const sellerName=propData.owner_broker_name||'Owner';
+  const propRef=[propData.tower_no,propData.unit_no].filter(Boolean).join(' ')+([propData.tower_no,propData.unit_no].some(Boolean)?' - ':'')+( propData.society_name||'Property');
+  const td=(Number(propData.deal_token_amount)||0)+(Number(propData.remaining_amount)||0);
+  const tdFmt=td?'INR '+td.toLocaleString('en-IN')+'/-':'INR [Amount]';
+  const toList=[propData.owner_email].filter(Boolean).join(', ');
+  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','accounts@openhouse.in',propData.co_owner_email,propData.third_owner_email,propData.broker_email].filter(Boolean).join(', ');
+  const html=`<div style="font-size:13px;line-height:1.8">
+<p><strong>To:</strong> ${toList}</p>
+${ccList?`<p><strong>CC:</strong> ${ccList}</p>`:''}
+<p><strong>Subject:</strong> Openhouse Payment Confirmation | ${propRef} | ${sellerName}</p>
+<hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
+<p>Dear <strong>${sellerName}</strong>,</p>
+<p>Greetings from <strong>Openhouse</strong>!</p>
+<p>We are pleased to confirm that the total deposit of ${tdFmt} for ${propRef} has been processed successfully.</p>
+<p>Please find the <strong>Payment Receipt</strong> attached for your records.</p>
+<p>Should you have any questions or require any clarification, please do not hesitate to reach out to us.</p>
+<p style="margin-top:10px;font-size:11px;color:var(--tx3)">📎 Payment Receipt PDF will be attached</p>
+</div>`;
+  document.getElementById('emailPreviewBody').innerHTML=html;
+  document.getElementById('emailModal').classList.add('open');
+});
+function closeEmailModal(){document.getElementById('emailModal').classList.remove('open')}
+document.getElementById('emailModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEmailModal()});
+document.getElementById('confirmSendBtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('confirmSendBtn');btn.disabled=true;btn.textContent='Sending...';
   try{
     const r=await fetch(`${API}/api/final/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
-    toast('Email sent to owner!','ok',5000);btn.innerHTML='✓ Email Sent';btn.style.borderColor='var(--grn)';btn.style.color='var(--grn)';
-    setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
-  }catch(e){toast(e.message||'Failed to send','err');btn.innerHTML=orig;btn.disabled=false;
-    if(e.message&&e.message.includes('log out'))toast('Please logout and login again','warn',8000)}
+    toast('Email sent to owner!','ok',5000);closeEmailModal();
+  }catch(e){toast(e.message||'Failed','err');
+    if(e.message&&e.message.includes('log out'))toast('Please logout and login again','warn',8000);
+  }finally{btn.disabled=false;btn.textContent='✉ Confirm & Send'}
 });
 </script>
 </body></html>

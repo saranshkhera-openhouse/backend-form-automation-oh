@@ -118,7 +118,7 @@
           <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
         </div>
         <div class="fg"><label>Outstanding Loan (in ₹)</label><input type="number" name="outstanding_loan"></div>
-        <div class="fg"><label>Willing to Pre-pay loan on his own?</label>
+        <div class="fg"><label>Willing to pay loan?</label>
           <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
       </div>
     </div>
@@ -440,13 +440,16 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
   if(!getRadio('has_loan')){toast('Select Any Loan?','err');return}
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
-  // Validate owner documents
-  const missingOwnerDocs=[];
-  Object.values(OWNER_DOC_ITEM).forEach(id=>document.getElementById(id).classList.remove('missing'));
-  for(const[key,label]of Object.entries(OWNER_DOC_LABEL)){
-    if(!ownerDocUrls[key]){missingOwnerDocs.push(label);document.getElementById(OWNER_DOC_ITEM[key]).classList.add('missing')}
+  // Validate owner documents — skip if already submitted (docs already in DB)
+  const alreadySubmitted=!!(loadedData&&loadedData.token_submitted_at&&!loadedData.token_is_draft);
+  if(!alreadySubmitted){
+    const missingOwnerDocs=[];
+    Object.values(OWNER_DOC_ITEM).forEach(id=>document.getElementById(id).classList.remove('missing'));
+    for(const[key,label]of Object.entries(OWNER_DOC_LABEL)){
+      if(!ownerDocUrls[key]){missingOwnerDocs.push(label);document.getElementById(OWNER_DOC_ITEM[key]).classList.add('missing')}
+    }
+    if(missingOwnerDocs.length){toast(`Upload required: ${missingOwnerDocs.join(', ')}`,'err');return}
   }
-  if(missingOwnerDocs.length){toast(`Upload required: ${missingOwnerDocs.join(', ')}`,'err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});

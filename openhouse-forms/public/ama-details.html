@@ -365,7 +365,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   // Validate loan documents (only if loan card is visible)
   const loanVisible=document.getElementById('loanDocsCard').style.display!=='none';
-  if(loanVisible){
+  const alreadySubmitted=!!(loadedData&&loadedData.ama_submitted_at);
+  if(loanVisible&&!alreadySubmitted){
     const missingLoan=[];
     ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
     if(!fileUrls.lod){missingLoan.push('LOD');document.getElementById('up_lod').classList.add('missing')}

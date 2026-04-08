@@ -414,15 +414,17 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
   if(!body.to_be_released_now){toast('To be Released Now required','err');return}
 
-  // Validate all documents are uploaded
-  const DOC_LABELS={cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
-  const missingDocs=[];
-  // Clear previous missing highlights
-  Object.values(ITEM_MAP).forEach(id=>document.getElementById(id).classList.remove('missing'));
-  for(const[key,label]of Object.entries(DOC_LABELS)){
-    if(!docUrls[key]){missingDocs.push(label);document.getElementById(ITEM_MAP[key]).classList.add('missing')}
+  // Validate all documents are uploaded — skip if already submitted
+  const alreadySubmitted=!!(loadedData&&loadedData.cp_bill_submitted_at);
+  if(!alreadySubmitted){
+    const DOC_LABELS={cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
+    const missingDocs=[];
+    Object.values(ITEM_MAP).forEach(id=>document.getElementById(id).classList.remove('missing'));
+    for(const[key,label]of Object.entries(DOC_LABELS)){
+      if(!docUrls[key]){missingDocs.push(label);document.getElementById(ITEM_MAP[key]).classList.add('missing')}
+    }
+    if(missingDocs.length){toast(`Upload required: ${missingDocs.join(', ')}`,'err');return}
   }
-  if(missingDocs.length){toast(`Upload required: ${missingDocs.join(', ')}`,'err');return}
 
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
