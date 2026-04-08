@@ -24,6 +24,10 @@
 
     <div class="card"><div class="fg"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate" required><div class="err-msg">Required</div></div></div>
 
+    <div class="card" id="ownerEmailsCard" style="display:none"><div class="card-t">Owner Email(s)</div>
+      <div id="ownerEmailsList" style="font-size:13px;line-height:1.8"></div>
+    </div>
+
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Payment Details</div>
       <div class="r2">
         <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="bank_account_number" id="neftAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
@@ -39,7 +43,7 @@
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
       <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Payment Receipt</button>
     </div>
-    <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Send to Owner</button>
+    <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Send Mail to Owner(s)</button>
   </form>
 </div>
 
@@ -82,6 +86,14 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('neft_reference',propData.neft_reference);
     // Key Handover Date — always show, prefill if exists
     if(propData.key_handover_date)document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0];
+    // Show owner emails fetched from Form 4
+    const emails=[];
+    if(propData.owner_email)emails.push(`<div><strong>${propData.owner_broker_name||'Owner'}:</strong> ${propData.owner_email}</div>`);
+    if(propData.co_owner_email)emails.push(`<div><strong>${propData.co_owner||'Co-owner'}:</strong> ${propData.co_owner_email}</div>`);
+    if(propData.third_owner_email)emails.push(`<div><strong>3rd Owner:</strong> ${propData.third_owner_email}</div>`);
+    if(propData.broker_email)emails.push(`<div><strong>Broker:</strong> ${propData.broker_email}</div>`);
+    if(emails.length){document.getElementById('ownerEmailsList').innerHTML=emails.join('');document.getElementById('ownerEmailsCard').style.display='block'}
+    else{document.getElementById('ownerEmailsCard').style.display='none'}
     document.getElementById('pdfBtn').disabled=!propData.final_submitted_at;
     document.getElementById('emailBtn').disabled=!propData.final_submitted_at;
     document.getElementById('finalForm').style.display='block';
