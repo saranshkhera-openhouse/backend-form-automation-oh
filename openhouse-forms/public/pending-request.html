@@ -273,7 +273,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   if(o2Name&&o2Amt)amtHtml+=`<li><strong>${o2Name}:</strong> INR ${o2Amt.toLocaleString('en-IN')}</li>`;
   const toList=[propData.owner_email,propData.co_owner_email,'saranshkhera5@gmail.com'].filter(Boolean).join(', ');
   const ccList=['accounts@openhouse.in','supply@openhouse.in','akash.teotia@openhouse.in','saurabh@openhouse.in',propData.third_owner_email].filter(Boolean).join(', ');
-  const chequeUrl=propData.cheque_image_url;
+  const coOwnerChequeUrl=o2Name?propData.co_owner_cheque_url:'';
   const amaUrl=signedAmaUrl||propData.signed_ama_url;
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> ${toList}</p>
@@ -286,7 +286,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <p><strong>Property:</strong> ${addr}</p>
 <ul style="line-height:2">${amtHtml}</ul>
 <p>Hi Accounts Team, please do the needful.</p>
-${chequeUrl?`<p><strong>Cancelled Cheque Link:</strong> <a href="${chequeUrl}" style="color:#1a73e8">Click here to view cheque</a></p>`:''}
+${coOwnerChequeUrl?`<p><strong>Co Owner Cancelled Cheque Link:</strong> <a href="${coOwnerChequeUrl}" style="color:#1a73e8">Click here to view cheque</a></p>`:''}
 ${amaUrl?`<p><strong>AMA Link:</strong> <a href="${amaUrl}" style="color:#1a73e8">Click here to view AMA</a></p>`:''}
 </div>`;
   document.getElementById('emailPreviewBody').innerHTML=html;

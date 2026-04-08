@@ -311,7 +311,7 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
 <p><strong>Property:</strong> ${addr}</p>
 ${amountLines}
 <p>Hi Accounts Team, please do the needful.</p>
-${p.cheque_image_url ? `<p><strong>Cancelled Cheque Link:</strong> <a href="${p.co_owner_cheque_url}" style="color:#1a73e8">Click here to view cheque</a></p>` : ''}
+${(owner2_name && p.co_owner_cheque_url) ? `<p><strong>Co Owner Cancelled Cheque Link:</strong> <a href="${p.co_owner_cheque_url}" style="color:#1a73e8">Click here to view cheque</a></p>` : ''}
 ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}" style="color:#1a73e8">Click here to view AMA</a></p>` : ''}
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
@@ -353,7 +353,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
 </body></html>`;
 
   const toList = [p.owner_email].filter(Boolean);
-  const ccList = ['saranshkhera5@gmail.com', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
+  const ccList = ['ashish@openhouse.in', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
