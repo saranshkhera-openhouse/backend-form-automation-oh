@@ -88,9 +88,9 @@
         <div class="fg"><label>Refundable Deposit (%) <span class="req">*</span></label><input type="text" id="rdPct" inputmode="decimal" placeholder="%"></div>
       </div>
       <div class="r3">
-        <div class="fg"><label>Total Deposit (₹) <span class="req">*</span></label><input type="number" name="total_deposit" id="totalDeposit" step="1" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>PG - Forfeitable (₹) <span class="req">*</span></label><input type="number" name="performance_guarantee" id="pgAmt" step="1" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Refundable Deposit (₹) <span class="req">*</span></label><input type="number" name="refundable_deposit" id="refundableDeposit" step="1" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Total Deposit (₹) <span class="req">*</span></label><input type="text" name="total_deposit" id="totalDeposit" inputmode="numeric" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>PG - Forfeitable (₹) <span class="req">*</span></label><input type="text" name="performance_guarantee" id="pgAmt" inputmode="numeric" required><div class="err-msg">Required</div></div>
+        <div class="fg"><label>Refundable Deposit (₹) <span class="req">*</span></label><input type="text" name="refundable_deposit" id="refundableDeposit" inputmode="numeric" required><div class="err-msg">Required</div></div>
       </div>
       <div style="font-size:9px;color:var(--tx3);margin-top:-6px;margin-bottom:6px" id="depositCalcHint"></div>
       <hr class="div">
@@ -118,7 +118,7 @@
           <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
         </div>
         <div class="fg"><label>Outstanding Loan (in ₹)</label><input type="number" name="outstanding_loan"></div>
-        <div class="fg"><label>Willing to pay loan?</label>
+        <div class="fg"><label>Willing to Pre-pay loan on his own?</label>
           <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
       </div>
     </div>
@@ -279,32 +279,25 @@ document.addEventListener('DOMContentLoaded',async()=>{
 
     // % → ₹
     function pctToAmt(pctEl,amtEl){if(calcLock)return;calcLock=true;const g=getGspTotal();const p=parseFloat(pctEl.value)||0;
-      if(g>0&&p>0)amtEl.value=Math.round(g*p/100);calcLock=false;autoCalcThird()}
+      if(g>0&&p>0)amtEl.value=Math.round(g*p/100);calcLock=false;updateHint()}
     // ₹ → %
-    function amtToPct(amtEl,pctEl){if(calcLock)return;calcLock=true;const g=getGspTotal();const a=parseFloat(amtEl.value)||0;
-      if(g>0&&a>0)pctEl.value=Math.round(a/g*100*1000)/1000;else pctEl.value='';calcLock=false;autoCalcThird()}
+    function amtToPct(amtEl,pctEl){if(calcLock)return;calcLock=true;const g=getGspTotal();const a=parseFloat(String(amtEl.value).replace(/,/g,''))||0;
+      if(g>0&&a>0)pctEl.value=Math.round(a/g*100*1000)/1000;else pctEl.value='';calcLock=false;updateHint()}
 
-    // Auto-calc 3rd = total - other two (works for both % and ₹ rows)
-    function autoCalcThird(){
-      const tv=parseFloat(tdAmt.value)||0,pv=parseFloat(pgAmt.value)||0,rv=parseFloat(rdAmt.value)||0;
-      const tp=parseFloat(tdPct.value)||0,pp=parseFloat(pgPct.value)||0,rp=parseFloat(rdPct.value)||0;
-      const g=getGspTotal();
-      // ₹ row: if 2 of 3 filled, calc the 3rd
-      if(pv&&rv&&!tv){tdAmt.value=pv+rv;if(g>0)tdPct.value=Math.round((pv+rv)/g*100*1000)/1000}
-      else if(tv&&rv&&!pv){pgAmt.value=tv-rv;if(g>0)pgPct.value=Math.round((tv-rv)/g*100*1000)/1000}
-      else if(tv&&pv&&!rv){rdAmt.value=tv-pv;if(g>0)rdPct.value=Math.round((tv-pv)/g*100*1000)/1000}
-      // Hint
-      if(tv||pv||rv){const parts=[];if(pv)parts.push(`PG ₹${pv.toLocaleString('en-IN')}`);if(rv)parts.push(`Refundable ₹${rv.toLocaleString('en-IN')}`);
-        depositHint.textContent=parts.length===2?`${parts.join(' + ')} = Total ₹${(pv+rv).toLocaleString('en-IN')}`:'';}
+    // Hint only — no auto-fill of 3rd field
+    function updateHint(){
+      const pv=parseFloat(String(pgAmt.value).replace(/,/g,''))||0;
+      const rv=parseFloat(String(rdAmt.value).replace(/,/g,''))||0;
+      if(pv||rv){const parts=[];if(pv)parts.push(`PG ₹${pv.toLocaleString('en-IN')}`);if(rv)parts.push(`Refundable ₹${rv.toLocaleString('en-IN')}`);
+        depositHint.textContent=parts.length===2?`${parts.join(' + ')} = Total ₹${(pv+rv).toLocaleString('en-IN')}`:''}
       else depositHint.textContent='';
     }
 
     gspEl.addEventListener('input',()=>{updateGspDisplay();const g=getGspTotal();if(g>0){
-      // Recalc all ₹ from % if % exists
       if(parseFloat(tdPct.value))tdAmt.value=Math.round(g*parseFloat(tdPct.value)/100);
       if(parseFloat(pgPct.value))pgAmt.value=Math.round(g*parseFloat(pgPct.value)/100);
       if(parseFloat(rdPct.value))rdAmt.value=Math.round(g*parseFloat(rdPct.value)/100);
-      autoCalcThird()}});
+      updateHint()}});
     tdPct.addEventListener('input',()=>pctToAmt(tdPct,tdAmt));
     pgPct.addEventListener('input',()=>pctToAmt(pgPct,pgAmt));
     rdPct.addEventListener('input',()=>pctToAmt(rdPct,rdAmt));
@@ -428,9 +421,9 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
   const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','loan_applicant_name','loan_co_applicant_name','performance_guarantee','total_deposit','refundable_deposit'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
-  body.performance_guarantee=body.performance_guarantee!==''?parseFloat(body.performance_guarantee):null;
-  body.total_deposit=body.total_deposit!==''?parseFloat(body.total_deposit):null;
-  body.refundable_deposit=body.refundable_deposit!==''?parseFloat(body.refundable_deposit):null;
+  body.performance_guarantee=body.performance_guarantee!==''?parseFloat(String(body.performance_guarantee).replace(/,/g,'')):null;
+  body.total_deposit=body.total_deposit!==''?parseFloat(String(body.total_deposit).replace(/,/g,'')):null;
+  body.refundable_deposit=body.refundable_deposit!==''?parseFloat(String(body.refundable_deposit).replace(/,/g,'')):null;
   for(const[key,col]of Object.entries(OWNER_DOC_COL)){body[col]=ownerDocUrls[key]||null}
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
