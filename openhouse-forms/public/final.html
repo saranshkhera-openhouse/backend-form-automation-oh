@@ -36,17 +36,6 @@
       <div id="ownerEmailsList" style="font-size:13px;line-height:1.8"></div>
     </div>
 
-    <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Payment Details</div>
-      <div class="r2">
-        <div class="fg"><label>Bank A/C No. <span class="req">*</span></label><input type="text" name="bank_account_number" id="neftAc" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Bank Name <span class="req">*</span></label><input type="text" name="bank_name" id="neftBank" required><div class="err-msg">Required</div></div>
-      </div>
-      <div class="fg"><label>IFSC Code <span class="req">*</span></label><input type="text" name="ifsc_code" id="neftIfsc" class="input-md" required><div class="err-msg">Required</div></div>
-      <div class="r2">
-        <div class="fg"><label>Transfer Date <span class="req">*</span></label><input type="date" name="token_transfer_date" id="fDate" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>NEFT Reference <span class="req">*</span></label><input type="text" name="neft_reference" required style="text-transform:uppercase"><div class="err-msg">Required</div></div>
-      </div></div>
-
     <div class="btn-row">
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
       <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Payment Receipt</button>
@@ -80,7 +69,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const cr=await fetch(`${API}/api/config`);allOpts=(await cr.json()).options;
     const ur=await fetch(`${API}/api/final/uids`);const uids=await ur.json();
     fillUidSelect(document.getElementById('selUid'),uids);makeSearchable(document.getElementById('selUid'));
-    noFutureDate('fDate');
     const p=new URLSearchParams(location.search);if(p.get('uid')){document.getElementById('selUid').value=p.get('uid');loadData()}
   }catch(e){toast('Failed','err')}
 });
@@ -95,14 +83,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('tkAmt').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';
     document.getElementById('remAmt').value=rem>0?'₹ '+rem.toLocaleString('en-IN'):'₹ 0';
     document.getElementById('remHidden').value=rem>0?rem:0;
-    // Prefill bank from Form 4
-    document.getElementById('neftAc').value=propData.bank_account_number||propData.deal_bank_account_number||propData.cheque_account_number||'';
-    document.getElementById('neftBank').value=propData.bank_name||propData.deal_bank_name||propData.cheque_bank_name||'';
-    document.getElementById('neftIfsc').value=propData.ifsc_code||propData.deal_ifsc_code||propData.cheque_ifsc||'';
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
-    const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
-    if(propData.token_transfer_date)sv('token_transfer_date',propData.token_transfer_date.split('T')[0]);
-    sv('neft_reference',propData.neft_reference);
     // Key Handover Date — always show, prefill if exists
     if(propData.key_handover_date)document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0];
     // Show owner emails fetched from Form 4
@@ -140,22 +121,17 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Load a property first','warn');return}
   if(!propData?.owner_email){toast('Owner email not found. Set it in Deal Terms form.','err');return}
   const sellerName=propData.owner_broker_name||'Owner';
-  const propRef=[propData.tower_no,propData.unit_no].filter(Boolean).join(' ')+([propData.tower_no,propData.unit_no].some(Boolean)?' - ':'')+( propData.society_name||'Property');
-  const td=(Number(propData.deal_token_amount)||0)+(Number(propData.remaining_amount)||0);
-  const tdFmt=td?'INR '+td.toLocaleString('en-IN')+'/-':'INR [Amount]';
+  const addr=[propData.unit_no,propData.tower_no,propData.society_name,propData.locality,propData.city].filter(Boolean).join(', ');
+  const hdDate=document.getElementById('hdDate').value?new Date(document.getElementById('hdDate').value+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
   const toList=[propData.owner_email].filter(Boolean).join(', ');
   const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','accounts@openhouse.in',propData.co_owner_email,propData.third_owner_email,propData.broker_email].filter(Boolean).join(', ');
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> ${toList}</p>
 ${ccList?`<p><strong>CC:</strong> ${ccList}</p>`:''}
-<p><strong>Subject:</strong> Openhouse Payment Confirmation | ${propRef} | ${sellerName}</p>
+<p><strong>Subject:</strong> ${currentUid} - Key Handover Acknowledgement | ${addr}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Dear <strong>${sellerName}</strong>,</p>
-<p>Greetings from <strong>Openhouse</strong>!</p>
-<p>We are pleased to confirm that the total deposit of ${tdFmt} for ${propRef} has been processed successfully.</p>
-<p>Please find the <strong>Payment Receipt</strong> attached for your records.</p>
-<p>Should you have any questions or require any clarification, please do not hesitate to reach out to us.</p>
-<p style="margin-top:10px;font-size:11px;color:var(--tx3)">📎 Payment Receipt PDF will be attached</p>
+<p>I am writing to confirm that OpenHouse has collected the keys for your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>.</p>
 </div>`;
   document.getElementById('emailPreviewBody').innerHTML=html;
   document.getElementById('emailModal').classList.add('open');

@@ -1,8 +1,7 @@
 const express=require('express'),router=express.Router();
 const{generateInvoiceHTML}=require('../utils/invoice-template');
-const{sendPaymentConfirmationEmail,htmlToPdf}=require('../utils/email-sender');
+const{sendKeyHandoverEmail}=require('../utils/email-sender');
 const{visibilityFilter}=require('../utils/visibility');
-const{getPhone}=require('../utils/whatsapp');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -18,19 +17,12 @@ module.exports=function(pool){
     try{
       const d=req.body;const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[d.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
-      const miss=[];
-      if(!d.bank_account_number)miss.push('Bank A/C');if(!d.bank_name)miss.push('Bank Name');
-      if(!d.ifsc_code)miss.push('IFSC');if(!d.token_transfer_date)miss.push('Transfer Date');if(!d.neft_reference)miss.push('NEFT Ref');
-      if(miss.length)return res.status(400).json({error:`Missing: ${miss.join(', ')}`,missing:miss});
+      if(!d.key_handover_date)return res.status(400).json({error:'Key Handover Date required'});
       await pool.query(`UPDATE properties SET
-        remaining_amount=$1,bank_account_number=$2,bank_name=$3,ifsc_code=$4,
-        token_transfer_date=$5,neft_reference=$6,
-        key_handover_date=COALESCE($8,key_handover_date),
+        remaining_amount=$1,key_handover_date=$3,
         final_submitted_at=NOW(),updated_at=NOW()
-        WHERE uid=$7`,
-        [parseFloat(d.remaining_amount)||null,d.bank_account_number,d.bank_name,d.ifsc_code,
-         d.token_transfer_date,(d.neft_reference||'').toUpperCase(),
-         d.uid,d.key_handover_date||null]);
+        WHERE uid=$2`,
+        [parseFloat(d.remaining_amount)||null,d.uid,d.key_handover_date||null]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
@@ -58,18 +50,15 @@ module.exports=function(pool){
       const p=pRows[0];
       if(!p.final_submitted_at)return res.status(400).json({error:'Form must be submitted first'});
       if(!p.owner_email)return res.status(400).json({error:'Owner email not found. Set it in Deal Terms form.'});
-      const baseUrl=process.env.APP_URL||'';
-      const pdfHtml=generateInvoiceHTML(p,baseUrl);
-      const signatoryName=user.name||user.email.split('@')[0];
-      const signatoryPhone=await getPhone(signatoryName)||'';
-      const result=await sendPaymentConfirmationEmail({
+      const senderName=user.name||user.email.split('@')[0];
+      const result=await sendKeyHandoverEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,property:p,pdfHtml,signatoryName,signatoryPhone
+        fromEmail:user.email,senderName,property:p
       });
-      console.log(`Payment confirmation email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
+      console.log(`Key handover email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
     }catch(e){
-      console.error('PaymentEmail:',e);
+      console.error('KeyHandoverEmail:',e);
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
         return res.status(401).json({error:'Gmail token expired. Please log out and log in again.'});
       }

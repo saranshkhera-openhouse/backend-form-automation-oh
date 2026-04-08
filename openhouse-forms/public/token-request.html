@@ -387,9 +387,9 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     // Populate GSP total + all deposit fields
     const gspVal=parseFloat(d.guaranteed_sale_price)||0;const gspT=gspVal*100000;
     document.getElementById('gspHint').textContent=gspT?'₹ '+gspT.toLocaleString('en-IN'):'';
-    if(d.performance_guarantee){document.getElementById('pgAmt').value=d.performance_guarantee;if(gspT>0)document.getElementById('pgPct').value=Math.round(d.performance_guarantee/gspT*100*1000)/1000}
-    if(d.total_deposit){document.getElementById('totalDeposit').value=d.total_deposit;if(gspT>0)document.getElementById('tdPct').value=Math.round(d.total_deposit/gspT*100*1000)/1000}
-    if(d.refundable_deposit){document.getElementById('refundableDeposit').value=d.refundable_deposit;if(gspT>0)document.getElementById('rdPct').value=Math.round(d.refundable_deposit/gspT*100*1000)/1000}
+    if(d.performance_guarantee!=null){document.getElementById('pgAmt').value=d.performance_guarantee;if(gspT>0)document.getElementById('pgPct').value=Math.round(d.performance_guarantee/gspT*100*1000)/1000}
+    if(d.total_deposit!=null){document.getElementById('totalDeposit').value=d.total_deposit;if(gspT>0)document.getElementById('tdPct').value=Math.round(d.total_deposit/gspT*100*1000)/1000}
+    if(d.refundable_deposit!=null){document.getElementById('refundableDeposit').value=d.refundable_deposit;if(gspT>0)document.getElementById('rdPct').value=Math.round(d.refundable_deposit/gspT*100*1000)/1000}
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
     if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');document.getElementById('rip').required=false}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
     if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');document.getElementById('rgp').required=false}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
@@ -428,9 +428,9 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
   const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','loan_applicant_name','loan_co_applicant_name','performance_guarantee','total_deposit','refundable_deposit'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
-  body.performance_guarantee=parseFloat(body.performance_guarantee)||null;
-  body.total_deposit=parseFloat(body.total_deposit)||null;
-  body.refundable_deposit=parseFloat(body.refundable_deposit)||null;
+  body.performance_guarantee=body.performance_guarantee!==''?parseFloat(body.performance_guarantee):null;
+  body.total_deposit=body.total_deposit!==''?parseFloat(body.total_deposit):null;
+  body.refundable_deposit=body.refundable_deposit!==''?parseFloat(body.refundable_deposit):null;
   for(const[key,col]of Object.entries(OWNER_DOC_COL)){body[col]=ownerDocUrls[key]||null}
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;

@@ -7,6 +7,22 @@
 .email-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--bg)}
 .email-body{padding:16px;max-height:60vh;overflow-y:auto}
 .email-ftr{padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.pu-item{border:2px dashed var(--bd);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:var(--bg);position:relative;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.pu-item:hover{border-color:var(--ac);background:rgba(0,0,0,.01)}
+.pu-item.uploaded{border-color:var(--grn);border-style:solid;background:#f0fdf4}
+.pu-item .pu-icon{font-size:20px;color:var(--tx3)}
+.pu-item.uploaded .pu-icon{color:var(--grn)}
+.pu-item .pu-label{font-size:10px;color:var(--tx3);font-weight:500}
+.pu-item.uploaded .pu-label{color:var(--grn)}
+.pu-item .pu-link{font-size:9px;color:var(--ac2);text-decoration:underline;margin-top:2px}
+.pu-item.missing{border-color:var(--red);background:#fef2f2}
+.pu-item.missing .pu-icon{color:var(--red)}
+.pu-item.missing .pu-label{color:var(--red)}
+.upload-row{border:1.5px dashed var(--bd);border-radius:8px;padding:10px 14px;text-align:center;cursor:pointer;background:var(--bg);transition:.15s;font-size:11px;color:var(--tx3)}
+.upload-row:hover{border-color:var(--ac)}
+.upload-row.done{border-color:var(--grn);border-style:solid;background:#f0fdf4;color:var(--grn)}
+.upload-row.missing{border-color:var(--red);background:#fef2f2;color:var(--red)}
+.upload-row input[type=file]{display:none}
 </style></head>
 <body>
 <header class="hdr">
@@ -42,12 +58,41 @@
 
     <div class="card"><div class="card-t">AMA Details</div>
       <div class="fg"><label>Date of AMA <span class="req">*</span></label><input type="date" name="ama_date" id="amaDate" required><div class="err-msg">Required</div></div>
+      <div class="fg" style="margin-top:10px"><label>Attach Signed AMA <span class="req">*</span></label>
+        <div class="upload-row" id="up_signedAma" onclick="document.getElementById('fi_signedAma').click()">
+          📄 Upload Signed AMA
+          <input type="file" id="fi_signedAma" accept="image/*,.pdf" onchange="uploadSignedAma(this)">
+        </div>
+        <div class="doc-upload-status" id="st_signedAma"></div>
+      </div>
     </div>
 
     <div class="card"><div class="card-t">Payment Split</div>
       <div class="r2" id="amountFields">
         <div class="fg"><label id="owner1Label">Owner Amount (₹) <span class="req">*</span></label><input type="number" id="owner1Amt" step="1" required></div>
         <div class="fg" id="owner2Wrap" style="display:none"><label id="owner2Label">Co-owner Amount (₹) <span class="req">*</span></label><input type="number" id="owner2Amt" step="1"></div>
+      </div>
+    </div>
+
+    <div class="card" id="coOwnerKycCard" style="display:none">
+      <div class="card-t">Co-owner KYC & Bank Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <div class="pu-item" id="pu_coAadhaarFront" onclick="document.getElementById('fi_co_aadhaar_front').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front <span class="req">*</span></div>
+          <input type="file" id="fi_co_aadhaar_front" accept="image/*,.pdf" style="display:none" onchange="uploadCoDoc(this,'co_aadhaar_front')">
+        </div>
+        <div class="pu-item" id="pu_coAadhaarBack" onclick="document.getElementById('fi_co_aadhaar_back').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back <span class="req">*</span></div>
+          <input type="file" id="fi_co_aadhaar_back" accept="image/*,.pdf" style="display:none" onchange="uploadCoDoc(this,'co_aadhaar_back')">
+        </div>
+        <div class="pu-item" id="pu_coPan" onclick="document.getElementById('fi_co_pan').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card <span class="req">*</span></div>
+          <input type="file" id="fi_co_pan" accept="image/*,.pdf" style="display:none" onchange="uploadCoDoc(this,'co_pan')">
+        </div>
+        <div class="pu-item" id="pu_coCheque" onclick="document.getElementById('fi_co_cheque').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Cancelled Cheque <span class="req">*</span></div>
+          <input type="file" id="fi_co_cheque" accept="image/*,.pdf" style="display:none" onchange="uploadCoDoc(this,'co_cheque')">
+        </div>
       </div>
     </div>
 
@@ -70,6 +115,46 @@
 <script src="/js/shared.js"></script>
 <script>
 let currentUid=null,propData=null,isAdmin=false,isManager=false;
+let cloudCfg=null,signedAmaUrl='';
+const coDocUrls={co_aadhaar_front:'',co_aadhaar_back:'',co_pan:'',co_cheque:''};
+const CO_DOC_ITEM={co_aadhaar_front:'pu_coAadhaarFront',co_aadhaar_back:'pu_coAadhaarBack',co_pan:'pu_coPan',co_cheque:'pu_coCheque'};
+const CO_DOC_COL={co_aadhaar_front:'co_owner_aadhaar_front_url',co_aadhaar_back:'co_owner_aadhaar_back_url',co_pan:'co_owner_pan_url',co_cheque:'co_owner_cheque_url'};
+const CO_DOC_LABEL={co_aadhaar_front:'Aadhaar Front',co_aadhaar_back:'Aadhaar Back',co_pan:'PAN Card',co_cheque:'Cancelled Cheque'};
+fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
+
+async function uploadSignedAma(input){
+  if(!input.files.length)return;if(!cloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const row=document.getElementById('up_signedAma');row.textContent='Uploading...';
+  try{
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cloudCfg.uploadPreset);fd.append('folder','signed-ama');
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${cloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    signedAmaUrl=d.secure_url;row.className='upload-row done';row.textContent='✓ Uploaded — click to replace';
+    const fi=document.createElement('input');fi.type='file';fi.accept='image/*,.pdf';fi.style.display='none';fi.id='fi_signedAma';fi.onchange=function(){uploadSignedAma(this)};row.appendChild(fi);
+    document.getElementById('st_signedAma').innerHTML=`<a href="${d.secure_url}" target="_blank" style="color:var(--ac2);font-size:10px">View</a>`;
+    row.classList.remove('missing');toast('Uploaded','ok');
+  }catch(e){toast('Upload failed','err');row.textContent='📄 Upload Signed AMA';
+    const fi=document.createElement('input');fi.type='file';fi.accept='image/*,.pdf';fi.style.display='none';fi.id='fi_signedAma';fi.onchange=function(){uploadSignedAma(this)};row.appendChild(fi)}
+  input.value='';
+}
+
+async function uploadCoDoc(input,key){
+  if(!input.files.length)return;if(!cloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const item=document.getElementById(CO_DOC_ITEM[key]);item.querySelector('.pu-label').textContent='Uploading...';
+  try{
+    const coName=(propData?.co_owner||'co-owner').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_');
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cloudCfg.uploadPreset);fd.append('folder',`co-owner-docs/${coName}`);
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${cloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    coDocUrls[key]=d.secure_url;item.classList.add('uploaded');item.classList.remove('missing');
+    item.querySelector('.pu-label').innerHTML=CO_DOC_LABEL[key]+' ✓ <span class="req">*</span>';
+    let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+    link.href=d.secure_url;toast('Uploaded','ok');
+  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').innerHTML=CO_DOC_LABEL[key]+' <span class="req">*</span>'}
+  input.value='';
+}
 
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
@@ -108,6 +193,11 @@ async function loadData(){
 
     // AMA date prefill
     if(propData.ama_date)document.getElementById('amaDate').value=propData.ama_date.split('T')[0];
+    // Signed AMA prefill
+    signedAmaUrl=propData.signed_ama_url||'';
+    if(signedAmaUrl){const row=document.getElementById('up_signedAma');row.classList.add('done');row.textContent='✓ Uploaded — click to replace';
+      const fi=document.createElement('input');fi.type='file';fi.accept='image/*,.pdf';fi.style.display='none';fi.id='fi_signedAma';fi.onchange=function(){uploadSignedAma(this)};row.appendChild(fi);
+      document.getElementById('st_signedAma').innerHTML=`<a href="${signedAmaUrl}" target="_blank" style="color:var(--ac2);font-size:10px">View</a>`}
 
     // Payment amounts — editable
     const hasCoOwner=!!(propData.co_owner&&propData.co_owner.trim());
@@ -118,9 +208,19 @@ async function loadData(){
       const half=Math.round(td/2);
       document.getElementById('owner1Amt').value=half-tk>0?half-tk:0;
       document.getElementById('owner2Amt').value=half;
+      // Show co-owner KYC card
+      document.getElementById('coOwnerKycCard').style.display='block';
+      for(const[key,col]of Object.entries(CO_DOC_COL)){
+        coDocUrls[key]=propData[col]||'';
+        const item=document.getElementById(CO_DOC_ITEM[key]);
+        if(propData[col]){item.classList.add('uploaded');item.querySelector('.pu-label').innerHTML=CO_DOC_LABEL[key]+' ✓ <span class="req">*</span>';
+          let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+          link.href=propData[col]}
+      }
     }else{
       document.getElementById('owner2Wrap').style.display='none';
       document.getElementById('owner1Amt').value=rem>0?rem:0;
+      document.getElementById('coOwnerKycCard').style.display='none';
     }
 
     document.getElementById('parForm').style.display='block';
@@ -134,9 +234,23 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   const amaDate=document.getElementById('amaDate').value;
   if(!amaDate){toast('AMA Date required','err');return}
+  // Validate signed AMA
+  const alreadySubmitted=!!(propData&&propData.pending_request_submitted_at);
+  if(!signedAmaUrl&&!alreadySubmitted){document.getElementById('up_signedAma').classList.add('missing');toast('Upload Signed AMA required','err');return}
   if(!document.getElementById('owner1Amt').value){toast('Owner amount required','err');return}
+  // Validate co-owner docs if card is visible
+  const coKycVisible=document.getElementById('coOwnerKycCard').style.display!=='none';
+  if(coKycVisible&&!alreadySubmitted){
+    const missing=[];
+    Object.values(CO_DOC_ITEM).forEach(id=>document.getElementById(id).classList.remove('missing'));
+    for(const[key,label]of Object.entries(CO_DOC_LABEL)){
+      if(!coDocUrls[key]){missing.push(label);document.getElementById(CO_DOC_ITEM[key]).classList.add('missing')}
+    }
+    if(missing.length){toast(`Upload required: ${missing.join(', ')}`,'err');return}
+  }
 
-  const body={uid:currentUid,ama_date:amaDate};
+  const body={uid:currentUid,ama_date:amaDate,signed_ama_url:signedAmaUrl||null};
+  for(const[key,col]of Object.entries(CO_DOC_COL)){body[col]=coDocUrls[key]||null}
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/pending-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
@@ -148,6 +262,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
 // Send email — show preview first
 document.getElementById('emailBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Load a property first','warn');return}
+  if(!propData?.owner_email){toast('Owner email not found. Set it in Deal Terms form.','err');return}
   const addr=[propData?.unit_no,propData?.tower_no,propData?.society_name,propData?.locality,propData?.city].filter(Boolean).join(', ');
   const amaDate=document.getElementById('amaDate').value?new Date(document.getElementById('amaDate').value+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
   const o1Name=propData.owner_broker_name||'Owner';
@@ -156,14 +271,23 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const o2Amt=Number(document.getElementById('owner2Amt')?.value)||0;
   let amtHtml=`<li><strong>${o1Name}:</strong> INR ${o1Amt.toLocaleString('en-IN')}</li>`;
   if(o2Name&&o2Amt)amtHtml+=`<li><strong>${o2Name}:</strong> INR ${o2Amt.toLocaleString('en-IN')}</li>`;
+  const toList=[propData.owner_email,propData.co_owner_email,'saranshkhera5@gmail.com'].filter(Boolean).join(', ');
+  const ccList=['accounts@openhouse.in','supply@openhouse.in','akash.teotia@openhouse.in','saurabh@openhouse.in',propData.third_owner_email].filter(Boolean).join(', ');
+  const chequeUrl=propData.cheque_image_url;
+  const amaUrl=signedAmaUrl||propData.signed_ama_url;
   const html=`<div style="font-size:13px;line-height:1.8">
-<p><strong>To:</strong> saranshkhera5@gmail.com</p>
-<p><strong>Subject:</strong> Pending Amount Request | ${addr}</p>
+<p><strong>To:</strong> ${toList}</p>
+<p><strong>CC:</strong> ${ccList}</p>
+<p><strong>Subject:</strong> ${currentUid} - AMA Acknowledgement &amp; Pending Amount Request | ${addr}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
-<p>Hi Accounts Team,</p>
-<p>The AMA for this property has been signed on <strong>${amaDate}</strong>. Please process the remaining amount as follows:</p>
+<p>Dear <strong>${o1Name}</strong>,</p>
+<p>Congratulations on the successful execution of the Asset Management Agreement dated <strong>${amaDate}</strong>.</p>
+<p>Please find the link to executed copy of the agreement for your reference. Kindly acknowledge receipt of this document by replying to this thread. Upon receiving your acknowledgement, the Accounts Team will release the remaining amount as follows:</p>
 <p><strong>Property:</strong> ${addr}</p>
 <ul style="line-height:2">${amtHtml}</ul>
+<p>Hi Accounts Team, please do the needful.</p>
+${chequeUrl?`<p><strong>Cancelled Cheque Link:</strong> <a href="${chequeUrl}" style="color:#1a73e8">Click here to view cheque</a></p>`:''}
+${amaUrl?`<p><strong>AMA Link:</strong> <a href="${amaUrl}" style="color:#1a73e8">Click here to view AMA</a></p>`:''}
 </div>`;
   document.getElementById('emailPreviewBody').innerHTML=html;
   document.getElementById('emailModal').classList.add('open');

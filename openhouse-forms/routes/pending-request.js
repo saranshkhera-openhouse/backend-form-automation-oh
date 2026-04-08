@@ -19,8 +19,13 @@ module.exports=function(pool){
     try{
       const d=req.body;const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[d.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
-      await pool.query(`UPDATE properties SET ama_date=$1,pending_request_submitted_at=NOW(),updated_at=NOW() WHERE uid=$2`,
-        [d.ama_date||null,d.uid]);
+      await pool.query(`UPDATE properties SET ama_date=$1,signed_ama_url=COALESCE($3,signed_ama_url),
+        co_owner_aadhaar_front_url=COALESCE($4,co_owner_aadhaar_front_url),co_owner_aadhaar_back_url=COALESCE($5,co_owner_aadhaar_back_url),
+        co_owner_pan_url=COALESCE($6,co_owner_pan_url),co_owner_cheque_url=COALESCE($7,co_owner_cheque_url),
+        pending_request_submitted_at=NOW(),updated_at=NOW() WHERE uid=$2`,
+        [d.ama_date||null,d.uid,d.signed_ama_url||null,
+         d.co_owner_aadhaar_front_url||null,d.co_owner_aadhaar_back_url||null,
+         d.co_owner_pan_url||null,d.co_owner_cheque_url||null]);
       res.json({success:true,uid:d.uid});
     }catch(e){console.error('PendingRequest:',e);res.status(500).json({error:e.message})}
   });

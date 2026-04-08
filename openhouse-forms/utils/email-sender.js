@@ -102,7 +102,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const society = p.society_name || 'Property';
   const tokenAmt = p.token_amount_requested ? '₹ ' + Number(p.token_amount_requested).toLocaleString('en-IN') : '';
 
-  const subject = `Token Request |${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - Token Request | ${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
 
   const senderName = fromEmail.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -165,7 +165,7 @@ async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, proper
   const tokenAmtFmt = tokenAmt ? 'INR ' + Number(tokenAmt).toLocaleString('en-IN') + '/-' : 'INR [Token Amount]';
   const neftRef = p.deal_neft_reference || '[Transaction Reference No.]';
 
-  const subject = `Openhouse Offer | ${propRef} | ${sellerName}`;
+  const subject = `${p.uid} - Openhouse Offer | ${propRef} | ${sellerName}`;
 
   const bodyHtml = `<html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.8">
 <p>Dear <strong>${sellerName}</strong>,</p>
@@ -244,7 +244,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">Cancelled Cheque</a></li>`);
   if(p.cp_ama_signed_url) photoLinks.push(`<li><a href="${p.cp_ama_signed_url}" target="_blank">AMA Signed (PDF)</a></li>`);
 
-  const subject = `CP Bill Generation | ${addr}`;
+  const subject = `${p.uid} - CP Bill Generation | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Hi Accounts Team,</p>
 <p>Kindly prepare the CP bill for the below mentioned property:</p>
@@ -293,30 +293,36 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
 
   const p = property;
   const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
-  const td = Number(p.total_deposit) || 0;
-  const tk = Number(p.token_amount_requested) || 0;
   const amaDate = p.ama_date ? new Date(p.ama_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+  const ownerName = owner1_name || p.owner_broker_name || 'Owner';
 
   let amountLines = `<ul style="line-height:2;font-size:14px">
-    <li><strong>${owner1_name || p.owner_broker_name || 'Owner'}:</strong> INR ${Number(owner1_amount||0).toLocaleString('en-IN')}</li>`;
+    <li><strong>${ownerName}:</strong> INR ${Number(owner1_amount||0).toLocaleString('en-IN')}</li>`;
   if (owner2_name && owner2_amount) {
     amountLines += `<li><strong>${owner2_name}:</strong> INR ${Number(owner2_amount).toLocaleString('en-IN')}</li>`;
   }
   amountLines += `</ul>`;
 
-  const subject = `Pending Amount Request | ${addr}`;
+  const subject = `${p.uid} - AMA Acknowledgement & Pending Amount Request | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
-<p>Hi Accounts Team,</p>
-<p>The AMA for this property has been signed on <strong>${amaDate}</strong>. Please process the remaining amount as follows:</p>
+<p>Dear <strong>${ownerName}</strong>,</p>
+<p>Congratulations on the successful execution of the Asset Management Agreement dated <strong>${amaDate}</strong>.</p>
+<p>Please find the link to executed copy of the agreement for your reference. Kindly acknowledge receipt of this document by replying to this thread. Upon receiving your acknowledgement, the Accounts Team will release the remaining amount as follows:</p>
 <p><strong>Property:</strong> ${addr}</p>
 ${amountLines}
+<p>Hi Accounts Team, please do the needful.</p>
+${p.cheque_image_url ? `<p><strong>Cancelled Cheque Link:</strong> <a href="${p.cheque_image_url}" style="color:#1a73e8">Click here to view cheque</a></p>` : ''}
+${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}" style="color:#1a73e8">Click here to view AMA</a></p>` : ''}
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
 
+  const toList = [p.owner_email, p.co_owner_email, 'saranshkhera5@gmail.com'].filter(Boolean);
+  //const ccList = ['accounts@openhouse.in', 'supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', p.third_owner_email].filter(Boolean);
+
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
-    to: process.env.ACCOUNTS_EMAIL || 'saranshkhera5@gmail.com',
-    cc: '',
+    to: toList.join(', '),
+    cc: ccList.length ? ccList.join(', ') : '',
     subject,
     bodyHtml
   });
@@ -326,7 +332,7 @@ ${amountLines}
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
-async function sendPaymentConfirmationEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml, signatoryName, signatoryPhone }) {
+async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, senderName, property }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -334,49 +340,33 @@ async function sendPaymentConfirmationEmail({ accessToken, refreshToken, fromEma
   oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-  console.log('Generating Payment Receipt PDF via Puppeteer...');
-  const pdfBuffer = await htmlToPdf(pdfHtml);
-  console.log(`PDF generated: ${pdfBuffer.length} bytes`);
-
   const p = property;
-  const sellerName = p.owner_broker_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Seller';
-  const propRef = [p.tower_no, p.unit_no].filter(Boolean).join(' ') + ([p.tower_no, p.unit_no].some(Boolean) ? ' - ' : '') + (p.society_name || 'Property');
-  const totalPaid = (Number(p.deal_token_amount) || 0) + (Number(p.remaining_amount) || 0);
-  const totalPaidFmt = totalPaid ? 'INR ' + totalPaid.toLocaleString('en-IN') + '/-' : 'INR [Amount]';
+  const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
+  const sellerName = p.owner_broker_name || 'Seller';
+  const hdDate = p.key_handover_date ? new Date(p.key_handover_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
-  const subject = `Openhouse Payment Confirmation | ${propRef} | ${sellerName}`;
-
-  const bodyHtml = `<html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.8">
+  const subject = `${p.uid} - Key Handover Acknowledgement | ${addr}`;
+  const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Dear <strong>${sellerName}</strong>,</p>
-<p>Greetings from <strong>Openhouse</strong>!</p>
-<p>We are pleased to confirm that the total deposit of ${totalPaidFmt} for ${propRef} has been processed successfully.</p>
-<p>Please find the <strong>Payment Receipt</strong> attached for your records.</p>
-<p>Should you have any questions or require any clarification, please do not hesitate to reach out to us.</p>
-<p>Warm regards,<br>
-${signatoryName}<br>
-${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse.in</a></p>
+<p>I am writing to confirm that OpenHouse has collected the keys for your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>.</p>
+<p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
-
-  const pdfFilename = `Payment_Receipt_${p.uid || 'receipt'}.pdf`;
 
   const toList = [p.owner_email].filter(Boolean);
   const ccList = ['saranshkhera5@gmail.com', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
 
-  console.log('Building MIME email with PDF attachment...');
-  const raw = buildMimeEmail({
+  const raw = buildSimpleMimeEmail({
     from: fromEmail,
     to: toList.join(', '),
     cc: ccList.length ? ccList.join(', ') : null,
     subject,
-    bodyHtml,
-    pdfBuffer,
-    pdfFilename
+    bodyHtml
   });
 
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
-  console.log(`Payment confirmation email sent! messageId: ${result.data.id}`);
+  console.log(`Key handover email sent! messageId: ${result.data.id}`);
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
 // Send offer email to property owner with PDF attachment
-module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendPaymentConfirmationEmail, htmlToPdf };
+module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendKeyHandoverEmail, htmlToPdf };

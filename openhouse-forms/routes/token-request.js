@@ -36,7 +36,7 @@ module.exports=function(pool){
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
          d.cheque_image_url||null,d.cheque_bank_name||null,d.cheque_account_number||null,d.cheque_ifsc||null,
          d.registry_status||null,d.occupancy_status||null,d.key_handover_date||null,
-         parseFloat(d.guaranteed_sale_price)||null,parseFloat(d.performance_guarantee)||null,
+         parseFloat(d.guaranteed_sale_price)||null,d.performance_guarantee!=null&&d.performance_guarantee!==''?parseFloat(d.performance_guarantee):null,
          parseInt(d.initial_period)||null,d.rent_payable_initial_period||null,
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
@@ -45,7 +45,7 @@ module.exports=function(pool){
          d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null,
          d.co_owner_number||null,d.loan_applicant_name||null,d.loan_co_applicant_name||null,
          d.owner_pan_url||null,d.owner_aadhaar_front_url||null,d.owner_aadhaar_back_url||null,d.owner_property_doc_url||null,
-         parseFloat(d.total_deposit)||null,parseFloat(d.refundable_deposit)||null]);
+         d.total_deposit!=null&&d.total_deposit!==''?parseFloat(d.total_deposit):null,d.refundable_deposit!=null&&d.refundable_deposit!==''?parseFloat(d.refundable_deposit):null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
