@@ -343,7 +343,7 @@ function buildModal(p){
     ${ef('GSP (Lakhs)','guaranteed_sale_price',p.guaranteed_sale_price,'number')}${ef('PG (₹)','performance_guarantee',p.performance_guarantee,'number')}${ef('Initial Period (d)','initial_period',p.initial_period,'number')}
     ${ef('Rent (Initial)','rent_payable_initial_period',p.rent_payable_initial_period)}${ef('Grace Period (d)','grace_period',p.grace_period,'number')}${ef('Rent (Grace)','rent_payable_grace_period',p.rent_payable_grace_period)}
     ${efSel('Has Loan?','has_loan',p.has_loan,['Yes','No'])}${ef('Outstanding Loan (₹)','outstanding_loan',p.outstanding_loan,'number')}${ef('Loan Bank','bank_name_loan',p.bank_name_loan)}
-    ${ef('Loan A/C','loan_account_number',p.loan_account_number)}${efSel('Willing to Pay','loan_pay_willingness',p.loan_pay_willingness,['Yes','No'])}${efRO('Documents',docs.length?docs.join(', '):'—')}
+    ${ef('Loan A/C','loan_account_number',p.loan_account_number)}${efSel('Willing to Pre-pay loan on his own?','loan_pay_willingness',p.loan_pay_willingness,['Yes','No'])}${efRO('Documents',docs.length?docs.join(', '):'—')}
     ${efArea('Remarks (Printed)','token_remarks_printed',p.token_remarks_printed)}${efArea('Remarks (Internal)','token_remarks',p.token_remarks)}${efRO('Submitted',fmtDtFull(p.token_submitted_at))}
   </div></div>`;
 
