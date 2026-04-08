@@ -317,7 +317,7 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
 </body></html>`;
 
   const toList = [p.owner_email, p.co_owner_email, 'saranshkhera5@gmail.com'].filter(Boolean);
-  //const ccList = ['accounts@openhouse.in', 'supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', p.third_owner_email].filter(Boolean);
+  const ccList = ['ashish@openhouse.in', p.third_owner_email].filter(Boolean);
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
