@@ -1,6 +1,8 @@
 const express=require('express'),router=express.Router();
 const{generateInvoiceHTML}=require('../utils/invoice-template');
+const{sendPaymentConfirmationEmail,htmlToPdf}=require('../utils/email-sender');
 const{visibilityFilter}=require('../utils/visibility');
+const{getPhone}=require('../utils/whatsapp');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -40,5 +42,40 @@ module.exports=function(pool){
       res.setHeader('Content-Type','text/html');res.send(html);
     }catch(e){console.error('PDF:',e);res.status(500).json({error:'PDF failed'})}
   });
+
+  router.post('/send-email/:uid',async(req,res)=>{
+    try{
+      const userId=req.user?.id;
+      if(!userId)return res.status(401).json({error:'Not authenticated'});
+      const{rows:uRows}=await pool.query('SELECT email,name,google_access_token,google_refresh_token FROM users WHERE id=$1',[userId]);
+      if(!uRows.length)return res.status(401).json({error:'User not found'});
+      const user=uRows[0];
+      if(!user.google_access_token&&!user.google_refresh_token){
+        return res.status(400).json({error:'Gmail not authorized. Please log out and log in again.'});
+      }
+      const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!pRows.length)return res.status(404).json({error:'Property not found'});
+      const p=pRows[0];
+      if(!p.final_submitted_at)return res.status(400).json({error:'Form must be submitted first'});
+      if(!p.owner_email)return res.status(400).json({error:'Owner email not found. Set it in Deal Terms form.'});
+      const baseUrl=process.env.APP_URL||'';
+      const pdfHtml=generateInvoiceHTML(p,baseUrl);
+      const signatoryName=user.name||user.email.split('@')[0];
+      const signatoryPhone=await getPhone(signatoryName)||'';
+      const result=await sendPaymentConfirmationEmail({
+        accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
+        fromEmail:user.email,property:p,pdfHtml,signatoryName,signatoryPhone
+      });
+      console.log(`Payment confirmation email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
+      res.json({success:true,messageId:result.messageId});
+    }catch(e){
+      console.error('PaymentEmail:',e);
+      if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
+        return res.status(401).json({error:'Gmail token expired. Please log out and log in again.'});
+      }
+      res.status(500).json({error:e.message||'Failed to send email'});
+    }
+  });
+
   return router;
 };

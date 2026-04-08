@@ -38,10 +38,11 @@ module.exports=function(pool){
       const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!pRows.length)return res.status(404).json({error:'Property not found'});
       if(!pRows[0].pending_request_submitted_at)return res.status(400).json({error:'Form must be submitted first'});
-      const equalSplit=req.body.equal_split||'No';
       const result=await sendPendingAmountEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,senderName:user.name||user.email,property:pRows[0],equalSplit
+        fromEmail:user.email,senderName:user.name||user.email,property:pRows[0],
+        owner1_name:req.body.owner1_name,owner1_amount:req.body.owner1_amount,
+        owner2_name:req.body.owner2_name,owner2_amount:req.body.owner2_amount
       });
       console.log(`Pending amount email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});

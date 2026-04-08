@@ -283,7 +283,7 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
-async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, equalSplit }) {
+async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, owner1_name, owner1_amount, owner2_name, owner2_amount }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -297,20 +297,12 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
   const tk = Number(p.token_amount_requested) || 0;
   const amaDate = p.ama_date ? new Date(p.ama_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
-  let amountLines = '';
-  if (equalSplit === 'Yes' && p.co_owner && p.co_owner.trim()) {
-    const half = Math.round(td / 2);
-    const firstAmt = half - tk;
-    amountLines = `<ul style="line-height:2;font-size:14px">
-      <li><strong>${p.owner_broker_name || 'First Owner'}:</strong> INR ${firstAmt > 0 ? firstAmt.toLocaleString('en-IN') : '0'}</li>
-      <li><strong>${p.co_owner}:</strong> INR ${half.toLocaleString('en-IN')}</li>
-    </ul>`;
-  } else {
-    const rem = td - tk;
-    amountLines = `<ul style="line-height:2;font-size:14px">
-      <li><strong>${p.owner_broker_name || 'Owner'}:</strong> INR ${rem > 0 ? rem.toLocaleString('en-IN') : '0'}</li>
-    </ul>`;
+  let amountLines = `<ul style="line-height:2;font-size:14px">
+    <li><strong>${owner1_name || p.owner_broker_name || 'Owner'}:</strong> INR ${Number(owner1_amount||0).toLocaleString('en-IN')}</li>`;
+  if (owner2_name && owner2_amount) {
+    amountLines += `<li><strong>${owner2_name}:</strong> INR ${Number(owner2_amount).toLocaleString('en-IN')}</li>`;
   }
+  amountLines += `</ul>`;
 
   const subject = `Pending Amount Request | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
@@ -334,5 +326,57 @@ ${amountLines}
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
+async function sendPaymentConfirmationEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml, signatoryName, signatoryPhone }) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+  console.log('Generating Payment Receipt PDF via Puppeteer...');
+  const pdfBuffer = await htmlToPdf(pdfHtml);
+  console.log(`PDF generated: ${pdfBuffer.length} bytes`);
+
+  const p = property;
+  const sellerName = p.owner_broker_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Seller';
+  const propRef = [p.tower_no, p.unit_no].filter(Boolean).join(' ') + ([p.tower_no, p.unit_no].some(Boolean) ? ' - ' : '') + (p.society_name || 'Property');
+  const totalPaid = (Number(p.deal_token_amount) || 0) + (Number(p.remaining_amount) || 0);
+  const totalPaidFmt = totalPaid ? 'INR ' + totalPaid.toLocaleString('en-IN') + '/-' : 'INR [Amount]';
+
+  const subject = `Openhouse Payment Confirmation | ${propRef} | ${sellerName}`;
+
+  const bodyHtml = `<html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.8">
+<p>Dear <strong>${sellerName}</strong>,</p>
+<p>Greetings from <strong>Openhouse</strong>!</p>
+<p>We are pleased to confirm that the total deposit of ${totalPaidFmt} for ${propRef} has been processed successfully.</p>
+<p>Please find the <strong>Payment Receipt</strong> attached for your records.</p>
+<p>Should you have any questions or require any clarification, please do not hesitate to reach out to us.</p>
+<p>Warm regards,<br>
+${signatoryName}<br>
+${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse.in</a></p>
+</body></html>`;
+
+  const pdfFilename = `Payment_Receipt_${p.uid || 'receipt'}.pdf`;
+
+  const toList = [p.owner_email].filter(Boolean);
+  const ccList = ['saranshkhera5@gmail.com', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
+
+  console.log('Building MIME email with PDF attachment...');
+  const raw = buildMimeEmail({
+    from: fromEmail,
+    to: toList.join(', '),
+    cc: ccList.length ? ccList.join(', ') : null,
+    subject,
+    bodyHtml,
+    pdfBuffer,
+    pdfFilename
+  });
+
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  console.log(`Payment confirmation email sent! messageId: ${result.data.id}`);
+  return { messageId: result.data.id, threadId: result.data.threadId };
+}
+
 // Send offer email to property owner with PDF attachment
-module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, htmlToPdf };
+module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendPaymentConfirmationEmail, htmlToPdf };

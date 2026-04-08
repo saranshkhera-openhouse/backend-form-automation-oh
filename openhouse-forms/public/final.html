@@ -37,8 +37,9 @@
 
     <div class="btn-row">
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
-      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>TD Receipt</button>
+      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Payment Receipt</button>
     </div>
+    <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Send to Owner</button>
   </form>
 </div>
 
@@ -82,6 +83,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     // Key Handover Date — always show, prefill if exists
     if(propData.key_handover_date)document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0];
     document.getElementById('pdfBtn').disabled=!propData.final_submitted_at;
+    document.getElementById('emailBtn').disabled=!propData.final_submitted_at;
     document.getElementById('finalForm').style.display='block';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${propData.final_submitted_at?' (Submitted)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('finalForm').style.display='none'}}
@@ -93,7 +95,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/final/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    document.getElementById('pdfBtn').disabled=false;toast('Submitted! TD Receipt ready.','ok',5000)});
+    document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted! Payment Receipt ready.','ok',5000)});
 });
 
 document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
@@ -101,5 +103,21 @@ document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)r
   document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
 function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
 document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
+
+// Send email to owner
+document.getElementById('emailBtn').addEventListener('click',async()=>{
+  if(!currentUid){toast('Load a property first','warn');return}
+  if(!propData?.owner_email){toast('Owner email not found. Set it in Deal Terms form.','err');return}
+  if(!confirm(`Send payment confirmation email to ${propData.owner_email}?`))return;
+  const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
+  try{
+    const r=await fetch(`${API}/api/final/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    toast('Email sent to owner!','ok',5000);btn.innerHTML='✓ Email Sent';btn.style.borderColor='var(--grn)';btn.style.color='var(--grn)';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
+  }catch(e){toast(e.message||'Failed to send','err');btn.innerHTML=orig;btn.disabled=false;
+    if(e.message&&e.message.includes('log out'))toast('Please logout and login again','warn',8000)}
+});
 </script>
 </body></html>

@@ -36,10 +36,10 @@
       <div class="fg"><label>Date of AMA <span class="req">*</span></label><input type="date" name="ama_date" id="amaDate" required><div class="err-msg">Required</div></div>
     </div>
 
-    <div class="card" id="splitCard" style="display:none"><div class="card-t">Payment Split</div>
-      <div class="fg"><label>Equal split between owners? <span class="req">*</span></label>
-        <div class="radios"><label><input type="radio" name="equal_split" value="Yes" id="splitYes"><span>Yes</span></label><label><input type="radio" name="equal_split" value="No" id="splitNo"><span>No</span></label></div></div>
-      <div id="splitPreview" style="display:none;margin-top:10px;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);font-size:13px;line-height:1.8">
+    <div class="card"><div class="card-t">Payment Amounts</div>
+      <div class="r2" id="amountFields">
+        <div class="fg"><label id="owner1Label">Owner Amount (₹) <span class="req">*</span></label><input type="number" id="owner1Amt" step="1" required></div>
+        <div class="fg" id="owner2Wrap" style="display:none"><label id="owner2Label">Co-owner Amount (₹) <span class="req">*</span></label><input type="number" id="owner2Amt" step="1"></div>
       </div>
     </div>
 
@@ -90,10 +90,19 @@ async function loadData(){
     // AMA date prefill
     if(propData.ama_date)document.getElementById('amaDate').value=propData.ama_date.split('T')[0];
 
-    // Show split card only if co-owner exists
+    // Payment amounts — editable
     const hasCoOwner=!!(propData.co_owner&&propData.co_owner.trim());
-    document.getElementById('splitCard').style.display=hasCoOwner?'block':'none';
-    if(!hasCoOwner){document.getElementById('splitNo').checked=true}
+    document.getElementById('owner1Label').textContent=(propData.owner_broker_name||'Owner')+' Amount (₹)';
+    if(hasCoOwner){
+      document.getElementById('owner2Wrap').style.display='block';
+      document.getElementById('owner2Label').textContent=(propData.co_owner||'Co-owner')+' Amount (₹)';
+      const half=Math.round(td/2);
+      document.getElementById('owner1Amt').value=half-tk>0?half-tk:0;
+      document.getElementById('owner2Amt').value=half;
+    }else{
+      document.getElementById('owner2Wrap').style.display='none';
+      document.getElementById('owner1Amt').value=rem>0?rem:0;
+    }
 
     document.getElementById('parForm').style.display='block';
     document.getElementById('emailBtn').style.display=propData.pending_request_submitted_at?'block':'none';
@@ -101,29 +110,12 @@ async function loadData(){
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('parForm').style.display='none'}
 }
 
-// Equal split toggle — show preview
-document.querySelectorAll('input[name="equal_split"]').forEach(r=>{
-  r.addEventListener('change',function(){
-    const preview=document.getElementById('splitPreview');
-    if(this.value==='Yes'&&propData){
-      const td=Number(propData.total_deposit)||0;
-      const tk=Number(propData.token_amount_requested)||0;
-      const half=Math.round(td/2);
-      const firstOwner=half-tk;
-      preview.innerHTML=`<div><strong>${propData.owner_broker_name||'First Owner'}:</strong> ₹ ${firstOwner>0?firstOwner.toLocaleString('en-IN'):'0'}</div>
-        <div><strong>${propData.co_owner||'Co-owner'}:</strong> ₹ ${half.toLocaleString('en-IN')}</div>`;
-      preview.style.display='block';
-    }else{preview.style.display='none'}
-  });
-});
-
 // Submit
 document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   const amaDate=document.getElementById('amaDate').value;
   if(!amaDate){toast('AMA Date required','err');return}
-  const hasCoOwner=document.getElementById('splitCard').style.display!=='none';
-  if(hasCoOwner&&!document.querySelector('input[name="equal_split"]:checked')){toast('Select equal split option','err');return}
+  if(!document.getElementById('owner1Amt').value){toast('Owner amount required','err');return}
 
   const body={uid:currentUid,ama_date:amaDate};
   submitBtn(document.getElementById('submitBtn'),async()=>{
@@ -134,15 +126,19 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   });
 });
 
-// Send email
+// Send email with editable amounts
 document.getElementById('emailBtn').addEventListener('click',async()=>{
   if(!currentUid){toast('Load a property first','warn');return}
   if(!confirm('Send pending amount request email to Accounts?'))return;
   const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending...';
   try{
-    const splitVal=document.querySelector('input[name="equal_split"]:checked')?.value||'No';
-    const r=await fetch(`${API}/api/pending-request/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({equal_split:splitVal})});
+    const owner1Amt=document.getElementById('owner1Amt').value||'0';
+    const owner2Amt=document.getElementById('owner2Amt')?.value||'';
+    const owner1Name=propData.owner_broker_name||'Owner';
+    const owner2Name=propData.co_owner||'';
+    const r=await fetch(`${API}/api/pending-request/send-email/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({owner1_name:owner1Name,owner1_amount:owner1Amt,owner2_name:owner2Name,owner2_amount:owner2Amt})});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
     toast('Email sent to Accounts!','ok',5000);btn.innerHTML='✓ Email Sent';btn.style.borderColor='var(--grn)';btn.style.color='var(--grn)';
     setTimeout(()=>{btn.innerHTML=orig;btn.style.borderColor='var(--ac2)';btn.style.color='var(--ac2)';btn.disabled=false},5000);
