@@ -125,7 +125,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   const raw = buildMimeEmail({
     from: fromEmail,
     to: 'accounts@openhouse.in, rahool@openhouse.in',
-    cc: 'supply@openhouse.in, akash.teotia@openhouse.in',
+    cc: 'supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in',
     subject,
     bodyHtml,
     pdfBuffer,
@@ -179,6 +179,15 @@ async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, proper
 2. AMA signing<br>
 3. Property Handover</p>
 <p>Should you have any questions or require any clarification regarding the above, please do not hesitate to reach out to us. We are here to assist you at every step.</p>
+<p><strong>List of documents required for AMA:</strong><br>
+1) Allotment Letter issued by the Builder<br>
+2) Possession Letter/Certificate by the Builder<br>
+3) Builder Buyer Agreement (if applicable)<br>
+4) Conveyance Deed/Sub Lease Deed/Sale Deed<br>
+5) Car Parking letter (if applicable)<br>
+6) Bank LOD (in case if active home loan)<br>
+7) Bank NOC (in case of home loan closure)<br>
+8) Aadhaar, PAN and Canceled Cheque of Co-applicant (if applicable)</p>
 <p>Warm regards<br>
 ${signatoryName}<br>
 ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse.in</a></p>
@@ -187,8 +196,8 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
   const pdfFilename = `Deal_Terms_${p.uid || 'receipt'}.pdf`;
 
   // Build recipient list
-  const toList = [p.owner_email].filter(Boolean);
-  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'accounts@openhouse.in', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
+  const toList = [p.owner_email, p.co_owner_email, p.third_owner_email].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'accounts@openhouse.in', 'saurabh@openhouse.in', p.broker_email].filter(Boolean);
 
   console.log('Building MIME email with PDF attachment...');
   const raw = buildMimeEmail({
@@ -272,7 +281,7 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
-    to: 'prashant@openhouse.in',
+    to: 'prashant@openhouse.in,accounts@openhouse.in',
     cc: 'supply@openhouse.in,',
     subject,
     bodyHtml
@@ -311,13 +320,18 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
 <p><strong>Property:</strong> ${addr}</p>
 ${amountLines}
 <p>Hi Accounts Team, please do the needful.</p>
-${(owner2_name && p.co_owner_cheque_url) ? `<p><strong>Co Owner Cancelled Cheque Link:</strong> <a href="${p.co_owner_cheque_url}" style="color:#1a73e8">Click here to view cheque</a></p>` : ''}
+${owner2_name ? [
+  p.co_owner_cheque_url ? `<p><strong>Co Owner Cancelled Cheque Link:</strong> <a href="${p.co_owner_cheque_url}" style="color:#1a73e8">Click here to view</a></p>` : '',
+  p.co_owner_pan_url ? `<p><strong>Co Owner PAN Card:</strong> <a href="${p.co_owner_pan_url}" style="color:#1a73e8">Click here to view</a></p>` : '',
+  p.co_owner_aadhaar_front_url ? `<p><strong>Co Owner Aadhaar Card Front:</strong> <a href="${p.co_owner_aadhaar_front_url}" style="color:#1a73e8">Click here to view</a></p>` : '',
+  p.co_owner_aadhaar_back_url ? `<p><strong>Co Owner Aadhaar Card Back:</strong> <a href="${p.co_owner_aadhaar_back_url}" style="color:#1a73e8">Click here to view</a></p>` : ''
+].filter(Boolean).join('\n') : ''}
 ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}" style="color:#1a73e8">Click here to view AMA</a></p>` : ''}
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
 
-  const toList = [p.owner_email, p.co_owner_email, 'saranshkhera5@gmail.com'].filter(Boolean);
-  const ccList = ['ashish@openhouse.in', p.third_owner_email].filter(Boolean);
+  const toList = [p.owner_email, p.co_owner_email, p.third_owner_email, 'accounts@openhouse.in'].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in'].filter(Boolean);
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,
@@ -348,12 +362,13 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   const subject = `${p.uid} - Key Handover Acknowledgement | ${addr}`;
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Dear <strong>${sellerName}</strong>,</p>
-<p>I am writing to confirm that OpenHouse has collected the keys for your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>.</p>
+<p>This email serves as official confirmation that we collected the keys to your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>. Please consider this message as formal notification regarding the start of our timeline.</p>
+
 <p>Regards,<br><strong>${senderName}</strong></p>
 </body></html>`;
 
-  const toList = [p.owner_email].filter(Boolean);
-  const ccList = ['ashish@openhouse.in', p.co_owner_email, p.third_owner_email, p.broker_email].filter(Boolean);
+  const toList = [p.owner_email, p.co_owner_email, p.third_owner_email].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
 
   const raw = buildSimpleMimeEmail({
     from: fromEmail,

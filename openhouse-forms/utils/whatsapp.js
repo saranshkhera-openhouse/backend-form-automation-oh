@@ -205,7 +205,7 @@ function notifyVisitCancelled(property, cancelledBy) {
   });
 }
 
-async function notifyAMASubmitted(property) {
+async function notifyAMASubmitted(property, submitterName) {
   const p = property;
   let dateStr = '-';
   if(p.deal_transfer_date){const dt=new Date(p.deal_transfer_date);dateStr=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`}
@@ -213,10 +213,11 @@ async function notifyAMASubmitted(property) {
   const bdManager = p.assigned_by || '-';
   const bdPhone = await getPhone(bdManager) || '-';
   const bodyValues = [p.uid||'-', dateStr, p.society_name||'-', towerUnit, bdManager, bdPhone];
-  // Fixed recipients: Saurabh, Akash Teotia + top managers + BD manager
+  // Fixed recipients: Saurabh, Akash Teotia + top managers + BD manager + submitter
   const topMgrs = await getTopManagers();
-  const recipients = [...new Set(['Saurabh', 'Akash Teotia', ...topMgrs])];
+  const recipients = [...new Set(['Saurabh', 'Akash Teotia', 'Priyanshi Bajpai', ...topMgrs])];
   if(bdManager && bdManager!=='-') recipients.push(bdManager);
+  if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   const results = await broadcastTemplate('ama_notification', bodyValues, recipients);
   // Additional fixed phone for AMA notifications

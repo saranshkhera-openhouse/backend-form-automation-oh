@@ -14,7 +14,7 @@
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
-  <div class="hdr-right"><div class="form-name">Deal Terms — For Owner</div></div>
+  <div class="hdr-right"><div class="form-name">Deal Terms (For Owner)</div></div>
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
@@ -54,7 +54,7 @@
       <button type="button" class="btn btn-out" id="previewBtn">Preview Deal Terms</button>
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
-      <button type="button" class="btn btn-out btn-sm" id="emailBtn" disabled style="flex:none;max-width:none;color:var(--ac2);border-color:var(--ac2)">📧 Send Email</button>
+      <button type="button" class="btn btn-out btn-sm" id="emailBtn" disabled style="flex:none;max-width:none;color:var(--ac2);border-color:var(--ac2)">📧 Preview Mail</button>
     </div>
 
     <div class="preview-section" id="previewSection">
@@ -201,12 +201,12 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const neftRef=d.deal_neft_reference||'[Transaction Reference No.]';
 
   // Recipient display
-  const toList=[ownerEmail].filter(Boolean);
-  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','accounts@openhouse.in',document.getElementById('dCoOwnerEmail').value,document.getElementById('dThirdEmail').value,document.getElementById('dBrokerEmail').value].filter(Boolean);
+  const toList=[ownerEmail,document.getElementById('dCoOwnerEmail').value,document.getElementById('dThirdEmail').value].filter(Boolean);
+  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','accounts@openhouse.in','saurabh@openhouse.in',document.getElementById('dBrokerEmail').value].filter(Boolean);
   document.getElementById('emailRecipients').innerHTML=`<strong>To:</strong> ${toList.join(', ')}${ccList.length?'<br><strong>Cc:</strong> '+ccList.join(', '):''}`;
 
   document.getElementById('emailPreviewBody').innerHTML=`
-<p><strong>Subject:</strong> Openhouse Offer | ${propRef} | ${sellerName}</p>
+<p><strong>Subject:</strong> ${currentUid} - Openhouse Offer | ${propRef} | ${sellerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Dear <strong>${sellerName}</strong>,</p>
 <p>Greetings from <strong>Openhouse</strong>!</p>
@@ -219,6 +219,15 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 2. AMA signing<br>
 3. Property Handover</p>
 <p>Should you have any questions or require any clarification regarding the above, please do not hesitate to reach out to us. We are here to assist you at every step.</p>
+<p><strong>List of documents required for AMA:</strong><br>
+1) Allotment Letter issued by the Builder<br>
+2) Possession Letter/Certificate by the Builder<br>
+3) Builder Buyer Agreement (if applicable)<br>
+4) Conveyance Deed/Sub Lease Deed/Sale Deed<br>
+5) Car Parking letter (if applicable)<br>
+6) Bank LOD (in case if active home loan)<br>
+7) Bank NOC (in case of home loan closure)<br>
+8) Aadhaar, PAN and Canceled Cheque of Co-applicant (if applicable)</p>
 <p>Warm regards<br>
 [Authorized Signatory Name]<br>
 [Contact Number]<br>

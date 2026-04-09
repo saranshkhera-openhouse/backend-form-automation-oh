@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Pending Amount Confirmation (For Owner)</title><link rel="stylesheet" href="/css/styles.css">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Key Handover Acknowledgement (For Owner)</title><link rel="stylesheet" href="/css/styles.css">
 <style>
 .email-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .email-overlay.open{display:flex}
@@ -11,7 +11,7 @@
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
-  <div class="hdr-center"><div class="form-name">Pending Amount Confirmation (For Owner)</div></div>
+  <div class="hdr-center"><div class="form-name">Key Handover Acknowledgement (For Owner)</div></div>
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
@@ -40,7 +40,7 @@
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
       <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Payment Receipt</button>
     </div>
-    <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Send Mail to Owner(s)</button>
+    <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Preview Mail</button>
   </form>
 </div>
 
@@ -123,15 +123,15 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const sellerName=propData.owner_broker_name||'Owner';
   const addr=[propData.unit_no,propData.tower_no,propData.society_name,propData.locality,propData.city].filter(Boolean).join(', ');
   const hdDate=document.getElementById('hdDate').value?new Date(document.getElementById('hdDate').value+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
-  const toList=[propData.owner_email].filter(Boolean).join(', ');
-  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','accounts@openhouse.in',propData.co_owner_email,propData.third_owner_email,propData.broker_email].filter(Boolean).join(', ');
+  const toList=[propData.owner_email,propData.co_owner_email,propData.third_owner_email].filter(Boolean).join(', ');
+  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','saurabh@openhouse.in','accounts@openhouse.in',propData.broker_email].filter(Boolean).join(', ');
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> ${toList}</p>
 ${ccList?`<p><strong>CC:</strong> ${ccList}</p>`:''}
 <p><strong>Subject:</strong> ${currentUid} - Key Handover Acknowledgement | ${addr}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Dear <strong>${sellerName}</strong>,</p>
-<p>I am writing to confirm that OpenHouse has collected the keys for your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>.</p>
+<p>This email serves as official confirmation that we collected the keys to your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>. Please consider this message as formal notification regarding the start of our timeline.</p>
 </div>`;
   document.getElementById('emailPreviewBody').innerHTML=html;
   document.getElementById('emailModal').classList.add('open');

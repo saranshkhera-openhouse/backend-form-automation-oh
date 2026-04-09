@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request Internal</title><link rel="stylesheet" href="/css/styles.css">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request (For Internal Team)</title><link rel="stylesheet" href="/css/styles.css">
 <style>
 .pu-item{border:2px dashed var(--bd);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:var(--bg);position:relative;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .pu-item:hover{border-color:var(--ac);background:rgba(0,0,0,.01)}
@@ -124,7 +124,7 @@
           <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
         </div>
         <div class="fg"><label>Outstanding Loan (in ₹)</label><input type="number" name="outstanding_loan"></div>
-        <div class="fg"><label>Willing to Pre-pay loan on his own?</label>
+        <div class="fg"><label>Willing to pay loan?</label>
           <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
       </div>
     </div>
@@ -162,7 +162,7 @@
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
     </div>
     <div style="margin-bottom:14px">
-      <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;border-color:var(--ac2);color:var(--ac2)">✉ Send Token Request Mail</button>
+      <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;border-color:var(--ac2);color:var(--ac2)">📧 Preview Mail</button>
     </div>
   </form>
 </div>
@@ -556,7 +556,7 @@ function showEmailPreview(){
   if(p.owner_property_doc_url)docLinks.push(`<strong>Property Ownership Doc:</strong> <a href="${p.owner_property_doc_url}" style="color:#1a73e8">View</a>`);
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> accounts@openhouse.in, rahool@openhouse.in</p>
-<p><strong>CC:</strong> supply@openhouse.in, akash.teotia@openhouse.in</p>
+<p><strong>CC:</strong> supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in</p>
 <p><strong>Subject:</strong> ${currentUid} - Token Request | ${propRef} | ${ownerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Greetings of the day!</p>

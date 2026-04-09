@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — CP Bill Generation</title><link rel="stylesheet" href="/css/styles.css">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — CP Bill Generation (For Internal Team)</title><link rel="stylesheet" href="/css/styles.css">
 <style>
 .photo-upload{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 .pu-item{border:2px dashed var(--bd);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:var(--bg);position:relative;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
@@ -41,7 +41,7 @@
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
-  <div class="hdr-center"><div class="form-name">CP Bill Generation</div></div>
+  <div class="hdr-center"><div class="form-name">CP Bill Generation (For Internal Team)</div></div>
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
@@ -136,7 +136,7 @@
     </div>
 
     <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit CP Bill</button>
-    <button type="button" class="btn btn-out" id="emailBtn" style="width:100%;margin-top:8px;display:none;color:var(--ac2);border-color:var(--ac2)">📧 Preview & Send Email</button>
+    <button type="button" class="btn btn-out" id="emailBtn" style="width:100%;margin-top:8px;display:none;color:var(--ac2);border-color:var(--ac2)">📧 Preview Mail</button>
   </div>
 </div>
 
@@ -445,7 +445,9 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">Cancelled Cheque</a>`);
   if(docUrls.cp_ama_signed)photoLines.push(`• <a href="${docUrls.cp_ama_signed}" target="_blank">AMA Signed (PDF)</a>`);
   const html=`<div style="font-size:13px;line-height:1.8">
-<p><strong>Subject:</strong> CP Bill Generation | ${addr}</p>
+<p><strong>To:</strong> prashant@openhouse.in, accounts@openhouse.in</p>
+<p><strong>CC:</strong> supply@openhouse.in</p>
+<p><strong>Subject:</strong> ${currentUid} - CP Bill Generation | ${addr}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Hi Accounts Team,</p>
 <p>Kindly prepare the CP bill for the below mentioned property:</p>
