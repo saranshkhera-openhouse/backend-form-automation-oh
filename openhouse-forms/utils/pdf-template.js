@@ -9,6 +9,7 @@ function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function pill(val,type){return val?`<span class="pill ${type}">${esc(val)}</span>`:'—'}
 function fval(v,cls=''){if(!v||v==='null')return `<div class="f-value empty">—</div>`;return `<div class="f-value ${cls}">${esc(String(v))}</div>`}
 
+// Robust document parser — handles string, array, double-encoded, leading spaces
 function parseDocs(raw){
   if(!raw) return [];
   if(Array.isArray(raw)) return raw.map(s=>typeof s==='string'?s.trim():s);
@@ -16,6 +17,7 @@ function parseDocs(raw){
     try{
       const parsed=JSON.parse(raw);
       if(Array.isArray(parsed)) return parsed.map(s=>typeof s==='string'?s.trim():s);
+      if(typeof parsed==='string'){try{const p2=JSON.parse(parsed);return Array.isArray(p2)?p2.map(s=>typeof s==='string'?s.trim():s):[]}catch(e2){}}
       return [];
     }catch(e){return []}
   }
@@ -31,16 +33,16 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
 
   const allDocs=['Allotment Letter issued by the Builder','Possession Letter/Certificate by the Builder','Builder Buyer Agreement','Conveyance Deed/Sale Deed/Registry'];
   const selectedDocs=parseDocs(p.documents_available);
+  console.log('PDF docs raw type:', typeof p.documents_available, '| parsed:', JSON.stringify(selectedDocs));
   const missingDocs=allDocs.filter(d=>!selectedDocs.includes(d));
   const availDocs=allDocs.filter(d=>selectedDocs.includes(d));
+  console.log('PDF avail:', availDocs.length, 'missing:', missingDocs.length);
 
   const hasNEFT=mode==='deal'?!!p.deal_neft_reference:!!(p.bank_account_number&&p.neft_reference);
   const neftBank=mode==='deal'?(p.deal_bank_name||''):(p.bank_name||'');
   const neftRef=mode==='deal'?(p.deal_neft_reference||''):(p.neft_reference||'');
   const neftDate=mode==='deal'?p.deal_transfer_date:p.token_transfer_date;
   const hdDate=p.key_handover_date?fmtDate(p.key_handover_date):'';
-
-  // Logic for Deposit Section
   const showRefundable = p.refundable_deposit && Number(p.refundable_deposit) !== 0;
 
   return `<!DOCTYPE html>
@@ -58,27 +60,26 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   .header-right{text-align:right}
   .receipt-tag{font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .receipt-date{font-size:10.5px;color:var(--muted);margin-top:2px}
-  .greeting-strip{background:var(--ink);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .greeting-strip{background:var(--ink);border-radius:8px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .greeting-left .hi{font-size:19px;font-weight:400;color:var(--white)}
   .greeting-left .sub{font-size:10.5px;color:rgba(255,255,255,.6);margin-top:3px;font-weight:300}
   .price-block{text-align:right}
   .price-label{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-light);opacity:.7;margin-bottom:2px}
   .price-val{font-size:24px;font-weight:600;color:var(--white);line-height:1}
-  
-  /* Deposit Grid Styles */
-  .deposit-grid { display: grid; gap: 6px; margin-bottom: 8px; }
-  .deposit-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .deposit-grid.cols-2 { grid-template-columns: 1fr 1fr; }
-  .deposit-card { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; text-align: left; }
-  .deposit-card .d-label { font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; font-weight: 500; }
-  .deposit-card .d-val { font-size: 14px; font-weight: 600; color: var(--ink); }
-
+  .deposit-grid{display:grid;gap:6px;margin-bottom:8px}
+  .deposit-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+  .deposit-grid.cols-2{grid-template-columns:1fr 1fr}
+  .deposit-card{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:8px 10px;text-align:left}
+  .deposit-card .d-label{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;font-weight:500}
+  .deposit-card .d-val{font-size:14px;font-weight:600;color:var(--ink)}
   .section-label{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:10px 0 4px;display:flex;align-items:center;gap:8px}
   .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
   .field-grid{display:grid;gap:4px}.field-grid.col2{grid-template-columns:1fr 1fr}.field-grid.col3{grid-template-columns:1fr 1fr 1fr}.field-grid.col4{grid-template-columns:1fr 1fr 1fr 1fr}
   .field{background:var(--white);border:1px solid var(--border);border-radius:5px;padding:6px 10px}
   .field .f-label{font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:3px}
   .field .f-value{font-size:11.5px;font-weight:500;color:var(--ink);line-height:1.2}
+  .field .f-value.mono{font-family:monospace;font-size:10.5px;letter-spacing:.04em}
+  .field .f-value.empty{color:#bbb;font-weight:300;font-size:10.5px;font-style:italic}
   .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9.5px;font-weight:500}
   .pill.green{background:var(--green-light);color:var(--green)}.pill.gold{background:#fef8ec;color:#8a6a1a}.pill.red{background:var(--red-light);color:var(--red)}
   .token-strip{background:var(--green-light);border:1.5px solid #b8d9c4;border-radius:7px;padding:8px 12px;display:flex;align-items:center;gap:10px}
@@ -106,7 +107,14 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   .print-bar{text-align:center;margin-bottom:12px}
   .print-bar button{font-family:'DM Sans',sans-serif;padding:8px 24px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;font-size:12px;font-weight:500}
   
+  /* Layout constraints for full-page structure */
+  .page-1-content, .page-2-content {display:flex;flex-direction:column;min-height:calc(100vh - 40px)}
+  .page-1-content .p1-body, .page-2-content .p2-body {flex:1}
+  .page-1-content > .footer, .page-2-content > .footer {margin-top:auto}
+  .page-1-content .section-label,.page-1-content .field-grid,.page-1-content .doc-grid,.page-1-content .token-strip{page-break-inside:avoid}
+  
   @media print{body{background:white;padding:12px 16px 16px}.page{max-width:100%}.print-bar{display:none!important}
+    .page-1-content, .page-2-content {min-height:calc(100vh - 28px)}
     .field,.doc-item,.terms-wrap,.token-strip,.greeting-strip,.deposit-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:.4cm .6cm;size:A4}}
 </style></head>
 <body><div class="page">
@@ -114,8 +122,8 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   <div class="page-1-content">
   <div class="p1-body">
   <div class="header">
-    <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"></div>
-    <div class="header-right"><div class="receipt-date">Generated: ${today}</div></div>
+    <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
+    <div class="header-right"><div class="receipt-tag"></div><div class="receipt-date">Generated: ${today}</div></div>
   </div>
   <div class="greeting-strip">
     <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
@@ -123,9 +131,9 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   </div>
 
   <div class="deposit-grid ${showRefundable ? 'cols-3' : 'cols-2'}">
-    <div class="deposit-card"><div class="d-label">Total Deposit</div><div class="d-val">${fmtCurrency(p.total_deposit)}</div></div>
-    <div class="deposit-card"><div class="d-label">Performance Guarantee</div><div class="d-val">${fmtCurrency(p.performance_guarantee)}</div></div>
-    ${showRefundable ? `<div class="deposit-card"><div class="d-label">Refundable Deposit</div><div class="d-val">${fmtCurrency(p.refundable_deposit)}</div></div>` : ''}
+    <div class="deposit-card"><div class="d-label">Total Deposit (₹)</div><div class="d-val">${fmtCurrency(p.total_deposit)}</div></div>
+    <div class="deposit-card"><div class="d-label">Performance Guarantee (₹)</div><div class="d-val">${fmtCurrency(p.performance_guarantee)}</div></div>
+    ${showRefundable ? `<div class="deposit-card"><div class="d-label">Refundable Deposit (₹)</div><div class="d-val">${fmtCurrency(p.refundable_deposit)}</div></div>` : ''}
   </div>
 
   <div class="section-label">Seller Details</div>
@@ -149,30 +157,67 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
     <div class="field"><div class="f-label">Registry Status</div><div class="f-value">${p.registry_status?pill(p.registry_status,p.registry_status==='Registered'?'green':'gold'):'—'}</div></div>
     <div class="field"><div class="f-label">Occupancy Status</div><div class="f-value">${p.occupancy_status?pill(p.occupancy_status,p.occupancy_status==='Vacant'?'gold':p.occupancy_status==='Tenant'?'red':'green'):'—'}</div></div>
   </div>
+  ${hdDate?`<div class="field-grid col2" style="margin-top:4px"><div class="field"><div class="f-label">Key Handover Date</div><div class="f-value">${hdDate}</div></div><div class="field"></div></div>`:''}
   <div class="section-label">Deal Terms</div>
   <div class="field-grid col2">
     <div class="field"><div class="f-label">Token Amount</div><div class="f-value">${fmtAmt(p.deal_token_amount||p.token_amount_requested)}</div></div>
     <div class="field"><div class="f-label">Guaranteed Sale Price</div><div class="f-value">${p.guaranteed_sale_price?fmtLakhs(p.guaranteed_sale_price):'—'}</div></div>
   </div>
+  ${(p.initial_period||p.grace_period)?`<div class="field-grid col2" style="margin-top:4px">
+    ${p.initial_period&&p.rent_payable_initial_period&&p.rent_payable_initial_period!=='N/A'?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days → ${fmtCurrency(p.rent_payable_initial_period)}/mo</div></div>`
+      :p.initial_period?`<div class="field"><div class="f-label">Initial Period</div><div class="f-value">${p.initial_period} days</div></div>`:'<div></div>'}
+    ${p.grace_period&&p.rent_payable_grace_period&&p.rent_payable_grace_period!=='N/A'?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days → ${fmtCurrency(p.rent_payable_grace_period)}/mo</div></div>`
+      :p.grace_period?`<div class="field"><div class="f-label">Grace Period</div><div class="f-value">${p.grace_period} days</div></div>`:'<div></div>'}
+  </div>`:''}
+  ${p.has_loan!=='No'&&(p.outstanding_loan||p.bank_name_loan||p.loan_pay_willingness)?`<div class="section-label">Loan Details</div>
+  <div class="field-grid col3">
+    <div class="field"><div class="f-label">Outstanding Loan</div>${fval(p.outstanding_loan?fmtCurrency(p.outstanding_loan):null)}</div>
+    <div class="field"><div class="f-label">Bank (Loan)</div>${fval(p.bank_name_loan)}</div>
+    <div class="field"><div class="f-label">Seller to Pay?</div><div class="f-value">${p.loan_pay_willingness?pill(p.loan_pay_willingness,p.loan_pay_willingness==='Yes'?'green':'red'):'—'}</div></div>
+  </div>`:''}
+  ${availDocs.length?`<div class="section-label">Documents Available</div>
+  <div class="doc-grid">
+    ${availDocs.map(d=>`<div class="doc-item"><div class="doc-box checked"></div>${esc(d.replace('issued by the Builder','').replace('/Certificate by the Builder','').replace('Conveyance Deed/Sale Deed/Registry','Conveyance Deed').trim())}</div>`).join('\n    ')}
+  </div>`:''}
+  ${missingDocs.length?`<div class="section-label">Documents Missing</div>
+  <div class="doc-grid">${missingDocs.map(d=>`<div class="doc-item missing"><div class="doc-box"></div>${esc(d.replace('issued by the Builder','').replace('/Certificate by the Builder','').replace('Conveyance Deed/Sale Deed/Registry','Conveyance Deed').trim())}</div>`).join('\n    ')}</div>`:''}
   <div class="section-label">Seller Bank Details</div>
   <div class="field-grid col3">
     <div class="field"><div class="f-label">Bank Name</div>${fval(p.cheque_bank_name||neftBank)}</div>
     <div class="field"><div class="f-label">Account Number</div>${fval(p.cheque_account_number||p.deal_bank_account_number,'mono')}</div>
     <div class="field"><div class="f-label">IFSC Code</div>${fval(p.cheque_ifsc||p.deal_ifsc_code,'mono')}</div>
   </div>
+  ${hasNEFT?`<div class="section-label">Token Transaction</div>
+  <div class="token-strip">
+    <div class="token-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="token-info"><div class="t-title">Token Paid — ${esc(neftBank||'Bank')}</div><div class="t-ref">NEFT Ref: ${esc(neftRef)}</div></div>
+    <div class="token-date"><div class="td-label">Transfer Date</div><div class="td-val">${fmtDate(neftDate)}</div></div>
+  </div>`:''}
+  ${p.token_remarks_printed?`<div class="section-label">Remarks</div>
+  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;font-size:10px;color:#374151;line-height:1.4;white-space:pre-wrap;max-height:80px;overflow:hidden">${esc(p.token_remarks_printed)}</div>`:''}
   </div><div class="footer">
-    <div><div class="footer-brand">Avano Technologies Private Limited</div><div class="footer-cin">CIN: U68200HR2024PTC123116 | Gurugram 122018</div></div>
-    <div class="footer-note"><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
+    <div><div class="footer-brand">Avano Technologies Private Limited</div>
+      <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
+    <div class="footer-note"><br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
   </div>
-  </div>
-  <div class="page-2-content" style="page-break-before:always; padding-top:20px;">
-    <div class="section-label">Terms &amp; Conditions</div>
-    <div class="terms-wrap"><h4>Please read carefully</h4>
-      <ul class="terms-list">
-        <li>Should any discrepancies arise during document verification, Openhouse reserves the right to withhold execution.</li>
-        <li>Society NOC charges are the seller's responsibility.</li>
-        <li>Smart locks will be installed for digital access at no cost.</li>
-      </ul>
+  </div><div class="page-2-content" style="page-break-before:always">
+    <div class="p2-body">
+      <div class="section-label">Terms &amp; Conditions</div>
+      <div class="terms-wrap"><h4>Please read carefully</h4>
+        <ul class="terms-list">
+          <li>Should any discrepancies or unavailability of required documents arise during the document verification process, Openhouse reserves the right to withhold execution of the agreement. In such an event, the advance token paid will be refunded to Openhouse in full.</li>
+          <li>All charges related to the Society NOC shall be the sole responsibility of the seller and must be settled at the time of ownership transfer.</li>
+          <li>To facilitate maximum visits to your property, Openhouse will install a smart lock on your property for digital access at no cost to you.</li>
+          <li>Openhouse is committed to facilitating a seamless, transparent, and mutually beneficial transaction.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer">
+      <div><div class="footer-brand">Avano Technologies Private Limited</div>
+        <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
+      <div class="footer-note"><br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
     </div>
   </div></div></body></html>`;
 }
+
+module.exports = { generateReceiptHTML };
