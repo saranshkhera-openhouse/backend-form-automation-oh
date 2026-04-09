@@ -476,10 +476,20 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   document.getElementById('ownerCheckName').textContent=ownerName;
   document.getElementById('ownerEditWrap').style.display='none';
   document.getElementById('coOwnerWrap').style.display='none';
-  document.getElementById('addCoOwnerChk').checked=false;
-  document.getElementById('coOwnerFields').style.display='none';
-  document.getElementById('coOwnerName').value='';
-  document.getElementById('coOwnerPhone').value='';
+  // Prefill co-owner from form fields
+  const existingCoName=document.getElementById('d_coowner').value.trim();
+  const existingCoPhone=document.getElementById('d_coowner_number').value.trim();
+  if(existingCoName){
+    document.getElementById('addCoOwnerChk').checked=true;
+    document.getElementById('coOwnerFields').style.display='block';
+    document.getElementById('coOwnerName').value=existingCoName;
+    document.getElementById('coOwnerPhone').value=existingCoPhone;
+  }else{
+    document.getElementById('addCoOwnerChk').checked=false;
+    document.getElementById('coOwnerFields').style.display='none';
+    document.getElementById('coOwnerName').value='';
+    document.getElementById('coOwnerPhone').value='';
+  }
   document.getElementById('ownerBtnRow').style.display='flex';
   document.getElementById('ownerBtnRow').innerHTML='<button type="button" class="btn btn-out" id="ownerCpBtn" style="flex:1">This is CP</button><button type="button" class="btn btn-dark" id="ownerOkBtn" style="flex:1">This is Owner ✓</button>';
   document.getElementById('ownerSaveRow').style.display='none';
@@ -499,6 +509,7 @@ document.getElementById('ownerBtnRow').addEventListener('click',(e)=>{
       const coPhone=document.getElementById('coOwnerPhone').value.trim();
       if(coPhone&&(coPhone.length!==10||coPhone[0]==='0')){toast('Enter valid 10-digit phone','err');return}
       document.getElementById('d_coowner').value=coName;
+      document.getElementById('d_coowner_number').value=coPhone;
     }
     document.getElementById('ownerCheckModal').style.display='none';
     showEmailPreview();
