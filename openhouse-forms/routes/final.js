@@ -1,6 +1,7 @@
 const express=require('express'),router=express.Router();
 const{generateInvoiceHTML}=require('../utils/invoice-template');
 const{sendKeyHandoverEmail}=require('../utils/email-sender');
+const{notifyKeyHandover}=require('../utils/whatsapp');
 const{visibilityFilter}=require('../utils/visibility');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -56,6 +57,7 @@ module.exports=function(pool){
         fromEmail:user.email,senderName,property:p
       });
       console.log(`Key handover email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
+      notifyKeyHandover(p, senderName).catch(e=>console.error('WA key_handover error:', e));
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('KeyHandoverEmail:',e);

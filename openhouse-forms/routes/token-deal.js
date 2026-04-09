@@ -2,7 +2,7 @@ const express=require('express'),router=express.Router();
 const{generateReceiptHTML}=require('../utils/pdf-template');
 const{sendDealTermsEmail}=require('../utils/email-sender');
 const{visibilityFilter}=require('../utils/visibility');
-const{getPhone}=require('../utils/whatsapp');
+const{getPhone,notifyDealTermsShared}=require('../utils/whatsapp');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -62,6 +62,7 @@ module.exports=function(pool){
         fromEmail:user.email,property:p,pdfHtml,signatoryName,signatoryPhone
       });
       console.log(`Deal email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
+      notifyDealTermsShared(p, signatoryName).catch(e=>console.error('WA deal_terms error:', e));
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('DealEmail:',e);

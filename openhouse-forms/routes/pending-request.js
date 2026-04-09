@@ -1,6 +1,7 @@
 const express=require('express'),router=express.Router();
 const{visibilityFilter}=require('../utils/visibility');
 const{sendPendingAmountEmail}=require('../utils/email-sender');
+const{notifyAMASigned}=require('../utils/whatsapp');
 
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -50,6 +51,7 @@ module.exports=function(pool){
         owner2_name:req.body.owner2_name,owner2_amount:req.body.owner2_amount
       });
       console.log(`Pending amount email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
+      notifyAMASigned(pRows[0], user.name||user.email).catch(e=>console.error('WA ama_signed error:', e));
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('PendingAmountEmail:',e);

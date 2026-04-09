@@ -180,7 +180,7 @@ function notifyVisitCompleted(property) {
 function notifyTokenRequest(property) {
   const p = property;
   const amt = p.token_amount_requested ? '₹' + Number(p.token_amount_requested).toLocaleString('en-IN') : '-';
-  const bodyValues = [amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
+  const bodyValues = [p.uid||'-',amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
   return getRecipients(p, [p.assigned_by, p.token_requested_by, 'Saurabh']).then(r => {
     console.log(`WA: token_request | UID: ${p.uid} | To: ${r.join(', ')}`);
     return broadcastTemplate('token_request', bodyValues, r);
@@ -223,9 +223,54 @@ async function notifyAMASubmitted(property, submitterName) {
   return results;
 }
 
+// Deal Terms shared to owner — triggered on Form 4 email send
+// Recipients: Top Managers, Submitter, Saurabh
+// To add more recipients: add names to the recipients array below
+async function notifyDealTermsShared(property, submitterName) {
+  const p = property;
+  const gsp = p.guaranteed_sale_price ? '₹' + Number(p.guaranteed_sale_price).toLocaleString('en-IN') + ' Lakhs' : '-';
+  const bodyValues = [p.uid||'-', p.society_name||'-', p.tower_no||'-', p.unit_no||'-', p.owner_broker_name||'-', p.co_owner||'-', gsp];
+  const topMgrs = await getTopManagers();
+  const recipients = [...new Set(['Saurabh', ...topMgrs])];
+  if(submitterName && submitterName!=='-') recipients.push(submitterName);
+  console.log(`WA: deal_terms_shared_to_owner | UID: ${p.uid} | To: ${recipients.join(', ')}`);
+  return broadcastTemplate('deal_terms_shared_to_owner', bodyValues, recipients);
+}
+
+// AMA Signed / Pending Amount Request — triggered on Form 6 email send
+// Recipients: Top Managers, Submitter, Saurabh, Akash Teotia, Amisha (9289996736)
+// To add more recipients: add names to the recipients array below
+async function notifyAMASigned(property, submitterName) {
+  const p = property;
+  const bodyValues = [p.uid||'-', p.society_name||'-', p.tower_no||'-', p.unit_no||'-', p.owner_broker_name||'-', p.co_owner||'-'];
+  const topMgrs = await getTopManagers();
+  const recipients = [...new Set(['Saurabh', 'Akash Teotia', ...topMgrs])];
+  if(submitterName && submitterName!=='-') recipients.push(submitterName);
+  console.log(`WA: ama_signed | UID: ${p.uid} | To: ${recipients.join(', ')}`);
+  const results = await broadcastTemplate('ama_signed', bodyValues, recipients);
+  // Amisha — fixed phone (not in users table yet)
+  await sendInterakt('9289996736', 'ama_signed', bodyValues);
+  return results;
+}
+
+// Key Handover — triggered on Form 7 email send
+// Recipients: Top Managers, Submitter, Saurabh
+// To add more recipients: add names to the recipients array below
+async function notifyKeyHandover(property, submitterName) {
+  const p = property;
+  const hdDate = p.key_handover_date ? fmtDate(p.key_handover_date) : '-';
+  const bodyValues = [p.uid||'-', p.society_name||'-', p.tower_no||'-', p.unit_no||'-', hdDate];
+  const topMgrs = await getTopManagers();
+  const recipients = [...new Set(['Saurabh', ...topMgrs])];
+  if(submitterName && submitterName!=='-') recipients.push(submitterName);
+  console.log(`WA: key_handover | UID: ${p.uid} | To: ${recipients.join(', ')}`);
+  return broadcastTemplate('key_handover', bodyValues, recipients);
+}
+
 module.exports = {
   init, getPhone, getTopManagers, getMidManagers,
   sendInterakt, broadcastTemplate, getRecipients,
   notifyVisitScheduled, notifyVisitCompleted, notifyTokenRequest,
-  notifyVisitReassigned, notifyVisitCancelled, notifyAMASubmitted
+  notifyVisitReassigned, notifyVisitCancelled, notifyAMASubmitted,
+  notifyDealTermsShared, notifyAMASigned, notifyKeyHandover
 };
