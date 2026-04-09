@@ -159,12 +159,12 @@ fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catc
 // Property document definitions
 const PROP_DOCS=[
   {key:'allotment_letter',label:'Allotment Letter'},
-  {key:'bba',label:'BBA (Builder Buyer Agreement)'},
   {key:'possession_letter',label:'Possession Letter'},
-  {key:'conveyance_deed',label:'Conveyance / Lease Deed / Tri-partite Agreement'},
-  {key:'sale_deed',label:'Sale Deed / Sub-Lease Deed'},
+  {key:'bba',label:'Builder Buyer Agreement'},
+  {key:'conveyance_deed',label:'Conveyance Deed/Sub Lease Deed/Sale Deed'},
   {key:'parking_allotment',label:'Parking Allotment Letter (if applicable)',optional:true},
-  {key:'gpa',label:'GPA (if applicable)',optional:true}
+  {key:'gpa',label:'GPA (if applicable)',optional:true},
+  {key:'noc',label:'NOC (if applicable)',optional:true}
 ];
 let propDocState={};
 
