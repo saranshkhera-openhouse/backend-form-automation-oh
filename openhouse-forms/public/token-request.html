@@ -489,7 +489,7 @@ document.getElementById('ownerBtnRow').addEventListener('click',(e)=>{
   const btn=e.target.closest('button');if(!btn)return;
   if(btn.id==='ownerOkBtn'){
     document.getElementById('coOwnerWrap').style.display='block';
-    document.getElementById('ownerBtnRow').innerHTML='<button type="button" class="btn btn-dark" id="ownerConfirmBtn" style="flex:1">Confirm & Send Email</button>';
+    document.getElementById('ownerBtnRow').innerHTML='<button type="button" class="btn btn-dark" id="ownerConfirmBtn" style="flex:1">Preview Email →</button>';
     return;
   }
   if(btn.id==='ownerConfirmBtn'){
