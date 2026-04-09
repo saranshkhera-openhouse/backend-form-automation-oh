@@ -84,7 +84,7 @@ function generateInvoiceHTML(p, baseUrl=''){
       <tr>
         <td><strong>Remaining Amount</strong><br><span class="mono">via A/C ${esc(finalAc)}</span></td>
         <td><span class="mono">${esc(p.neft_reference||'—')}</span></td>
-        <td>${fmtDate(p.token_transfer_date)}</td>
+        <td>${fmtDate(p.deal_transfer_date)}</td>
         <td>${fmtCur(p.remaining_amount)}</td>
       </tr>
     </tbody>

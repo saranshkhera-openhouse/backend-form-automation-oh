@@ -343,7 +343,7 @@ function buildModal(p){
     ${ef('GSP (Lakhs)','guaranteed_sale_price',p.guaranteed_sale_price,'number')}${ef('PG (₹)','performance_guarantee',p.performance_guarantee,'number')}${ef('Initial Period (d)','initial_period',p.initial_period,'number')}
     ${ef('Rent (Initial)','rent_payable_initial_period',p.rent_payable_initial_period)}${ef('Grace Period (d)','grace_period',p.grace_period,'number')}${ef('Rent (Grace)','rent_payable_grace_period',p.rent_payable_grace_period)}
     ${efSel('Has Loan?','has_loan',p.has_loan,['Yes','No'])}${ef('Outstanding Loan (₹)','outstanding_loan',p.outstanding_loan,'number')}${ef('Loan Bank','bank_name_loan',p.bank_name_loan)}
-    ${ef('Loan A/C','loan_account_number',p.loan_account_number)}${efSel('Willing to Pre-pay loan on his own?','loan_pay_willingness',p.loan_pay_willingness,['Yes','No'])}${efRO('Documents',docs.length?docs.join(', '):'—')}
+    ${ef('Loan A/C','loan_account_number',p.loan_account_number)}${efSel('Willing to Pay','loan_pay_willingness',p.loan_pay_willingness,['Yes','No'])}${efRO('Documents',docs.length?docs.join(', '):'—')}
     ${efArea('Remarks (Printed)','token_remarks_printed',p.token_remarks_printed)}${efArea('Remarks (Internal)','token_remarks',p.token_remarks)}${efRO('Submitted',fmtDtFull(p.token_submitted_at))}
   </div></div>`;
 
@@ -366,7 +366,7 @@ function buildModal(p){
 
   html+=`<div class="prev-section"><div class="prev-section-t">Final / PSD (Form 6)</div><div class="prev-grid">
     ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Bank Name','bank_name',p.bank_name)}${ef('Account No','bank_account_number',p.bank_account_number)}
-    ${ef('IFSC','ifsc_code',p.ifsc_code)}${ef('Transfer Date','token_transfer_date',p.token_transfer_date,'date')}${ef('NEFT Ref','neft_reference',p.neft_reference)}
+    ${ef('IFSC','ifsc_code',p.ifsc_code)}${ef('Transfer Date','deal_transfer_date',p.deal_transfer_date,'date')}${ef('NEFT Ref','neft_reference',p.neft_reference)}
     ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
   </div></div>`;
 
@@ -416,7 +416,7 @@ document.getElementById('fQ').addEventListener('input',render);document.getEleme
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];loadData()});
 
 const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','pending-request','final','cp-bill','listing'];
-const FORM_LABELS={schedule:'Schedule',visit:'Visit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA','pending-request':'Pend Req',final:'PSD','cp-bill':'CP Bill',listing:'Listing'};
+const FORM_LABELS={schedule:'Schedule',visit:'Audit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA','pending-request':'AMA Ack',final:'Key Handover','cp-bill':'CP Bill',listing:'Listing'};
 let allUsers=[],userSortCol='email',userSortDir='asc';
 async function loadUsers(){try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}}
 function getUserRole(u){return u.is_admin?3:u.is_top_manager?2:u.is_manager?1:0}

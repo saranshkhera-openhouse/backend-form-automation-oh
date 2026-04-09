@@ -41,7 +41,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   const hasNEFT=mode==='deal'?!!p.deal_neft_reference:!!(p.bank_account_number&&p.neft_reference);
   const neftBank=mode==='deal'?(p.deal_bank_name||''):(p.bank_name||'');
   const neftRef=mode==='deal'?(p.deal_neft_reference||''):(p.neft_reference||'');
-  const neftDate=mode==='deal'?p.deal_transfer_date:p.token_transfer_date;
+  const neftDate=p.deal_transfer_date;
   const hdDate=p.key_handover_date?fmtDate(p.key_handover_date):'';
   const showRefundable = p.refundable_deposit && Number(p.refundable_deposit) !== 0;
 

@@ -111,7 +111,7 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference','owner_email','co_owner_email','co_owner_number','third_owner_email','broker_email',
       'ama_sanction_url','ama_soa_url','ama_lod_url','ama_pg_non_forfeitable','ama_beta_max_pct','ama_beta_min_pct',
       'ama_maint_alignment','ama_elec_alignment','ama_special_terms','ama_prop_docs',
-      'remaining_amount','bank_name','bank_account_number','ifsc_code','token_transfer_date','neft_reference',
+      'remaining_amount','bank_name','bank_account_number','ifsc_code','neft_reference',
       'listing_asking_price','listing_availability','listing_highlights','listing_description',
       'super_area','carpet_area',
       'society_age_years','total_units','maintenance_charges','society_move_in_charges','electricity_charges',
