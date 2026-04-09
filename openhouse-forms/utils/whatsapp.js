@@ -220,8 +220,6 @@ async function notifyAMASubmitted(property, submitterName) {
   if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   const results = await broadcastTemplate('ama_notification', bodyValues, recipients);
-  // Additional fixed phone for AMA notifications
-  await sendInterakt('9217709032', 'ama_notification', bodyValues);
   return results;
 }
 
