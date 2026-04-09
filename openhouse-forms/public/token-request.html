@@ -162,7 +162,7 @@
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
     </div>
     <div style="margin-bottom:14px">
-      <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;border-color:var(--ac2);color:var(--ac2)">📧 Preview Mail</button>
+      <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;border-color:var(--ac2);color:var(--ac2)">📧 Confirm And Proceed</button>
     </div>
   </form>
 </div>
@@ -548,8 +548,9 @@ function showEmailPreview(){
   const ownerName=p.owner_broker_name||'Owner';
   const tokenAmt=p.token_amount_requested?'₹ '+Number(p.token_amount_requested).toLocaleString('en-IN'):'';
   const propRef=[tower,unit].filter(Boolean).join(' - ')+(tower||unit?' ':'')+(society);
+  const chequeUrl=document.getElementById('chequeUrl').value||p.cheque_image_url;
   const docLinks=[];
-  if(p.cheque_image_url)docLinks.push(`<strong>Cancelled Cheque:</strong> <a href="${p.cheque_image_url}" style="color:#1a73e8">View</a>`);
+  if(chequeUrl)docLinks.push(`<strong>Cancelled Cheque:</strong> <a href="${chequeUrl}" style="color:#1a73e8">View</a>`);
   if(p.owner_pan_url)docLinks.push(`<strong>PAN Card:</strong> <a href="${p.owner_pan_url}" style="color:#1a73e8">View</a>`);
   if(p.owner_aadhaar_front_url)docLinks.push(`<strong>Aadhaar Front:</strong> <a href="${p.owner_aadhaar_front_url}" style="color:#1a73e8">View</a>`);
   if(p.owner_aadhaar_back_url)docLinks.push(`<strong>Aadhaar Back:</strong> <a href="${p.owner_aadhaar_back_url}" style="color:#1a73e8">View</a>`);
