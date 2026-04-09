@@ -12,6 +12,12 @@
 .pu-item.missing{border-color:var(--red);background:#fef2f2}
 .pu-item.missing .pu-icon{color:var(--red)}
 .pu-item.missing .pu-label{color:var(--red)}
+.email-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.email-overlay.open{display:flex}
+.email-box{background:var(--sf);border-radius:12px;width:100%;max-width:640px;margin:40px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.email-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.email-body{padding:16px;max-height:60vh;overflow-y:auto}
+.email-ftr{padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
 </style></head>
 <body>
 <header class="hdr">
@@ -198,6 +204,17 @@
         <button type="button" class="btn btn-out" id="ownerBackBtn" style="flex:1">← Back</button>
         <button type="button" class="btn btn-dark" id="ownerSaveBtn" style="flex:1">Save Changes</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="email-overlay" id="emailModal">
+  <div class="email-box">
+    <div class="email-hdr"><h3 style="font-size:14px;margin:0">Email Preview</h3><button class="btn btn-out btn-sm" onclick="closeEmailModal()">✕</button></div>
+    <div class="email-body" id="emailPreviewBody"></div>
+    <div class="email-ftr">
+      <button class="btn btn-out btn-sm" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn btn-dark btn-sm" id="confirmSendBtn">✉ Confirm & Send</button>
     </div>
   </div>
 </div>
@@ -484,8 +501,7 @@ document.getElementById('ownerBtnRow').addEventListener('click',(e)=>{
       document.getElementById('d_coowner').value=coName;
     }
     document.getElementById('ownerCheckModal').style.display='none';
-    if(!confirm('Send token request email?'))return;
-    sendEmail();
+    showEmailPreview();
     return;
   }
   if(btn.id==='ownerCpBtn'){
@@ -525,6 +541,37 @@ document.getElementById('ownerSaveBtn').addEventListener('click',async()=>{
   }catch(e){toast(e.message||'Failed','err');btn.disabled=false;btn.textContent='Save Changes'}
 });
 document.getElementById('ownerCheckModal').addEventListener('click',e=>{if(e.target===e.currentTarget){e.currentTarget.style.display='none'}});
+
+function showEmailPreview(){
+  const p=loadedData||{};
+  const tower=p.tower_no||'';const unit=p.unit_no||'';const society=p.society_name||'Property';
+  const ownerName=p.owner_broker_name||'Owner';
+  const tokenAmt=p.token_amount_requested?'₹ '+Number(p.token_amount_requested).toLocaleString('en-IN'):'';
+  const propRef=[tower,unit].filter(Boolean).join(' - ')+(tower||unit?' ':'')+(society);
+  const docLinks=[];
+  if(p.cheque_image_url)docLinks.push(`<strong>Cancelled Cheque:</strong> <a href="${p.cheque_image_url}" style="color:#1a73e8">View</a>`);
+  if(p.owner_pan_url)docLinks.push(`<strong>PAN Card:</strong> <a href="${p.owner_pan_url}" style="color:#1a73e8">View</a>`);
+  if(p.owner_aadhaar_front_url)docLinks.push(`<strong>Aadhaar Front:</strong> <a href="${p.owner_aadhaar_front_url}" style="color:#1a73e8">View</a>`);
+  if(p.owner_aadhaar_back_url)docLinks.push(`<strong>Aadhaar Back:</strong> <a href="${p.owner_aadhaar_back_url}" style="color:#1a73e8">View</a>`);
+  if(p.owner_property_doc_url)docLinks.push(`<strong>Property Ownership Doc:</strong> <a href="${p.owner_property_doc_url}" style="color:#1a73e8">View</a>`);
+  const html=`<div style="font-size:13px;line-height:1.8">
+<p><strong>To:</strong> accounts@openhouse.in, rahool@openhouse.in</p>
+<p><strong>CC:</strong> supply@openhouse.in, akash.teotia@openhouse.in</p>
+<p><strong>Subject:</strong> ${currentUid} - Token Request | ${propRef} | ${ownerName}</p>
+<hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
+<p>Greetings of the day!</p>
+<p>Dear Accounts Team,</p>
+<p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${propRef}</strong>. PFA the deal terms.</p>
+<p>Rahool Sureka, please approve the same.</p>
+${docLinks.length?docLinks.map(l=>`<p>${l}</p>`).join(''):''}
+<p style="margin-top:10px;font-size:11px;color:var(--tx3)">📎 Token Request PDF will be attached</p>
+</div>`;
+  document.getElementById('emailPreviewBody').innerHTML=html;
+  document.getElementById('emailModal').classList.add('open');
+}
+function closeEmailModal(){document.getElementById('emailModal').classList.remove('open')}
+document.getElementById('emailModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEmailModal()});
+document.getElementById('confirmSendBtn').addEventListener('click',()=>{closeEmailModal();sendEmail()});
 
 async function sendEmail(){
   const btn=document.getElementById('emailBtn');const orig=btn.innerHTML;
