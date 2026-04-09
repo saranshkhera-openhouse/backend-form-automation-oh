@@ -31,7 +31,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   const firstName=p.first_name||rawOwner.split(' ')[0]||'Owner';
   const logoUrl=baseUrl?baseUrl+'/images/logo.png':'/images/logo.png';
 
-  const allDocs=['Allotment Letter issued by the Builder','Possession Letter/Certificate by the Builder','Builder Buyer Agreement','Conveyance Deed/Sale Deed/Registry'];
+  const allDocs=['Allotment Letter issued by the Builder','Possession Letter/Certificate by the Builder','Builder Buyer Agreement','Conveyance Deed/Sub Lease Deed/Sale Deed'];
   const selectedDocs=parseDocs(p.documents_available);
   console.log('PDF docs raw type:', typeof p.documents_available, '| parsed:', JSON.stringify(selectedDocs));
   const missingDocs=allDocs.filter(d=>!selectedDocs.includes(d));
