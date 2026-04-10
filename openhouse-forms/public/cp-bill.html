@@ -81,7 +81,10 @@
         <div class="fg"><label>CP Phone <span class="req">*</span></label><input type="tel" name="cp_phone" id="f_cpPhone" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^1-9]/g,'').slice(0,1)+this.value.slice(1).replace(/\D/g,'').slice(0,9)" required><div class="err-msg">Required (10 digits, no leading 0)</div></div>
       </div>
       <div class="r2">
-        <div class="fg"><label>CP Firm</label><input type="text" name="cp_firm" id="f_cpFirm"></div>
+        <div class="fg"><label>CP Type <span class="req">*</span></label>
+          <select id="f_cpType" required onchange="toggleCpType()"><option value="">Select...</option><option value="INDIVIDUAL">Individual</option><option value="HAS_FIRM">Has a Firm</option></select><div class="err-msg">Required</div></div>
+        <div class="fg" id="cpFirmNameWrap" style="display:none"><label>Firm Name <span class="req">*</span></label><input type="text" id="f_cpFirmName" oninput="document.getElementById('f_cpFirm').value=this.value"><div class="err-msg">Required</div></div>
+        <input type="hidden" name="cp_firm" id="f_cpFirm">
         <div class="fg"><label>CP Email</label><input type="email" name="cp_email" id="f_cpEmail"></div>
       </div>
     </div>
@@ -109,18 +112,18 @@
       <div class="fg"><label>Total Amount (₹)</label><input type="text" id="f_totalAmount" class="pre" readonly></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="docsCard">
       <div class="card-t">Documents Upload for CP <span class="req">*</span></div>
       <div class="photo-upload">
-        <div class="pu-item" id="pu_aadhaarFront" onclick="pickFile('cp_aadhaar_front')">
+        <div class="pu-item cp-individual-doc" id="pu_aadhaarFront" onclick="pickFile('cp_aadhaar_front')">
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_front" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_front')">
         </div>
-        <div class="pu-item" id="pu_aadhaarBack" onclick="pickFile('cp_aadhaar_back')">
+        <div class="pu-item cp-individual-doc" id="pu_aadhaarBack" onclick="pickFile('cp_aadhaar_back')">
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_back" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_back')">
         </div>
-        <div class="pu-item" id="pu_pan" onclick="pickFile('cp_pan_card')">
+        <div class="pu-item cp-individual-doc" id="pu_pan" onclick="pickFile('cp_pan_card')">
           <div class="pu-icon">📄</div><div class="pu-label">PAN Card <span class="req">*</span></div>
           <input type="file" id="fi_cp_pan_card" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_pan_card')">
         </div>
@@ -179,11 +182,13 @@ async function setCpMode(mode){
     // Clear fields for new CP
     document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
     document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
+    document.getElementById('f_cpType').value='';document.getElementById('f_cpFirmName').value='';toggleCpType();
     resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque']);
   }else{
     document.getElementById('cpCodeWrap').style.display='none';cpCode='';
     document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
     document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
+    document.getElementById('f_cpType').value='';document.getElementById('f_cpFirmName').value='';toggleCpType();
     resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque']);
     document.getElementById('cpSearchInput').focus();
   }
@@ -232,6 +237,16 @@ async function importCp(id){
     document.getElementById('f_cpName').value=cp.cp_name||'';
     document.getElementById('f_cpPhone').value=cp.cp_phone||'';
     document.getElementById('f_cpFirm').value=cp.cp_firm||'';
+    const firmVal=cp.cp_firm?cp.cp_firm.trim():'';
+    if(!firmVal||firmVal.toUpperCase()==='INDIVIDUAL'){
+      document.getElementById('f_cpType').value='INDIVIDUAL';
+      document.getElementById('f_cpFirm').value='INDIVIDUAL';
+    }else{
+      document.getElementById('f_cpType').value='HAS_FIRM';
+      document.getElementById('f_cpFirmName').value=firmVal;
+      document.getElementById('f_cpFirm').value=firmVal;
+    }
+    toggleCpType();
     document.getElementById('f_cpEmail').value=cp.cp_email||'';
     document.getElementById('cpSearchInput').value=cp.cp_name+' ('+cp.cp_code+')';
     document.getElementById('cpSearchResults').classList.remove('open');
@@ -314,6 +329,17 @@ async function loadUID(uid){
     document.getElementById('f_cpName').value=d.cp_name||'';
     document.getElementById('f_cpPhone').value=d.cp_phone||'';
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
+    // Set CP type from DB: null/empty/INDIVIDUAL → Individual, else → Has a Firm
+    const firmVal=d.cp_firm?d.cp_firm.trim():'';
+    if(!firmVal||firmVal.toUpperCase()==='INDIVIDUAL'){
+      document.getElementById('f_cpType').value='INDIVIDUAL';
+      document.getElementById('f_cpFirm').value='INDIVIDUAL';
+    }else{
+      document.getElementById('f_cpType').value='HAS_FIRM';
+      document.getElementById('f_cpFirmName').value=firmVal;
+      document.getElementById('f_cpFirm').value=firmVal;
+    }
+    toggleCpType();
     document.getElementById('f_cpEmail').value=d.cp_email||'';
     // Restore CP code if exists, otherwise auto-generate for new
     if(d.cp_code){cpCode=d.cp_code;cpMasterId=null;cpMode='new';
@@ -363,6 +389,18 @@ async function loadUID(uid){
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('cpBillForm').style.display='none'}
 }
 
+function toggleCpType(){
+  const type=document.getElementById('f_cpType').value;
+  const isFirm=type==='HAS_FIRM';
+  document.getElementById('cpFirmNameWrap').style.display=isFirm?'block':'none';
+  // Show/hide individual-only docs (aadhaar front/back, PAN)
+  document.querySelectorAll('.cp-individual-doc').forEach(el=>{el.style.display=isFirm?'none':'flex'});
+  // Expand cheque to span 2 when firm (like AMA signed)
+  document.getElementById('pu_cheque').style.gridColumn=isFirm?'span 2':'';
+  // Set hidden cp_firm
+  if(!isFirm){document.getElementById('f_cpFirm').value='INDIVIDUAL';document.getElementById('f_cpFirmName').value=''}
+  else{document.getElementById('f_cpFirm').value=document.getElementById('f_cpFirmName').value}
+}
 function pickFile(key){document.getElementById('fi_'+key).click()}
 async function uploadDoc(input,key){
   if(!input.files.length)return;if(!cloudCfg){toast('Upload not ready','warn');return}
@@ -391,7 +429,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   body.cp_master_id=cpMasterId||null;
   body.cp_name=document.getElementById('f_cpName').value.trim();
   body.cp_phone=cpPhone;
-  body.cp_firm=document.getElementById('f_cpFirm').value.trim();
+  const cpType=document.getElementById('f_cpType').value;
+  body.cp_firm=cpType==='HAS_FIRM'?document.getElementById('f_cpFirmName').value.trim():'INDIVIDUAL';
   body.cp_email=document.getElementById('f_cpEmail').value.trim();
   body.deal_type='Acquisition/Supply';
   body.oh_acquired_model=document.getElementById('f_model').value.trim();
@@ -410,14 +449,20 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
 
   if(!body.cp_name){toast('CP Name required','err');return}
   if(!body.cp_phone){toast('CP Phone required','err');return}
+  const cpType=document.getElementById('f_cpType').value;
+  if(!cpType){toast('Select CP Type','err');return}
+  if(cpType==='HAS_FIRM'&&!document.getElementById('f_cpFirmName').value.trim()){toast('Firm Name required','err');return}
   if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
   if(!body.to_be_released_now){toast('To be Released Now required','err');return}
 
-  // Validate all documents are uploaded — skip if already submitted
+  // Validate documents — skip if already submitted
   const alreadySubmitted=!!(loadedData&&loadedData.cp_bill_submitted_at);
   if(!alreadySubmitted){
-    const DOC_LABELS={cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
+    const isFirm=cpType==='HAS_FIRM';
+    const DOC_LABELS=isFirm
+      ?{cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'}
+      :{cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
     const missingDocs=[];
     Object.values(ITEM_MAP).forEach(id=>document.getElementById(id).classList.remove('missing'));
     for(const[key,label]of Object.entries(DOC_LABELS)){
@@ -438,10 +483,13 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Select a UID','warn');return}
   const addr=[loadedData?.unit_no,loadedData?.tower_no,loadedData?.society_name,loadedData?.locality,loadedData?.city].filter(Boolean).join(', ');
   const amaStatus=docUrls.cp_ama_signed?'Signed (attached below)':'Not signed yet';
+  const previewCpType=document.getElementById('f_cpType').value;
+  const previewIsFirm=previewCpType==='HAS_FIRM';
+  const cpFirmDisplay=previewIsFirm?document.getElementById('f_cpFirmName').value||'—':'Individual';
   const photoLines=[];
-  if(docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
-  if(docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
-  if(docUrls.cp_pan_card)photoLines.push(`• <a href="${docUrls.cp_pan_card}" target="_blank">PAN Card</a>`);
+  if(!previewIsFirm&&docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
+  if(!previewIsFirm&&docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
+  if(!previewIsFirm&&docUrls.cp_pan_card)photoLines.push(`• <a href="${docUrls.cp_pan_card}" target="_blank">PAN Card</a>`);
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">Cancelled Cheque</a>`);
   if(docUrls.cp_ama_signed)photoLines.push(`• <a href="${docUrls.cp_ama_signed}" target="_blank">AMA Signed (PDF)</a>`);
   const html=`<div style="font-size:13px;line-height:1.8">
@@ -454,7 +502,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <table style="font-size:13px;line-height:2">
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Deal Type:</td><td>Acquisition/Supply</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Name:</td><td>${document.getElementById('f_cpName').value||'—'}</td></tr>
-<tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Firm:</td><td>${document.getElementById('f_cpFirm').value||'—'}</td></tr>
+<tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Firm:</td><td>${cpFirmDisplay}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Mobile Number:</td><td>${document.getElementById('f_cpPhone').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Email ID:</td><td>${document.getElementById('f_cpEmail').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Property Address:</td><td>${addr}</td></tr>
