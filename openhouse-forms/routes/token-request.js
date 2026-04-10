@@ -90,9 +90,7 @@ module.exports=function(pool){
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
         fromEmail:user.email,property:p,pdfHtml,threadId:p.email_thread_id||null,references:p.email_message_id||null
       });
-      console.log(`THREAD DEBUG: uid=${req.params.uid} p.email_thread_id=${p.email_thread_id} result.threadId=${result.threadId} result.rfc822MsgId=${result.rfc822MsgId}`);
       if(!p.email_thread_id&&result.threadId){
-        console.log(`THREAD SAVE: Saving threadId=${result.threadId} msgId=${result.rfc822MsgId} for ${req.params.uid}`);
         await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=COALESCE($3,email_message_id) WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
       }
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);

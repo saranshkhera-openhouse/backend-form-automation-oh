@@ -53,15 +53,22 @@ function chunkBase64(base64str) {
   return lines.join('\r\n');
 }
 
+// Generate RFC 2822 Message-ID
+function generateMsgId() {
+  return `<${Date.now()}.${Math.random().toString(36).slice(2)}@openhouse.in>`;
+}
+
 // Build RFC 2822 MIME email with PDF attachment
 function buildMimeEmail({ from, to, cc, subject, bodyHtml, pdfBuffer, pdfFilename, references }) {
   const boundary = 'boundary_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
   const pdfBase64 = chunkBase64(Buffer.from(pdfBuffer).toString('base64'));
+  const msgId = generateMsgId();
 
   const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
 
   const mime = [
     'MIME-Version: 1.0',
+    `Message-ID: ${msgId}`,
     `From: ${from}`,
     `To: ${to}`,
     cc ? `Cc: ${cc}` : null,
@@ -88,8 +95,9 @@ function buildMimeEmail({ from, to, cc, subject, bodyHtml, pdfBuffer, pdfFilenam
   ].filter(line => line !== null).join('\r\n');
 
   // Gmail API needs URL-safe base64
-  return Buffer.from(mime, 'utf-8').toString('base64')
+  const raw = Buffer.from(mime, 'utf-8').toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return { raw, msgId };
 }
 
 // Send email via Gmail API using user's OAuth tokens
@@ -145,7 +153,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
 
   console.log('Building MIME email...');
   const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in','supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in',fromEmail);
-  const raw = buildMimeEmail({
+  const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
     to: emailTo,
     cc: emailCc,
@@ -165,8 +173,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   });
 
   console.log(`Email sent! messageId: ${result.data.id}`);
-  const rfc822MsgId = await getMessageId(gmail, result.data.id);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId };
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
 }
 
 // Send Deal Terms email to seller with PDF attachment
@@ -228,7 +235,7 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
 
   console.log('Building MIME email with PDF attachment...');
   const {to:dtTo,cc:dtCc}=testOverride(p.uid,'deal_terms',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
-  const raw = buildMimeEmail({
+  const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
     to: dtTo,
     cc: dtCc,
@@ -243,15 +250,16 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
   if (threadId) dtReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: dtReqBody });
   console.log(`Deal Terms email sent! messageId: ${result.data.id}`);
-  const rfc822MsgId = await getMessageId(gmail, result.data.id);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId };
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
 }
 
 // Build simple HTML email (no attachment)
 function buildSimpleMimeEmail({ from, to, cc, subject, bodyHtml, references }) {
   const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
+  const msgId = generateMsgId();
   const mime = [
     'MIME-Version: 1.0',
+    `Message-ID: ${msgId}`,
     `From: ${from}`,
     `To: ${to}`,
     cc ? `Cc: ${cc}` : null,
@@ -263,18 +271,11 @@ function buildSimpleMimeEmail({ from, to, cc, subject, bodyHtml, references }) {
     '',
     bodyHtml
   ].filter(line => line !== null).join('\r\n');
-  return Buffer.from(mime, 'utf-8').toString('base64')
+  const raw = Buffer.from(mime, 'utf-8').toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return { raw, msgId };
 }
 
-// Fetch RFC 2822 Message-ID header from a sent message (for threading on recipient side)
-async function getMessageId(gmail, messageId) {
-  try {
-    const msg = await gmail.users.messages.get({ userId: 'me', id: messageId, format: 'metadata', metadataHeaders: ['Message-Id'] });
-    const hdr = msg.data.payload.headers.find(h => h.name.toLowerCase() === 'message-id');
-    return hdr ? hdr.value : null;
-  } catch(e) { console.error('getMessageId error:', e.message); return null; }
-}
 
 // Send CP Bill email via Gmail API
 async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderName, property, threadId, references }) {
@@ -324,7 +325,7 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
 </body></html>`;
 
   const {to:cpTo,cc:cpCc}=testOverride(p.uid,'cp_bill','prashant@openhouse.in,accounts@openhouse.in','supply@openhouse.in',fromEmail);
-  const raw = buildSimpleMimeEmail({
+  const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: cpTo,
     cc: cpCc,
@@ -337,8 +338,7 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
   if (threadId) cpReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: cpReqBody });
   console.log(`CP Bill email sent! messageId: ${result.data.id}`);
-  const rfc822MsgId = await getMessageId(gmail, result.data.id);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId };
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
 }
 
 async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, owner1_name, owner1_amount, owner2_name, owner2_amount, threadId, references }) {
@@ -383,7 +383,7 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
   const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in'].filter(Boolean);
 
   const {to:paTo,cc:paCc}=testOverride(p.uid,'pending_amount',toList.join(', '),ccList.length?ccList.join(', '):'',fromEmail);
-  const raw = buildSimpleMimeEmail({
+  const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: paTo,
     cc: paCc,
@@ -396,8 +396,7 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
   if (threadId) paReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: paReqBody });
   console.log(`Pending amount email sent! messageId: ${result.data.id}`);
-  const rfc822MsgId = await getMessageId(gmail, result.data.id);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId };
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
 }
 
 async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, senderName, property, threadId, references }) {
@@ -425,7 +424,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
 
   const {to:khTo,cc:khCc}=testOverride(p.uid,'key_handover',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
-  const raw = buildSimpleMimeEmail({
+  const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: khTo,
     cc: khCc,
@@ -438,8 +437,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   if (threadId) khReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: khReqBody });
   console.log(`Key handover email sent! messageId: ${result.data.id}`);
-  const rfc822MsgId = await getMessageId(gmail, result.data.id);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId };
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
 }
 
 // Send offer email to property owner with PDF attachment
