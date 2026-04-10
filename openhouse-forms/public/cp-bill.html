@@ -449,7 +449,6 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
 
   if(!body.cp_name){toast('CP Name required','err');return}
   if(!body.cp_phone){toast('CP Phone required','err');return}
-  const cpType=document.getElementById('f_cpType').value;
   if(!cpType){toast('Select CP Type','err');return}
   if(cpType==='HAS_FIRM'&&!document.getElementById('f_cpFirmName').value.trim()){toast('Firm Name required','err');return}
   if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
