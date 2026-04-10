@@ -8,7 +8,7 @@ const TEST_OVERRIDES = {
   'OHGC1001': {
     token_request:    { to: 'ashish@openhouse.in,sahaj.dureja@openhouse.in', cc: 'durejasahaj@gmail.com' },
     deal_terms:       { to: 'saransh.khera@openhouse.in', cc: 'saranshkhera5@gmail.com' },
-    pending_amount:   { to: 'ashish@openhouse.in', cc: null },
+    pending_amount:   { to: 'ashish@openhouse.in,sahaj.dureja@openhouse.in', cc: null },
     key_handover:     { to: 'ashish@openhouse.in', cc: null },
     cp_bill:          { to: 'ashish@openhouse.in', cc: null },
   }
