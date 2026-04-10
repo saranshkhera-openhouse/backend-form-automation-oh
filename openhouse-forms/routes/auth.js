@@ -40,7 +40,7 @@ module.exports = function(pool) {
   // ── Admin: list all users ──
   router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { rows } = await pool.query('SELECT id,email,name,allowed_forms,is_admin,is_manager,is_active,created_at FROM users ORDER BY created_at DESC');
+      const { rows } = await pool.query('SELECT id,email,name,phone,allowed_forms,is_admin,is_manager,is_top_manager,can_assign,can_visit,is_active,created_at FROM users ORDER BY name ASC');
       res.json(rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -48,14 +48,15 @@ module.exports = function(pool) {
   // ── Admin: add user ──
   router.post('/users', isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { email, name, allowed_forms, is_admin, is_manager } = req.body;
+      const { email, name, phone, allowed_forms, is_admin, is_manager, is_top_manager, can_assign, can_visit } = req.body;
       if (!email) return res.status(400).json({ error: 'Email required' });
       const forms = allowed_forms || [];
       const { rows } = await pool.query(
-        `INSERT INTO users(email,name,allowed_forms,is_admin,is_manager) VALUES(LOWER($1),$2,$3,$4,$5)
-         ON CONFLICT(email) DO UPDATE SET name=$2,allowed_forms=$3,is_admin=$4,is_manager=$5,is_active=TRUE
-         RETURNING id,email,name,allowed_forms,is_admin,is_manager,is_active`,
-        [email.trim(), name || '', forms, is_admin || false, is_manager || false]
+        `INSERT INTO users(email,name,phone,allowed_forms,is_admin,is_manager,is_top_manager,can_assign,can_visit)
+         VALUES(LOWER($1),$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT(email) DO UPDATE SET name=$2,phone=COALESCE(NULLIF($3,''),users.phone),allowed_forms=$4,is_admin=$5,is_manager=$6,is_top_manager=$7,can_assign=$8,can_visit=$9,is_active=TRUE
+         RETURNING id,email,name,phone,allowed_forms,is_admin,is_manager,is_top_manager,can_assign,can_visit,is_active`,
+        [email.trim(), name || '', phone || null, forms, is_admin || false, is_manager || false, is_top_manager || false, can_assign || false, can_visit || false]
       );
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -64,12 +65,13 @@ module.exports = function(pool) {
   // ── Admin: update user ──
   router.put('/users/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { name, allowed_forms, is_admin, is_manager, is_active } = req.body;
+      const { name, phone, allowed_forms, is_admin, is_manager, is_top_manager, can_assign, can_visit, is_active } = req.body;
       const { rows } = await pool.query(
-        `UPDATE users SET name=COALESCE($1,name),allowed_forms=COALESCE($2,allowed_forms),
-         is_admin=COALESCE($3,is_admin),is_manager=COALESCE($6,is_manager),is_active=COALESCE($4,is_active) WHERE id=$5
-         RETURNING id,email,name,allowed_forms,is_admin,is_manager,is_active`,
-        [name, allowed_forms, is_admin, is_active, req.params.id, is_manager]
+        `UPDATE users SET name=COALESCE($1,name),phone=COALESCE($7,phone),allowed_forms=COALESCE($2,allowed_forms),
+         is_admin=COALESCE($3,is_admin),is_manager=COALESCE($6,is_manager),is_top_manager=COALESCE($8,is_top_manager),
+         can_assign=COALESCE($9,can_assign),can_visit=COALESCE($10,can_visit),is_active=COALESCE($4,is_active) WHERE id=$5
+         RETURNING id,email,name,phone,allowed_forms,is_admin,is_manager,is_top_manager,can_assign,can_visit,is_active`,
+        [name, allowed_forms, is_admin, is_active, req.params.id, is_manager, phone, is_top_manager, can_assign, can_visit]
       );
       if (!rows.length) return res.status(404).json({ error: 'User not found' });
       res.json(rows[0]);

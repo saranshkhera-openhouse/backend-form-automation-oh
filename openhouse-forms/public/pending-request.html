@@ -185,7 +185,7 @@ async function loadData(){
     document.getElementById('ro_coowner').value=propData.co_owner||'—';
 
     const td=Number(propData.total_deposit)||0;
-    const tk=Number(propData.token_amount_requested)||0;
+    const tk=Number(propData.deal_token_amount)||0;
     const rem=td-tk;
     document.getElementById('ro_totalDeposit').value=td?'₹ '+td.toLocaleString('en-IN'):'—';
     document.getElementById('ro_tokenPaid').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';

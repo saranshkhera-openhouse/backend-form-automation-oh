@@ -19,7 +19,7 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query(`UPDATE properties SET
         unit_no=$27,tower_no=$28,floor=$29,area_sqft=$30,demand_price=$31,
-        token_requested_by=$1,token_amount_requested=$2,
+        token_requested_by=$1,deal_token_amount=$2,
         cheque_image_url=$3,cheque_bank_name=$4,cheque_account_number=$5,cheque_ifsc=$6,
         registry_status=$7,occupancy_status=$8,key_handover_date=$9,
         guaranteed_sale_price=$10,performance_guarantee=$11,
@@ -33,7 +33,7 @@ module.exports=function(pool){
         total_deposit=$39,refundable_deposit=$40,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
-        [d.token_requested_by||null,d.token_amount_requested!=null&&d.token_amount_requested!==''?parseFloat(d.token_amount_requested):null,
+        [d.token_requested_by||null,d.deal_token_amount!=null&&d.deal_token_amount!==''?parseFloat(d.deal_token_amount):null,
          d.cheque_image_url||null,d.cheque_bank_name||null,d.cheque_account_number||null,d.cheque_ifsc||null,
          d.registry_status||null,d.occupancy_status||null,d.key_handover_date||null,
          parseFloat(d.guaranteed_sale_price)||null,d.performance_guarantee!=null&&d.performance_guarantee!==''?parseFloat(d.performance_guarantee):null,

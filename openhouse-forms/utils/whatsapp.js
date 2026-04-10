@@ -179,7 +179,7 @@ function notifyVisitCompleted(property) {
 
 function notifyTokenRequest(property) {
   const p = property;
-  const amt = p.token_amount_requested ? '₹' + Number(p.token_amount_requested).toLocaleString('en-IN') : '-';
+  const amt = p.deal_token_amount!=null&&p.deal_token_amount!=='' ? '₹' + Number(p.deal_token_amount).toLocaleString('en-IN') : '-';
   const bodyValues = [p.uid||'-',amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
   return getRecipients(p, [p.assigned_by, p.token_requested_by, 'Saurabh']).then(r => {
     console.log(`WA: token_request | UID: ${p.uid} | To: ${r.join(', ')}`);

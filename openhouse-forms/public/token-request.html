@@ -67,7 +67,7 @@
 
     <div class="card"><div class="card-t">Token Request</div>
       <div class="fg"><label>Requested By <span class="req">*</span></label><select name="token_requested_by" id="selReqBy" required><option value="">Select...</option></select><div class="err-msg">Required</div></div>
-      <div class="fg"><label>Token Amount (₹) <span class="req">*</span></label><input type="number" name="token_amount_requested" required><div class="err-msg">Required</div></div></div>
+      <div class="fg"><label>Token Amount (₹) <span class="req">*</span></label><input type="number" name="deal_token_amount" required><div class="err-msg">Required</div></div></div>
 
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">Cheque Details</div>
       <div class="fg"><label>Cancelled Cheque</label>
@@ -388,7 +388,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('d_ask').value=d.demand_price||'';
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     const sr=(n,v)=>{if(!v)return;const rb=document.querySelector(`input[name="${n}"][value="${v}"]`);if(rb)rb.checked=true};
-    sv('token_amount_requested',d.token_amount_requested);sv('token_requested_by',d.token_requested_by);
+    sv('deal_token_amount',d.deal_token_amount!=null?d.deal_token_amount:(d.token_amount_requested!=null?d.token_amount_requested:''));sv('token_requested_by',d.token_requested_by);
     sv('cheque_account_number',d.cheque_account_number);sv('cheque_bank_name',d.cheque_bank_name);sv('cheque_ifsc',d.cheque_ifsc);
     if(d.cheque_image_url)chequeUploader.setUrl(d.cheque_image_url);
     sv('registry_status',d.registry_status);sv('occupancy_status',d.occupancy_status);
@@ -557,7 +557,7 @@ function showEmailPreview(){
   const p=loadedData||{};
   const tower=p.tower_no||'';const unit=p.unit_no||'';const society=p.society_name||'Property';
   const ownerName=p.owner_broker_name||'Owner';
-  const tokenAmt=p.token_amount_requested?'₹ '+Number(p.token_amount_requested).toLocaleString('en-IN'):'';
+  const tokenAmt=p.deal_token_amount!=null&&p.deal_token_amount!==''?'₹ '+Number(p.deal_token_amount).toLocaleString('en-IN'):'';
   const propRef=[tower,unit].filter(Boolean).join(' - ')+(tower||unit?' ':'')+(society);
   const chequeUrl=document.getElementById('chequeUrl').value||p.cheque_image_url;
   const docLinks=[];

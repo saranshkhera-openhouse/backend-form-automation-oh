@@ -337,7 +337,7 @@ function buildModal(p){
   </div></div>`;
 
   html+=`<div class="prev-section"><div class="prev-section-t">Token Request (Form 3)</div><div class="prev-grid">
-    ${ef('Requested By','token_requested_by',p.token_requested_by)}${ef('Token Amount (₹)','token_amount_requested',p.token_amount_requested,'number')}${pvLink('Cheque Image',p.cheque_image_url)}
+    ${ef('Requested By','token_requested_by',p.token_requested_by)}${ef('Token Amount (₹)','deal_token_amount',p.deal_token_amount,'number')}${pvLink('Cheque Image',p.cheque_image_url)}
     ${ef('Cheque Bank','cheque_bank_name',p.cheque_bank_name)}${ef('Cheque A/C','cheque_account_number',p.cheque_account_number)}${ef('Cheque IFSC','cheque_ifsc',p.cheque_ifsc)}
     ${efSel('Registry','registry_status',p.registry_status,['Registered','Unregistered','Conveyance Done'])}${efSel('Occupancy','occupancy_status',p.occupancy_status,['Vacant','Tenant','Self Occupied'])}${ef('Key Handover','key_handover_date',p.key_handover_date,'date')}
     ${ef('GSP (Lakhs)','guaranteed_sale_price',p.guaranteed_sale_price,'number')}${ef('Total Deposit (₹)','total_deposit',p.total_deposit,'number')}${ef('PG (₹)','performance_guarantee',p.performance_guarantee,'number')}

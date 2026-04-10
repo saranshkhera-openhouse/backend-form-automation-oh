@@ -160,7 +160,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   ${hdDate?`<div class="field-grid col2" style="margin-top:4px"><div class="field"><div class="f-label">Key Handover Date</div><div class="f-value">${hdDate}</div></div><div class="field"></div></div>`:''}
   <div class="section-label">Deal Terms</div>
   <div class="field-grid col2">
-    <div class="field"><div class="f-label">Token Amount</div><div class="f-value">${fmtAmt(p.deal_token_amount!=null?p.deal_token_amount:p.token_amount_requested)}</div></div>
+    <div class="field"><div class="f-label">Token Amount</div><div class="f-value">${fmtAmt(p.deal_token_amount)}</div></div>
     <div class="field"><div class="f-label">Guaranteed Sale Price</div><div class="f-value">${p.guaranteed_sale_price?fmtLakhs(p.guaranteed_sale_price):'—'}</div></div>
   </div>
   ${(p.initial_period||p.grace_period)?`<div class="field-grid col2" style="margin-top:4px">
