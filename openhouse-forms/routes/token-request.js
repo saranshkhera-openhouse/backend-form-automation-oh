@@ -33,7 +33,7 @@ module.exports=function(pool){
         total_deposit=$39,refundable_deposit=$40,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
-        [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
+        [d.token_requested_by||null,d.token_amount_requested!=null&&d.token_amount_requested!==''?parseFloat(d.token_amount_requested):null,
          d.cheque_image_url||null,d.cheque_bank_name||null,d.cheque_account_number||null,d.cheque_ifsc||null,
          d.registry_status||null,d.occupancy_status||null,d.key_handover_date||null,
          parseFloat(d.guaranteed_sale_price)||null,d.performance_guarantee!=null&&d.performance_guarantee!==''?parseFloat(d.performance_guarantee):null,

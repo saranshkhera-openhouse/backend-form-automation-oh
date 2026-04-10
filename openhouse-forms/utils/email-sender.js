@@ -100,7 +100,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const tower = p.tower_no || '';
   const unit = p.unit_no || '';
   const society = p.society_name || 'Property';
-  const tokenAmt = p.token_amount_requested ? '₹ ' + Number(p.token_amount_requested).toLocaleString('en-IN') : '';
+  const tokenAmt = p.token_amount_requested!=null&&p.token_amount_requested!=='' ? '₹ ' + Number(p.token_amount_requested).toLocaleString('en-IN') : '';
 
   const subject = `${p.uid} - Token Request | ${tower}${tower && unit ? ' -' : ''}${unit} ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
 
@@ -163,7 +163,7 @@ async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, proper
   const unit = p.unit_no || '';
   const society = p.society_name || 'Property';
   const propRef = [tower, unit].filter(Boolean).join(' ') + (tower || unit ? ' - ' : '') + society;
-  const tokenAmt = p.deal_token_amount || p.token_amount_requested;
+  const tokenAmt = p.deal_token_amount!=null ? p.deal_token_amount : p.token_amount_requested;
   const tokenAmtFmt = tokenAmt ? 'INR ' + Number(tokenAmt).toLocaleString('en-IN') + '/-' : 'INR [Token Amount]';
   const neftRef = p.deal_neft_reference || '[Transaction Reference No.]';
 

@@ -112,7 +112,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
   const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
   try{const r=await fetch(`${API}/api/token-deal/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
     document.getElementById('fUid').value=propData.uid;currentUid=uid;
-    document.getElementById('dealAmt').value=propData.deal_token_amount||propData.token_amount_requested||'';
+    document.getElementById('dealAmt').value=propData.deal_token_amount!=null?propData.deal_token_amount:(propData.token_amount_requested!=null?propData.token_amount_requested:'');
     document.getElementById('dAc').value=propData.deal_bank_account_number||propData.cheque_account_number||'';
     document.getElementById('dBank').value=propData.deal_bank_name||propData.cheque_bank_name||'';
     document.getElementById('dIfsc').value=propData.deal_ifsc_code||propData.cheque_ifsc||'';
@@ -196,7 +196,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const sellerName=d.owner_broker_name||'Seller';
   const tower=d.tower_no||'';const unit=d.unit_no||'';const soc=d.society_name||'Property';
   const propRef=[tower,unit].filter(Boolean).join(' ')+(tower||unit?' - ':'')+soc;
-  const tokenAmt=d.deal_token_amount||d.token_amount_requested;
+  const tokenAmt=d.deal_token_amount!=null?d.deal_token_amount:(d.token_amount_requested!=null?d.token_amount_requested:null);
   const tokenFmt=tokenAmt?'INR '+Number(tokenAmt).toLocaleString('en-IN')+'/-':'INR [Token Amount]';
   const neftRef=d.deal_neft_reference||'[Transaction Reference No.]';
 
