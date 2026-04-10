@@ -22,7 +22,7 @@ function buildCorePayload(row){
     last_name:row.last_name,
     contact_no:row.contact_no,
     listing_asking_price:row.listing_asking_price,
-    demand_price:row.demand_price,
+    demand_price:0,
   };
 }
 
