@@ -206,7 +206,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   document.getElementById('emailRecipients').innerHTML=`<strong>To:</strong> ${toList.join(', ')}${ccList.length?'<br><strong>Cc:</strong> '+ccList.join(', '):''}`;
 
   document.getElementById('emailPreviewBody').innerHTML=`
-<p><strong>Subject:</strong> ${currentUid} - Openhouse Offer | ${propRef} | ${sellerName}</p>
+<p><strong>Subject:</strong> ${currentUid} - Openhouse Offer | ${propData?.unit_no||''} ${propData?.tower_no||''} - ${propData?.society_name||'Property'} | ${sellerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Dear <strong>${sellerName}</strong>,</p>
 <p>Greetings from <strong>Openhouse</strong>!</p>

@@ -128,7 +128,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> ${toList}</p>
 ${ccList?`<p><strong>CC:</strong> ${ccList}</p>`:''}
-<p><strong>Subject:</strong> ${currentUid} - Key Handover Acknowledgement | ${addr}</p>
+<p><strong>Subject:</strong> ${currentUid} - Openhouse Offer | ${propData?.unit_no||''} ${propData?.tower_no||''} - ${propData?.society_name||'Property'} | ${sellerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Dear <strong>${sellerName}</strong>,</p>
 <p>This email serves as official confirmation that we collected the keys to your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>. Please consider this message as formal notification regarding the start of our timeline.</p>
