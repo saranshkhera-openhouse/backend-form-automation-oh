@@ -49,10 +49,10 @@ module.exports=function(pool){
         fromEmail:user.email,senderName:user.name||user.email,property:pRows[0],
         owner1_name:req.body.owner1_name,owner1_amount:req.body.owner1_amount,
         owner2_name:req.body.owner2_name,owner2_amount:req.body.owner2_amount,
-        threadId:pRows[0].email_thread_id||null
+        threadId:pRows[0].email_thread_id||null,references:pRows[0].email_message_id||null
       });
       if(!pRows[0].email_thread_id&&result.threadId){
-        await pool.query('UPDATE properties SET email_thread_id=$1 WHERE uid=$2',[result.threadId,req.params.uid]);
+        await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=COALESCE($3,email_message_id) WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
       }
       console.log(`Pending amount email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       notifyAMASigned(pRows[0], user.name||user.email).catch(e=>console.error('WA ama_signed error:', e));

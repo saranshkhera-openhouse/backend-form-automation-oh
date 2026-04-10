@@ -88,10 +88,10 @@ module.exports=function(pool){
       const pdfHtml=generateReceiptHTML(p,'deal',baseUrl);
       const result=await sendTokenRequestEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,property:p,pdfHtml,threadId:p.email_thread_id||null
+        fromEmail:user.email,property:p,pdfHtml,threadId:p.email_thread_id||null,references:p.email_message_id||null
       });
       if(!p.email_thread_id&&result.threadId){
-        await pool.query('UPDATE properties SET email_thread_id=$1 WHERE uid=$2',[result.threadId,req.params.uid]);
+        await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=COALESCE($3,email_message_id) WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
       }
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
