@@ -192,7 +192,7 @@ function notifyVisitReassigned(property, newExec) {
   const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),newExec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
   return getRecipients(p, [newExec, p.assigned_by]).then(r => {
     console.log(`WA: visit_reassigned | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_reassigned', bodyValues, r);
+    return broadcastTemplate('visit_reassigned_2', bodyValues, r);
   });
 }
 
