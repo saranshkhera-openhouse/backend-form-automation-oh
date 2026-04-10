@@ -305,8 +305,16 @@ async function loadUID(uid){
     buildPropDocs(existingDocs);
 
     document.getElementById('amaForm').style.display='block';
-    document.getElementById('listPropBtn').style.display='inline-flex';
-    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.ama_submitted_at?' (Submitted)':''}`;
+    const lp=document.getElementById('listPropBtn');
+    lp.style.display='inline-flex';
+    if(d.core_home_id){
+      lp.textContent='Seller dashboard linked';
+      lp.disabled=true;
+    }else{
+      lp.textContent='Create Seller Dashboard';
+      lp.disabled=false;
+    }
+    st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.ama_submitted_at?' (Submitted)':''}${d.core_home_id?` · Home #${d.core_home_id}`:''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('amaForm').style.display='none';document.getElementById('listPropBtn').style.display='none'}
 }
 
@@ -317,10 +325,37 @@ document.getElementById('listPropBtn').addEventListener('click',()=>{
   document.getElementById('listPropBody').innerHTML=`<div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 14px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px"><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Tower</span><div style="font-weight:600">${ld.tower_no||'—'}</div></div><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Unit</span><div style="font-weight:600">${ld.unit_no||'—'}</div></div><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Society</span><div style="font-weight:600">${ld.society_name||'—'}</div></div><div><span style="font-size:9px;text-transform:uppercase;color:var(--tx3);font-weight:600">Seller</span><div style="font-weight:600">${ld.owner_broker_name||'—'}</div></div></div></div>`;
   document.getElementById('listPropModal').style.display='flex';
 });
-document.getElementById('listPropConfirmBtn').addEventListener('click',()=>{
-  // Placeholder — functionality to be added later
-  document.getElementById('listPropModal').style.display='none';
-  toast('Create Seller Dashboard — coming soon','ok');
+document.getElementById('listPropConfirmBtn').addEventListener('click',async()=>{
+  if(!currentUid){toast('Load a property first','warn');return}
+  const btn=document.getElementById('listPropConfirmBtn');
+  btn.disabled=true;
+  try{
+    console.log('[ama-details] create-seller-dashboard: request',{uid:currentUid});
+    const r=await fetch(`${API}/api/ama-details/create-seller-dashboard`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      credentials:'same-origin',
+      body:JSON.stringify({uid:currentUid})
+    });
+    const j=await r.json().catch(()=>({}));
+    console.log('[ama-details] create-seller-dashboard: response',{status:r.status,body:j});
+    if(!r.ok)throw new Error(j.error||j.message||`Request failed (${r.status})`);
+    document.getElementById('listPropModal').style.display='none';
+    toast(j.message||(j.idempotent?'Already linked':'Seller dashboard created'),'ok');
+    if(j.homeId!=null||j.home_id!=null){
+      const hid=j.homeId??j.home_id;
+      if(loadedData)loadedData.core_home_id=hid;
+      const lp=document.getElementById('listPropBtn');
+      lp.textContent='Seller dashboard linked';
+      lp.disabled=true;
+      const st=document.getElementById('prefillStatus');
+      if(st&&st.classList.contains('ok'))st.textContent=`Loaded: ${currentUid}${loadedData&&loadedData.ama_submitted_at?' (Submitted)':''} · Home #${hid}`;
+    }
+  }catch(e){
+    console.error('[ama-details] create-seller-dashboard',e);
+    toast(e.message||'Failed','err');
+  }finally{
+    btn.disabled=false;
+  }
 });
 document.getElementById('listPropModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.style.display='none'});
 

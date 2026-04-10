@@ -227,6 +227,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_code') THEN ALTER TABLE properties ADD COLUMN cp_code TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='total_deposit') THEN ALTER TABLE properties ADD COLUMN total_deposit REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='refundable_deposit') THEN ALTER TABLE properties ADD COLUMN refundable_deposit REAL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='core_home_id') THEN ALTER TABLE properties ADD COLUMN core_home_id INTEGER; END IF;
 END $$;
 `;
 
