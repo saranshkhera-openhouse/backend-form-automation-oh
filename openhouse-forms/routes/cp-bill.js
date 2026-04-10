@@ -118,11 +118,15 @@ module.exports=function(pool){
       }
       const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!pRows.length)return res.status(404).json({error:'Property not found'});
-      if(!pRows[0].cp_bill_submitted_at)return res.status(400).json({error:'CP Bill form must be submitted first'});
+      const p=pRows[0];
+      if(!p.cp_bill_submitted_at)return res.status(400).json({error:'CP Bill form must be submitted first'});
       const result=await sendCPBillEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,senderName:user.name||user.email,property:pRows[0]
+        fromEmail:user.email,senderName:user.name||user.email,property:p,threadId:p.email_thread_id||null
       });
+      if(!p.email_thread_id&&result.threadId){
+        await pool.query('UPDATE properties SET email_thread_id=$1 WHERE uid=$2',[result.threadId,req.params.uid]);
+      }
       console.log(`CP Bill email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
     }catch(e){

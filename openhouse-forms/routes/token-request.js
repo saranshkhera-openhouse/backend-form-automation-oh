@@ -82,17 +82,20 @@ module.exports=function(pool){
       }
       const{rows:pRows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!pRows.length)return res.status(404).json({error:'Property not found'});
-      if(!pRows[0].token_submitted_at)return res.status(400).json({error:'Token request must be submitted first'});
+      const p=pRows[0];
+      if(!p.token_submitted_at)return res.status(400).json({error:'Token request must be submitted first'});
       const baseUrl=process.env.APP_URL||'';
-      const pdfHtml=generateReceiptHTML(pRows[0],'deal',baseUrl);
+      const pdfHtml=generateReceiptHTML(p,'deal',baseUrl);
       const result=await sendTokenRequestEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,property:pRows[0],pdfHtml
+        fromEmail:user.email,property:p,pdfHtml,threadId:p.email_thread_id||null
       });
+      if(!p.email_thread_id&&result.threadId){
+        await pool.query('UPDATE properties SET email_thread_id=$1 WHERE uid=$2',[result.threadId,req.params.uid]);
+      }
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
-      // Fire-and-forget WhatsApp notification after email sent
-      notifyTokenRequest(pRows[0]).catch(e=>console.error('WA token notify error:',e));
+      notifyTokenRequest(p).catch(e=>console.error('WA token notify error:',e));
     }catch(e){
       console.error('SendEmail:',e);
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){

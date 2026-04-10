@@ -54,8 +54,11 @@ module.exports=function(pool){
       const senderName=user.name||user.email.split('@')[0];
       const result=await sendKeyHandoverEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,senderName,property:p
+        fromEmail:user.email,senderName,property:p,threadId:p.email_thread_id||null
       });
+      if(!p.email_thread_id&&result.threadId){
+        await pool.query('UPDATE properties SET email_thread_id=$1 WHERE uid=$2',[result.threadId,req.params.uid]);
+      }
       console.log(`Key handover email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       notifyKeyHandover(p, senderName).catch(e=>console.error('WA key_handover error:', e));
       res.json({success:true,messageId:result.messageId});

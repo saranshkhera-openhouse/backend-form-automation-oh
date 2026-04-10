@@ -71,7 +71,7 @@ function buildMimeEmail({ from, to, cc, subject, bodyHtml, pdfBuffer, pdfFilenam
 }
 
 // Send email via Gmail API using user's OAuth tokens
-async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml }) {
+async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml, threadId }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -133,9 +133,11 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   });
 
   console.log(`MIME raw length: ${raw.length} chars. Sending via Gmail API...`);
+  const reqBody = { raw };
+  if (threadId) reqBody.threadId = threadId;
   const result = await gmail.users.messages.send({
     userId: 'me',
-    requestBody: { raw }
+    requestBody: reqBody
   });
 
   console.log(`Email sent! messageId: ${result.data.id}`);
@@ -143,7 +145,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
 }
 
 // Send Deal Terms email to seller with PDF attachment
-async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml, signatoryName, signatoryPhone }) {
+async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, property, pdfHtml, signatoryName, signatoryPhone, threadId }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -210,7 +212,9 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
     pdfFilename
   });
 
-  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  const dtReqBody = { raw };
+  if (threadId) dtReqBody.threadId = threadId;
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: dtReqBody });
   console.log(`Deal Terms email sent! messageId: ${result.data.id}`);
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
@@ -234,7 +238,7 @@ function buildSimpleMimeEmail({ from, to, cc, subject, bodyHtml }) {
 }
 
 // Send CP Bill email via Gmail API
-async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderName, property }) {
+async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderName, property, threadId }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -287,12 +291,14 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
     bodyHtml
   });
 
-  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  const cpReqBody = { raw };
+  if (threadId) cpReqBody.threadId = threadId;
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: cpReqBody });
   console.log(`CP Bill email sent! messageId: ${result.data.id}`);
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
-async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, owner1_name, owner1_amount, owner2_name, owner2_amount }) {
+async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, owner1_name, owner1_amount, owner2_name, owner2_amount, threadId }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -341,12 +347,14 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
     bodyHtml
   });
 
-  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  const paReqBody = { raw };
+  if (threadId) paReqBody.threadId = threadId;
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: paReqBody });
   console.log(`Pending amount email sent! messageId: ${result.data.id}`);
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
 
-async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, senderName, property }) {
+async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, senderName, property, threadId }) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -378,7 +386,9 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
     bodyHtml
   });
 
-  const result = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+  const khReqBody = { raw };
+  if (threadId) khReqBody.threadId = threadId;
+  const result = await gmail.users.messages.send({ userId: 'me', requestBody: khReqBody });
   console.log(`Key handover email sent! messageId: ${result.data.id}`);
   return { messageId: result.data.id, threadId: result.data.threadId };
 }
