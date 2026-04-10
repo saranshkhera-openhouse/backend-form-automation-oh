@@ -41,7 +41,6 @@ CREATE TABLE IF NOT EXISTS properties (
 
   -- Form 3: Token Request
   token_requested_by TEXT,
-  token_amount_requested REAL,
   cheque_image_url TEXT, cheque_bank_name TEXT, cheque_account_number TEXT, cheque_ifsc TEXT,
   co_owner TEXT, registry_status TEXT, occupancy_status TEXT, key_handover_date DATE,
   guaranteed_sale_price REAL, performance_guarantee REAL,
@@ -143,7 +142,6 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='deal_token_amount') THEN ALTER TABLE properties ADD COLUMN deal_token_amount REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='remaining_amount') THEN ALTER TABLE properties ADD COLUMN remaining_amount REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='schedule_submitted_at') THEN ALTER TABLE properties ADD COLUMN schedule_submitted_at TIMESTAMPTZ; END IF;
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='token_amount_requested') THEN ALTER TABLE properties ADD COLUMN token_amount_requested REAL; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='token_deal_submitted_at') THEN ALTER TABLE properties ADD COLUMN token_deal_submitted_at TIMESTAMPTZ; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='token_is_draft') THEN ALTER TABLE properties ADD COLUMN token_is_draft BOOLEAN DEFAULT FALSE; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='final_submitted_at') THEN ALTER TABLE properties ADD COLUMN final_submitted_at TIMESTAMPTZ; END IF;
