@@ -2,6 +2,48 @@
 const { google } = require('googleapis');
 const puppeteer = require('puppeteer');
 
+let _pool = null;
+function init(pool) { _pool = pool; }
+
+// Add managers to CC if any of their team members are in TO or CC
+async function addManagerEmails(toStr, ccStr) {
+  if (!_pool) return ccStr;
+  try {
+    // Collect all recipient emails
+    const allEmails = [...(toStr||'').split(','), ...(ccStr||'').split(',')]
+      .map(e => e.trim().toLowerCase()).filter(Boolean);
+    if (!allEmails.length) return ccStr;
+
+    // Find names of all recipients
+    const { rows: recipientRows } = await _pool.query(
+      `SELECT name FROM users WHERE LOWER(email) = ANY($1) AND is_active=TRUE`,
+      [allEmails]
+    );
+    const recipientNames = recipientRows.map(r => r.name?.toLowerCase()).filter(Boolean);
+    if (!recipientNames.length) return ccStr;
+
+    // Find managers whose team includes any recipient
+    const { rows: mgrRows } = await _pool.query(
+      `SELECT email, name, managed_team FROM users WHERE is_manager=TRUE AND is_active=TRUE AND managed_team IS NOT NULL`
+    );
+
+    const mgrEmails = [];
+    for (const mgr of mgrRows) {
+      const team = typeof mgr.managed_team === 'string' ? JSON.parse(mgr.managed_team || '[]') : mgr.managed_team || [];
+      const teamLower = team.map(t => t.toLowerCase());
+      const hasTeamMember = recipientNames.some(n => teamLower.includes(n));
+      if (hasTeamMember && mgr.email && !allEmails.includes(mgr.email.toLowerCase())) {
+        mgrEmails.push(mgr.email);
+      }
+    }
+
+    if (!mgrEmails.length) return ccStr;
+    console.log(`Manager CC added: ${mgrEmails.join(', ')}`);
+    const existing = (ccStr || '').split(',').map(e => e.trim()).filter(Boolean);
+    return [...existing, ...mgrEmails].join(', ');
+  } catch (e) { console.error('addManagerEmails error:', e.message); return ccStr; }
+}
+
 // Test UIDs — override recipients per email type
 // To add test UIDs: add entries below. To disable: remove the UID key.
 const TEST_OVERRIDES = {
@@ -153,10 +195,11 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
 
   console.log('Building MIME email...');
   const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in','supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in',fromEmail);
+  const emailCcFinal = await addManagerEmails(emailTo, emailCc);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
     to: emailTo,
-    cc: emailCc,
+    cc: emailCcFinal,
     subject,
     bodyHtml,
     pdfBuffer,
@@ -173,7 +216,8 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   });
 
   console.log(`Email sent! messageId: ${result.data.id}`);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
+  const realMsgId = await getMessageId(gmail, result.data.id);
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
 
 // Send Deal Terms email to seller with PDF attachment
@@ -235,10 +279,11 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
 
   console.log('Building MIME email with PDF attachment...');
   const {to:dtTo,cc:dtCc}=testOverride(p.uid,'deal_terms',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
+  const dtCcFinal = await addManagerEmails(dtTo, dtCc);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
     to: dtTo,
-    cc: dtCc,
+    cc: dtCcFinal,
     subject,
     bodyHtml,
     pdfBuffer,
@@ -250,7 +295,8 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
   if (threadId) dtReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: dtReqBody });
   console.log(`Deal Terms email sent! messageId: ${result.data.id}`);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
+  const realMsgId = await getMessageId(gmail, result.data.id);
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
 
 // Build simple HTML email (no attachment)
@@ -276,6 +322,14 @@ function buildSimpleMimeEmail({ from, to, cc, subject, bodyHtml, references }) {
   return { raw, msgId };
 }
 
+// Fetch ACTUAL Message-ID from Gmail after sending (requires gmail.readonly)
+async function getMessageId(gmail, messageId) {
+  try {
+    const msg = await gmail.users.messages.get({ userId: 'me', id: messageId, format: 'metadata', metadataHeaders: ['Message-Id'] });
+    const hdr = msg.data.payload.headers.find(h => h.name.toLowerCase() === 'message-id');
+    return hdr ? hdr.value : null;
+  } catch(e) { console.error('getMessageId error:', e.message); return null; }
+}
 
 // Send CP Bill email via Gmail API
 async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderName, property, threadId, references }) {
@@ -325,10 +379,11 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
 </body></html>`;
 
   const {to:cpTo,cc:cpCc}=testOverride(p.uid,'cp_bill','prashant@openhouse.in,accounts@openhouse.in','supply@openhouse.in',fromEmail);
+  const cpCcFinal = await addManagerEmails(cpTo, cpCc);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: cpTo,
-    cc: cpCc,
+    cc: cpCcFinal,
     subject,
     bodyHtml,
     references
@@ -338,7 +393,8 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
   if (threadId) cpReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: cpReqBody });
   console.log(`CP Bill email sent! messageId: ${result.data.id}`);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
+  const realMsgId = await getMessageId(gmail, result.data.id);
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
 
 async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, senderName, property, owner1_name, owner1_amount, owner2_name, owner2_amount, threadId, references }) {
@@ -383,10 +439,11 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
   const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in'].filter(Boolean);
 
   const {to:paTo,cc:paCc}=testOverride(p.uid,'pending_amount',toList.join(', '),ccList.length?ccList.join(', '):'',fromEmail);
+  const paCcFinal = await addManagerEmails(paTo, paCc);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: paTo,
-    cc: paCc,
+    cc: paCcFinal,
     subject,
     bodyHtml,
     references
@@ -396,7 +453,8 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
   if (threadId) paReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: paReqBody });
   console.log(`Pending amount email sent! messageId: ${result.data.id}`);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
+  const realMsgId = await getMessageId(gmail, result.data.id);
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
 
 async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, senderName, property, threadId, references }) {
@@ -424,10 +482,11 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
 
   const {to:khTo,cc:khCc}=testOverride(p.uid,'key_handover',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
+  const khCcFinal = await addManagerEmails(khTo, khCc);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: khTo,
-    cc: khCc,
+    cc: khCcFinal,
     subject,
     bodyHtml,
     references
@@ -437,8 +496,9 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   if (threadId) khReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: khReqBody });
   console.log(`Key handover email sent! messageId: ${result.data.id}`);
-  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: msgId };
+  const realMsgId = await getMessageId(gmail, result.data.id);
+  return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
 
 // Send offer email to property owner with PDF attachment
-module.exports = { sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendKeyHandoverEmail, htmlToPdf };
+module.exports = { init, sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendKeyHandoverEmail, htmlToPdf };

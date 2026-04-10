@@ -9,7 +9,7 @@ module.exports = function(pool) {
   router.get('/google', (req, res, next) => {
     if (req.query.returnTo) req.session.returnTo = req.query.returnTo;
     passport.authenticate('google', {
-      scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.send'],
+      scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/gmail.readonly'],
       accessType: 'offline',
       prompt: 'consent'
     })(req, res, next);

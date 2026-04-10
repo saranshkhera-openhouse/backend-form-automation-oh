@@ -169,6 +169,7 @@ async function start() {
     await pool.query(MIGRATION_SQL); console.log('Migration done');
     await pool.query(COMPAT_SQL); console.log('Compat done, DB ready');
     require('./utils/whatsapp').init(pool);
+    require('./utils/email-sender').init(pool);
     // Auto-seed user phone/roles if not yet populated
     const needSeed=await pool.query(`SELECT COUNT(*) as c FROM users WHERE phone IS NOT NULL AND phone!=''`);
     if(parseInt(needSeed.rows[0].c)===0){
