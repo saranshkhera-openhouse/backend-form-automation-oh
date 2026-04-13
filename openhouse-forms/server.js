@@ -142,9 +142,9 @@ app.get('/api/my-properties', isAuthenticated, async(req,res)=>{
     const baseWhere=vis.clause?`WHERE TRUE${vis.clause}`:'';
     const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,floor,area_sqft,configuration,
       demand_price,source,owner_broker_name,contact_no,assigned_by,field_exec,
-      schedule_date,schedule_time,is_dead,
+      schedule_date,schedule_time,is_dead,is_token_refunded,
       schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,
-      token_deal_submitted_at,ama_submitted_at,final_submitted_at,cp_bill_submitted_at,listing_submitted_at
+      token_deal_submitted_at,ama_submitted_at,pending_request_submitted_at,final_submitted_at,cp_bill_submitted_at,listing_submitted_at
       FROM properties ${baseWhere} ORDER BY created_at DESC`,vis.params);
     res.json(rows)}catch(e){console.error('MyProps error:',e.message);res.status(500).json({error:e.message})}
 });

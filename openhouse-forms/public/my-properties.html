@@ -3,6 +3,18 @@
 <style>
 .prop-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
 .prop-card.dead{border-color:#f0c4c0;background:#fef8f8}
+.prop-card.refunded{border-color:#fcd34d;background:#fefbeb}
+.stage-pill.s-ama{background:#ede9fe;color:#6d28d9}
+.stage-pill.s-asgn{background:#fce7f3;color:#831843}
+.stage-pill.s-cp{background:#e0f2fe;color:#0369a1}
+.stage-pill.s-ref{background:#fef3c7;color:#b45309}
+.stats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.stat{flex:1;min-width:70px;padding:8px 6px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);text-align:center;cursor:pointer;transition:.15s;box-shadow:var(--sh)}
+.stat:hover{border-color:var(--ac)}
+.stat.active{background:var(--ac);border-color:var(--ac)}
+.stat.active .stat-val,.stat.active .stat-lbl{color:#fff!important}
+.stat-val{font-size:20px;font-weight:700;color:var(--ac);line-height:1}
+.stat-lbl{font-size:8px;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;font-weight:600}
 .prop-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;gap:8px}
 .prop-hdr:active{background:var(--bg)}
 .prop-uid{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ac)}
@@ -52,6 +64,20 @@
   <div class="hdr-right"></div>
 </header>
 <div class="ctn">
+  <div class="stats" id="stats">
+    <div class="stat" data-filter="" id="stAll"><div class="stat-val" id="sAll">—</div><div class="stat-lbl">Total</div></div>
+    <div class="stat" data-filter="scheduled"><div class="stat-val" id="sSch">—</div><div class="stat-lbl">Scheduled</div></div>
+    <div class="stat" data-filter="visited"><div class="stat-val" id="sVis">—</div><div class="stat-lbl">Visited</div></div>
+    <div class="stat" data-filter="token"><div class="stat-val" id="sTok">—</div><div class="stat-lbl">Token Req</div></div>
+    <div class="stat" data-filter="deal"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal Terms</div></div>
+    <div class="stat" data-filter="ama"><div class="stat-val" id="sAma">—</div><div class="stat-lbl">AMA Req</div></div>
+    <div class="stat" data-filter="amasigned"><div class="stat-val" id="sAmaSgn">—</div><div class="stat-lbl">AMA Signed</div></div>
+    <div class="stat" data-filter="cpbill"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
+    <div class="stat" data-filter="final"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Key Handover</div></div>
+    <div class="stat" data-filter="listed"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
+    <div class="stat" data-filter="refunded"><div class="stat-val" id="sRef" style="color:#b45309">—</div><div class="stat-lbl">Refunded</div></div>
+    <div class="stat" data-filter="dead"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
+  </div>
   <div class="filter-row">
     <input type="text" id="fQ" placeholder="🔍 Search UID, society, owner..." style="font-size:16px;flex:2;min-width:180px;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r)">
     <select id="fStatus" style="font-size:14px;flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r)">
@@ -59,11 +85,13 @@
       <option value="scheduled">Scheduled</option>
       <option value="visited">Visited</option>
       <option value="token">Token Req</option>
-      <option value="deal">Deal</option>
-      <option value="ama">AMA</option>
-      <option value="final">Final</option>
-      <option value="cp_bill">CP Bill</option>
+      <option value="deal">Deal Terms</option>
+      <option value="ama">AMA Req</option>
+      <option value="amasigned">AMA Signed</option>
+      <option value="cpbill">CP Bill</option>
+      <option value="final">Key Handover</option>
       <option value="listed">Listed</option>
+      <option value="refunded">Token Refunded</option>
       <option value="dead">Cancelled</option>
     </select>
   </div>
@@ -79,27 +107,45 @@ function fmtTime12(t){if(!t)return'—';const[h,m]=t.split(':');const hr=parseIn
 
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead',step:0};
-  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:8};
-  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-fin',key:'cp_bill',step:7};
-  if(p.final_submitted_at)return{label:'Final',cls:'s-fin',key:'final',step:6};
-  if(p.ama_submitted_at)return{label:'AMA',cls:'s-deal',key:'ama',step:5};
-  if(p.token_deal_submitted_at)return{label:'Deal',cls:'s-deal',key:'deal',step:4};
+  if(p.is_token_refunded)return{label:'Token Refunded',cls:'s-ref',key:'refunded',step:0};
+  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:9};
+  if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final',step:8};
+  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill',step:7};
+  if(p.pending_request_submitted_at)return{label:'AMA Signed',cls:'s-asgn',key:'amasigned',step:6};
+  if(p.ama_submitted_at)return{label:'AMA Req',cls:'s-ama',key:'ama',step:5};
+  if(p.token_deal_submitted_at)return{label:'Deal Terms',cls:'s-deal',key:'deal',step:4};
   if(p.token_submitted_at||p.token_is_draft)return{label:p.token_is_draft?'Token (Draft)':'Token Req',cls:'s-tok',key:'token',step:3};
   if(p.visit_submitted_at)return{label:'Visited',cls:'s-vis',key:'visited',step:2};
   if(p.schedule_submitted_at)return{label:'Scheduled',cls:'s-sch',key:'scheduled',step:1};
   return{label:'—',cls:'',key:'',step:0};
 }
 
-const PROG_COLORS={1:'#3b82f6',2:'#6366f1',3:'#f59e0b',4:'#ec4899',5:'#8b5cf6',6:'#10b981',7:'#10b981',8:'#2d5a3d',0:'#b33a2e'};
+const PROG_COLORS={1:'#3b82f6',2:'#6366f1',3:'#f59e0b',4:'#ec4899',5:'#8b5cf6',6:'#831843',7:'#0369a1',8:'#10b981',9:'#2d5a3d',0:'#b33a2e'};
 
 function pdv(label,val){
   const isEmpty=val===null||val===undefined||val===''||val==='null';
   return`<div class="pd-item"><div class="pd-label">${label}</div><div class="pd-value${isEmpty?' empty':''}">${isEmpty?'—':val}</div></div>`;
 }
 
+let activeStatFilter='';
+function updateStatCounts(){
+  document.getElementById('sAll').textContent=allProps.length;
+  document.getElementById('sSch').textContent=allProps.filter(p=>p._stage.key==='scheduled').length;
+  document.getElementById('sVis').textContent=allProps.filter(p=>p._stage.key==='visited').length;
+  document.getElementById('sTok').textContent=allProps.filter(p=>p._stage.key==='token').length;
+  document.getElementById('sDeal').textContent=allProps.filter(p=>p._stage.key==='deal').length;
+  document.getElementById('sAma').textContent=allProps.filter(p=>p._stage.key==='ama').length;
+  document.getElementById('sAmaSgn').textContent=allProps.filter(p=>p._stage.key==='amasigned').length;
+  document.getElementById('sCp').textContent=allProps.filter(p=>p._stage.key==='cpbill').length;
+  document.getElementById('sFin').textContent=allProps.filter(p=>p._stage.key==='final').length;
+  document.getElementById('sLst').textContent=allProps.filter(p=>p._stage.key==='listed').length;
+  document.getElementById('sRef').textContent=allProps.filter(p=>p._stage.key==='refunded').length;
+  document.getElementById('sCan').textContent=allProps.filter(p=>p._stage.key==='dead').length;
+}
+
 function renderProps(){
   const q=document.getElementById('fQ').value.toLowerCase();
-  const st=document.getElementById('fStatus').value;
+  const st=document.getElementById('fStatus').value||activeStatFilter;
   let d=allProps;
   if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q));
   if(st)d=d.filter(p=>p._stage.key===st);
@@ -110,22 +156,23 @@ function renderProps(){
   const atOpts=assignedToList.map(n=>`<option value="${n}">${n}</option>`).join('');
 
   list.innerHTML=d.map((p,idx)=>{
-    const dead=p.is_dead;
+    const dead=p.is_dead;const refunded=p.is_token_refunded;
     const stage=p._stage;
-    const progPct=dead?100:Math.round(stage.step/8*100);
+    const progPct=(dead||refunded)?100:Math.round(stage.step/9*100);
     const progColor=PROG_COLORS[stage.step]||'#ccc';
 
     const steps=[
       {n:'Schedule',ok:!!p.schedule_submitted_at},
       {n:'Visit',ok:!!p.visit_submitted_at},
       {n:'Token',ok:!!p.token_submitted_at,draft:p.token_is_draft},
-      {n:'Deal',ok:!!p.token_deal_submitted_at},
-      {n:'AMA',ok:!!p.ama_submitted_at},
-      {n:'Final',ok:!!p.final_submitted_at},
+      {n:'Deal Terms',ok:!!p.token_deal_submitted_at},
+      {n:'AMA Req',ok:!!p.ama_submitted_at},
+      {n:'AMA Signed',ok:!!p.pending_request_submitted_at},
       {n:'CP Bill',ok:!!p.cp_bill_submitted_at},
+      {n:'Key Handover',ok:!!p.final_submitted_at},
       {n:'Listing',ok:!!p.listing_submitted_at}
     ];
-    const statusHtml=dead?'<span class="ps dead">Cancelled</span>':steps.map(s=>{
+    const statusHtml=dead?'<span class="ps dead">Cancelled</span>':refunded?'<span class="ps" style="background:#fef3c7;color:#b45309">Token Refunded</span>':steps.map(s=>{
       const cls=s.draft?'draft':s.ok?'done':'pending';
       return`<span class="ps ${cls}">${s.n} ${s.draft?'◐':s.ok?'✓':'✗'}</span>`;
     }).join('');
@@ -159,7 +206,7 @@ function renderProps(){
         </div>
       </div>`:''}`;
 
-    return`<div class="prop-card${dead?' dead':''}" id="pc_${idx}">
+    return`<div class="prop-card${dead?' dead':refunded?' refunded':''}" id="pc_${idx}">
       <div class="prop-hdr" onclick="toggleCard(${idx})">
         <span class="prop-uid">${p.uid}</span>
         <span class="stage-pill ${stage.cls}">${stage.label}</span>
@@ -220,10 +267,17 @@ document.addEventListener('DOMContentLoaded',async()=>{
     assignedToList=[...opts.assignedToList,...opts.assignedByList].filter((v,i,a)=>a.indexOf(v)===i).sort();
     allProps=await pr.json();
     allProps.forEach(p=>p._stage=getStage(p));
+    updateStatCounts();
     renderProps();
   }catch(e){toast('Failed to load','err');document.getElementById('propCount').textContent='Failed to load'}
 });
 document.getElementById('fQ').addEventListener('input',renderProps);
-document.getElementById('fStatus').addEventListener('change',renderProps);
+document.getElementById('fStatus').addEventListener('change',()=>{activeStatFilter='';document.querySelectorAll('.stat').forEach(s=>s.classList.remove('active'));renderProps()});
+document.querySelectorAll('.stat').forEach(s=>s.addEventListener('click',()=>{
+  const f=s.dataset.filter;
+  if(activeStatFilter===f){activeStatFilter='';s.classList.remove('active')}
+  else{document.querySelectorAll('.stat').forEach(x=>x.classList.remove('active'));activeStatFilter=f;if(f)s.classList.add('active')}
+  document.getElementById('fStatus').value='';renderProps();
+}));
 </script>
 </body></html>

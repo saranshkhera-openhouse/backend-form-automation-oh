@@ -110,9 +110,10 @@ tr.row-refunded td{color:#b45309!important;opacity:.7}
         <select id="fSt" style="font-size:14px"><option value="">All Stages</option>
           <option value="scheduled">Scheduled</option><option value="visited">Visited</option>
           <option value="token">Token Req</option><option value="draft">Draft</option>
-          <option value="deal">Deal</option><option value="ama">AMA</option>
-          <option value="final">PSD</option><option value="cpbill">CP Bill</option>
-          <option value="listed">Listed</option><option value="dead">Cancelled</option>
+          <option value="deal">Deal Terms</option><option value="ama">AMA Req</option>
+          <option value="amasigned">AMA Signed</option><option value="cpbill">CP Bill</option>
+          <option value="final">Key Handover</option>
+          <option value="listed">Listed</option><option value="refunded">Token Refunded</option><option value="dead">Cancelled</option>
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()" title="Refresh data">↻</button>
       </div>
@@ -121,7 +122,10 @@ tr.row-refunded td{color:#b45309!important;opacity:.7}
         <button class="btn btn-out btn-sm date-btn" id="btnYday" onclick="setDateFilter('yesterday')">Yesterday</button>
         <button class="btn btn-out btn-sm date-btn" id="btn7d" onclick="setDateFilter('7days')">Last 7 Days</button>
         <button class="btn btn-out btn-sm date-btn" id="btn30d" onclick="setDateFilter('30days')">Last 30 Days</button>
-        <input type="date" id="fCustomDate" style="font-size:11px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);width:130px" onchange="setDateFilter('custom')">
+        <label style="font-size:10px;color:var(--tx3);margin-left:4px">From</label>
+        <input type="date" id="fDateFrom" style="font-size:11px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);width:130px" onchange="setDateFilter('range')">
+        <label style="font-size:10px;color:var(--tx3)">To</label>
+        <input type="date" id="fDateTo" style="font-size:11px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);width:130px" onchange="setDateFilter('range')">
         <button class="btn btn-out btn-sm" id="btnClearDate" onclick="clearAllFilters()" style="display:none;color:var(--red);border-color:#fecaca">✕ Clear All</button>
         <span id="dateLbl" style="font-size:10px;color:var(--tx3);margin-left:4px"></span>
       </div>
@@ -196,7 +200,7 @@ async function loadData(){try{const r=await fetch(`${API}/api/properties`);allDa
   render()}catch(e){console.error(e)}}
 
 function render(){let d=[...allData];const q=document.getElementById('fQ').value.toLowerCase();const city=document.getElementById('fCity').value;const ab=document.getElementById('fAb').value;const st=document.getElementById('fSt').value||activeStatFilter;
-  const hasFilters=q||city||ab||st||dateFilterStart;
+  const hasFilters=q||city||ab||st||dateFilterStart||dateFilterEnd;
   document.getElementById('btnClearDate').style.display=hasFilters?'inline-flex':'none';
   if(q)d=d.filter(p=>(p.uid||'').toLowerCase().includes(q)||(p.society_name||'').toLowerCase().includes(q)||(p.owner_broker_name||'').toLowerCase().includes(q)||(p.assigned_by||'').toLowerCase().includes(q)||(p.token_requested_by||'').toLowerCase().includes(q)||(p.contact_no||'').includes(q)||(p.field_exec||'').toLowerCase().includes(q));
   if(city)d=d.filter(p=>p.city===city);
@@ -213,7 +217,7 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   else if(st==='listed')d=d.filter(p=>p._stage.key==='listed');
   else if(st==='refunded')d=d.filter(p=>p._stage.key==='refunded');
   else if(st==='dead')d=d.filter(p=>p._stage.key==='dead');
-  if(dateFilterStart){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();return t>=dateFilterStart.getTime()&&t<dateFilterEnd.getTime()})}
+  if(dateFilterStart||dateFilterEnd){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();if(dateFilterStart&&t<dateFilterStart.getTime())return false;if(dateFilterEnd&&t>dateFilterEnd.getTime())return false;return true})}
   if(sortCol)d.sort((a,b)=>{let va=(a[sortCol]||'').toString().toLowerCase(),vb=(b[sortCol]||'').toString().toLowerCase();
     if(sortCol==='last_activity'){va=new Date(a[sortCol]||0).getTime();vb=new Date(b[sortCol]||0).getTime();return sortDir==='asc'?va-vb:vb-va}
     return va<vb?(sortDir==='asc'?-1:1):va>vb?(sortDir==='asc'?1:-1):0});
@@ -263,21 +267,31 @@ document.querySelectorAll('.stat[data-filter]').forEach(s=>{s.addEventListener('
   document.getElementById('fSt').value='';render()})});
 
 function setDateFilter(mode){
-  const lbl=document.getElementById('dateLbl');const customInput=document.getElementById('fCustomDate');
+  const lbl=document.getElementById('dateLbl');const fromInput=document.getElementById('fDateFrom');const toInput=document.getElementById('fDateTo');
   document.querySelectorAll('.date-btn').forEach(b=>b.style.cssText='');
   const today=new Date();today.setHours(0,0,0,0);
-  if(mode==='today'){dateFilterStart=today;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: Today';document.getElementById('btnToday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';customInput.value=''}
-  else if(mode==='yesterday'){const yday=new Date(today);yday.setDate(yday.getDate()-1);dateFilterStart=yday;dateFilterEnd=today;lbl.textContent='Showing: '+fmtDt(yday);document.getElementById('btnYday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';customInput.value=''}
-  else if(mode==='7days'){const d7=new Date(today);d7.setDate(d7.getDate()-7);dateFilterStart=d7;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(d7)+' → Today';document.getElementById('btn7d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';customInput.value=''}
-  else if(mode==='30days'){const d30=new Date(today);d30.setDate(d30.getDate()-30);dateFilterStart=d30;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(d30)+' → Today';document.getElementById('btn30d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)';customInput.value=''}
-  else if(mode==='custom'){const val=customInput.value;if(!val){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';render();return}const picked=new Date(val+'T00:00:00');dateFilterStart=picked;dateFilterEnd=new Date(picked.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(picked)}
+  if(mode!=='range'){fromInput.value='';toInput.value=''}
+  if(mode==='today'){dateFilterStart=today;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: Today';document.getElementById('btnToday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}
+  else if(mode==='yesterday'){const yday=new Date(today);yday.setDate(yday.getDate()-1);dateFilterStart=yday;dateFilterEnd=today;lbl.textContent='Showing: '+fmtDt(yday);document.getElementById('btnYday').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}
+  else if(mode==='7days'){const d7=new Date(today);d7.setDate(d7.getDate()-7);dateFilterStart=d7;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(d7)+' → Today';document.getElementById('btn7d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}
+  else if(mode==='30days'){const d30=new Date(today);d30.setDate(d30.getDate()-30);dateFilterStart=d30;dateFilterEnd=new Date(today.getTime()+86400000);lbl.textContent='Showing: '+fmtDt(d30)+' → Today';document.getElementById('btn30d').style.cssText='background:var(--ac);color:#fff;border-color:var(--ac)'}
+  else if(mode==='range'){
+    const from=fromInput.value;const to=toInput.value;
+    if(!from&&!to){dateFilterStart=null;dateFilterEnd=null;lbl.textContent='';render();return}
+    if(from)dateFilterStart=new Date(from+'T00:00:00'); else dateFilterStart=null;
+    if(to)dateFilterEnd=new Date(to+'T23:59:59'); else dateFilterEnd=new Date(today.getTime()+86400000);
+    if(dateFilterStart&&!dateFilterEnd)lbl.textContent='From: '+fmtDt(dateFilterStart);
+    else if(!dateFilterStart&&dateFilterEnd)lbl.textContent='To: '+fmtDt(to);
+    else lbl.textContent=fmtDt(dateFilterStart)+' → '+fmtDt(dateFilterEnd);
+  }
   document.getElementById('btnClearDate').style.display='inline-flex';render();
 }
 
 function clearAllFilters(){
   dateFilterStart=null;dateFilterEnd=null;activeStatFilter='';
   document.getElementById('dateLbl').textContent='';document.getElementById('btnClearDate').style.display='none';
-  document.getElementById('fCustomDate').value='';document.getElementById('fQ').value='';
+  document.getElementById('fDateFrom').value='';document.getElementById('fDateTo').value='';
+  document.getElementById('fQ').value='';
   document.getElementById('fCity').value='';document.getElementById('fAb').value='';document.getElementById('fSt').value='';
   document.querySelectorAll('.date-btn').forEach(b=>b.style.cssText='');
   document.querySelectorAll('.stat').forEach(s=>s.classList.remove('active'));
@@ -448,7 +462,7 @@ async function saveModal(){
 
 document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.s;if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=c;sortDir='asc'}render()})});
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fAb').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
-document.addEventListener('DOMContentLoaded',()=>{document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];loadData()});
+document.addEventListener('DOMContentLoaded',()=>{const todayStr=new Date().toISOString().split('T')[0];document.getElementById('fDateFrom').max=todayStr;document.getElementById('fDateTo').max=todayStr;loadData()});
 
 const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','pending-request','cp-bill','final','listing'];
 const FORM_LABELS={schedule:'Schedule',visit:'Audit','token-request':'Token Req','token-deal':'Deal Terms','ama-details':'AMA Req','pending-request':'AMA Signed',final:'Key Handover','cp-bill':'CP Bill',listing:'Listing'};
