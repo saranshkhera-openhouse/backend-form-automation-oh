@@ -40,12 +40,12 @@ module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
-      const p=rows[0];if(!p.final_submitted_at)return res.status(400).json({error:'PSD (Form 5) must be submitted first'});
+      const p=rows[0];if(!p.pending_request_submitted_at)return res.status(400).json({error:'AMA Acknowledgement (Form 6) must be submitted first'});
       res.json(p)}catch(e){res.status(500).json({error:e.message})}
   });
   router.get('/uids',async(req,res)=>{
     try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,final_submitted_at,cp_bill_submitted_at
-      FROM properties WHERE final_submitted_at IS NOT NULL AND is_dead IS NOT TRUE AND uid !~ '^OH[A-Z]*D[0-9]'${vis.clause} ORDER BY updated_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+      FROM properties WHERE pending_request_submitted_at IS NOT NULL AND is_dead IS NOT TRUE AND uid !~ '^OH[A-Z]*D[0-9]'${vis.clause} ORDER BY updated_at DESC`,vis.params);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
   });
   router.post('/submit',async(req,res)=>{
     try{
@@ -122,11 +122,8 @@ module.exports=function(pool){
       if(!p.cp_bill_submitted_at)return res.status(400).json({error:'CP Bill form must be submitted first'});
       const result=await sendCPBillEmail({
         accessToken:user.google_access_token,refreshToken:user.google_refresh_token,
-        fromEmail:user.email,senderName:user.name||user.email,property:p,threadId:p.email_thread_id||null,references:p.email_message_id||null
+        fromEmail:user.email,senderName:user.name||user.email,property:p
       });
-      if(!p.email_thread_id&&result.threadId){
-        await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=COALESCE($3,email_message_id) WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
-      }
       console.log(`CP Bill email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
     }catch(e){

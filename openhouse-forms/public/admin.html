@@ -308,7 +308,7 @@ function buildModal(p){
   currentModalUid=p.uid;
   const mb=document.getElementById('modalBody');
   document.getElementById('saveStatus').textContent='';
-  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Ack',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
+  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
   let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
 
@@ -376,12 +376,7 @@ function buildModal(p){
     ${efRO('Submitted',fmtDtFull(p.pending_request_submitted_at))}
   </div></div>`;
 
-  html+=`<div class="prev-section"><div class="prev-section-t">Key Handover (Form 7)</div><div class="prev-grid">
-    ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Key Handover Date','key_handover_date',p.key_handover_date,'date')}
-    ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
-  </div></div>`;
-
-  html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 8)</div><div class="prev-grid">
+  html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 7)</div><div class="prev-grid">
     ${ef('CP Code','cp_code',p.cp_code)}${ef('CP Name','cp_name',p.cp_name)}${ef('CP Phone','cp_phone',p.cp_phone)}
     ${ef('CP Firm','cp_firm',p.cp_firm)}${ef('CP Email','cp_email',p.cp_email)}
     ${efSel('Deal Type','deal_type',p.deal_type,['Acquisition','Supply'])}${ef('OH Model','oh_acquired_model',p.oh_acquired_model)}
@@ -392,6 +387,11 @@ function buildModal(p){
     ${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
     ${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
     ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Key Handover (Form 8)</div><div class="prev-grid">
+    ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Key Handover Date','key_handover_date',p.key_handover_date,'date')}
+    ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
   </div></div>`;
 
   html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 9)</div><div class="prev-grid">
@@ -430,8 +430,8 @@ document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('c
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fAb').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('fCustomDate').max=new Date().toISOString().split('T')[0];loadData()});
 
-const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','pending-request','final','cp-bill','listing'];
-const FORM_LABELS={schedule:'Schedule',visit:'Audit','token-request':'Token Req','token-deal':'Deal','ama-details':'AMA','pending-request':'AMA Ack',final:'Key Handover','cp-bill':'CP Bill',listing:'Listing'};
+const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','pending-request','cp-bill','final','listing'];
+const FORM_LABELS={schedule:'Schedule',visit:'Audit','token-request':'Token Req','token-deal':'Deal Terms','ama-details':'AMA Req','pending-request':'AMA Signed',final:'Key Handover','cp-bill':'CP Bill',listing:'Listing'};
 let allUsers=[],userSortCol='email',userSortDir='asc';
 async function loadUsers(){try{const r=await fetch('/auth/users');if(!r.ok)return;allUsers=await r.json();renderUsers()}catch(e){console.error(e)}}
 function getUserRole(u){return u.is_admin?3:u.is_top_manager?2:u.is_manager?1:0}
