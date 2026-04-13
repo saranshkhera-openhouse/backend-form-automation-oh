@@ -82,10 +82,14 @@
       </div>
       <div class="r2">
         <div class="fg"><label>CP Type <span class="req">*</span></label>
-          <select id="f_cpType" required onchange="toggleCpType()"><option value="">Select...</option><option value="INDIVIDUAL">Individual</option><option value="HAS_FIRM">Has a Firm</option></select><div class="err-msg">Required</div></div>
+          <select id="f_cpType" required onchange="toggleCpType()"><option value="">Select...</option><option value="INDIVIDUAL">Individual</option><option value="HAS_FIRM">Registered Firm</option></select><div class="err-msg">Required</div></div>
         <div class="fg" id="cpFirmNameWrap" style="display:none"><label>Firm Name <span class="req">*</span></label><input type="text" id="f_cpFirmName" oninput="document.getElementById('f_cpFirm').value=this.value"><div class="err-msg">Required</div></div>
         <input type="hidden" name="cp_firm" id="f_cpFirm">
         <div class="fg"><label>CP Email</label><input type="email" name="cp_email" id="f_cpEmail"></div>
+      </div>
+      <div class="r2" id="gstWrap" style="display:none">
+        <div class="fg"><label>GST Applicable <span class="req">*</span></label>
+          <div class="radios"><label><input type="radio" name="gst_applicable" value="Yes" onchange="toggleCpType()"><span>Yes</span></label><label><input type="radio" name="gst_applicable" value="No" onchange="toggleCpType()"><span>No</span></label></div></div>
       </div>
     </div>
 
@@ -131,6 +135,10 @@
           <div class="pu-icon">📄</div><div class="pu-label">Cancelled Cheque <span class="req">*</span></div>
           <input type="file" id="fi_cp_cancelled_cheque" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_cancelled_cheque')">
         </div>
+        <div class="pu-item cp-gst-doc" id="pu_gstInvoice" onclick="pickFile('cp_gst_invoice')" style="display:none">
+          <div class="pu-icon">📄</div><div class="pu-label">GST Invoice <span class="req">*</span></div>
+          <input type="file" id="fi_cp_gst_invoice" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_gst_invoice')">
+        </div>
         <div class="pu-item" id="pu_ama" onclick="pickFile('cp_ama_signed')" style="grid-column:span 2">
           <div class="pu-icon">📄</div><div class="pu-label">AMA Signed (PDF) <span class="req">*</span></div>
           <input type="file" id="fi_cp_ama_signed" accept=".pdf,application/pdf" onchange="uploadDoc(this,'cp_ama_signed')">
@@ -157,9 +165,9 @@
 <script src="/js/shared.js"></script>
 <script>
 let currentUid=null,loadedData=null,isAdmin=false,isManager=false;
-const docUrls={cp_aadhaar_front:'',cp_aadhaar_back:'',cp_pan_card:'',cp_cancelled_cheque:'',cp_ama_signed:''};
-const DOC_MAP={cp_aadhaar_front:'cp_aadhaar_front_url',cp_aadhaar_back:'cp_aadhaar_back_url',cp_pan_card:'cp_pan_card_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',cp_ama_signed:'cp_ama_signed_url'};
-const ITEM_MAP={cp_aadhaar_front:'pu_aadhaarFront',cp_aadhaar_back:'pu_aadhaarBack',cp_pan_card:'pu_pan',cp_cancelled_cheque:'pu_cheque',cp_ama_signed:'pu_ama'};
+const docUrls={cp_aadhaar_front:'',cp_aadhaar_back:'',cp_pan_card:'',cp_cancelled_cheque:'',cp_gst_invoice:'',cp_ama_signed:''};
+const DOC_MAP={cp_aadhaar_front:'cp_aadhaar_front_url',cp_aadhaar_back:'cp_aadhaar_back_url',cp_pan_card:'cp_pan_card_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',cp_gst_invoice:'cp_gst_invoice_url',cp_ama_signed:'cp_ama_signed_url'};
+const ITEM_MAP={cp_aadhaar_front:'pu_aadhaarFront',cp_aadhaar_back:'pu_aadhaarBack',cp_pan_card:'pu_pan',cp_cancelled_cheque:'pu_cheque',cp_gst_invoice:'pu_gstInvoice',cp_ama_signed:'pu_ama'};
 let cloudCfg=null;
 fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
 
@@ -183,13 +191,13 @@ async function setCpMode(mode){
     document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
     document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
     document.getElementById('f_cpType').value='';document.getElementById('f_cpFirmName').value='';toggleCpType();
-    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque']);
+    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque','cp_gst_invoice']);
   }else{
     document.getElementById('cpCodeWrap').style.display='none';cpCode='';
     document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
     document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
     document.getElementById('f_cpType').value='';document.getElementById('f_cpFirmName').value='';toggleCpType();
-    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque']);
+    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque','cp_gst_invoice']);
     document.getElementById('cpSearchInput').focus();
   }
 }
@@ -246,6 +254,7 @@ async function importCp(id){
       document.getElementById('f_cpFirmName').value=firmVal;
       document.getElementById('f_cpFirm').value=firmVal;
     }
+    document.querySelectorAll('input[name="gst_applicable"]').forEach(r=>r.checked=false);
     toggleCpType();
     document.getElementById('f_cpEmail').value=cp.cp_email||'';
     document.getElementById('cpSearchInput').value=cp.cp_name+' ('+cp.cp_code+')';
@@ -329,7 +338,7 @@ async function loadUID(uid){
     document.getElementById('f_cpName').value=d.cp_name||'';
     document.getElementById('f_cpPhone').value=d.cp_phone||'';
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
-    // Set CP type from DB: null/empty/INDIVIDUAL → Individual, else → Has a Firm
+    // Set CP type from DB: null/empty/INDIVIDUAL → Individual, else → Registered Firm
     const firmVal=d.cp_firm?d.cp_firm.trim():'';
     if(!firmVal||firmVal.toUpperCase()==='INDIVIDUAL'){
       document.getElementById('f_cpType').value='INDIVIDUAL';
@@ -339,6 +348,9 @@ async function loadUID(uid){
       document.getElementById('f_cpFirmName').value=firmVal;
       document.getElementById('f_cpFirm').value=firmVal;
     }
+    // Restore GST radio
+    const gstR=document.querySelector(`input[name="gst_applicable"][value="${d.gst_applicable||'No'}"]`);
+    if(gstR)gstR.checked=true;
     toggleCpType();
     document.getElementById('f_cpEmail').value=d.cp_email||'';
     // Restore CP code if exists, otherwise auto-generate for new
@@ -392,13 +404,19 @@ async function loadUID(uid){
 function toggleCpType(){
   const type=document.getElementById('f_cpType').value;
   const isFirm=type==='HAS_FIRM';
+  const gstVal=document.querySelector('input[name="gst_applicable"]:checked')?.value;
+  const isGstYes=isFirm&&gstVal==='Yes';
+  // Show/hide firm name + GST radio
   document.getElementById('cpFirmNameWrap').style.display=isFirm?'block':'none';
-  // Show/hide individual-only docs (aadhaar front/back, PAN)
-  document.querySelectorAll('.cp-individual-doc').forEach(el=>{el.style.display=isFirm?'none':'flex'});
-  // Expand cheque to span 2 when firm (like AMA signed)
-  document.getElementById('pu_cheque').style.gridColumn=isFirm?'span 2':'';
+  document.getElementById('gstWrap').style.display=isFirm?'flex':'none';
+  // Individual OR Firm+GST No → show all 5 docs (aadhaar, PAN, cheque, AMA), hide GST invoice
+  // Firm+GST Yes → hide aadhaar/PAN, show cheque + GST invoice + AMA
+  document.querySelectorAll('.cp-individual-doc').forEach(el=>{el.style.display=isGstYes?'none':'flex'});
+  document.getElementById('pu_gstInvoice').style.display=isGstYes?'flex':'none';
+  // Cheque layout: span 2 only when firm+GST No (no aadhaar/PAN hidden but GST invoice also hidden)
+  document.getElementById('pu_cheque').style.gridColumn='';
   // Set hidden cp_firm
-  if(!isFirm){document.getElementById('f_cpFirm').value='INDIVIDUAL';document.getElementById('f_cpFirmName').value=''}
+  if(!isFirm){document.getElementById('f_cpFirm').value='INDIVIDUAL';document.getElementById('f_cpFirmName').value='';document.querySelectorAll('input[name="gst_applicable"]').forEach(r=>r.checked=false)}
   else{document.getElementById('f_cpFirm').value=document.getElementById('f_cpFirmName').value}
 }
 function pickFile(key){document.getElementById('fi_'+key).click()}
@@ -431,6 +449,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   body.cp_phone=cpPhone;
   const cpType=document.getElementById('f_cpType').value;
   body.cp_firm=cpType==='HAS_FIRM'?document.getElementById('f_cpFirmName').value.trim():'INDIVIDUAL';
+  body.gst_applicable=cpType==='HAS_FIRM'?(document.querySelector('input[name="gst_applicable"]:checked')?.value||'No'):'No';
   body.cp_email=document.getElementById('f_cpEmail').value.trim();
   body.deal_type='Acquisition/Supply';
   body.oh_acquired_model=document.getElementById('f_model').value.trim();
@@ -451,6 +470,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!body.cp_phone){toast('CP Phone required','err');return}
   if(!cpType){toast('Select CP Type','err');return}
   if(cpType==='HAS_FIRM'&&!document.getElementById('f_cpFirmName').value.trim()){toast('Firm Name required','err');return}
+  const gstVal=document.querySelector('input[name="gst_applicable"]:checked')?.value;
+  if(cpType==='HAS_FIRM'&&!gstVal){toast('Select GST Applicable','err');return}
   if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
   if(!body.to_be_released_now){toast('To be Released Now required','err');return}
@@ -459,9 +480,13 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const alreadySubmitted=!!(loadedData&&loadedData.cp_bill_submitted_at);
   if(!alreadySubmitted){
     const isFirm=cpType==='HAS_FIRM';
-    const DOC_LABELS=isFirm
-      ?{cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'}
-      :{cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
+    const isGstYes=isFirm&&gstVal==='Yes';
+    let DOC_LABELS;
+    if(isGstYes){
+      DOC_LABELS={cp_cancelled_cheque:'Cancelled Cheque',cp_gst_invoice:'GST Invoice',cp_ama_signed:'AMA Signed'};
+    }else{
+      DOC_LABELS={cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
+    }
     const missingDocs=[];
     Object.values(ITEM_MAP).forEach(id=>document.getElementById(id).classList.remove('missing'));
     for(const[key,label]of Object.entries(DOC_LABELS)){
@@ -484,12 +509,15 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const amaStatus=docUrls.cp_ama_signed?'Signed (attached below)':'Not signed yet';
   const previewCpType=document.getElementById('f_cpType').value;
   const previewIsFirm=previewCpType==='HAS_FIRM';
+  const previewGst=document.querySelector('input[name="gst_applicable"]:checked')?.value;
+  const previewGstYes=previewIsFirm&&previewGst==='Yes';
   const cpFirmDisplay=previewIsFirm?document.getElementById('f_cpFirmName').value||'—':'Individual';
   const photoLines=[];
-  if(!previewIsFirm&&docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
-  if(!previewIsFirm&&docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
-  if(!previewIsFirm&&docUrls.cp_pan_card)photoLines.push(`• <a href="${docUrls.cp_pan_card}" target="_blank">PAN Card</a>`);
+  if(!previewGstYes&&docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
+  if(!previewGstYes&&docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
+  if(!previewGstYes&&docUrls.cp_pan_card)photoLines.push(`• <a href="${docUrls.cp_pan_card}" target="_blank">PAN Card</a>`);
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">Cancelled Cheque</a>`);
+  if(previewGstYes&&docUrls.cp_gst_invoice)photoLines.push(`• <a href="${docUrls.cp_gst_invoice}" target="_blank">GST Invoice</a>`);
   if(docUrls.cp_ama_signed)photoLines.push(`• <a href="${docUrls.cp_ama_signed}" target="_blank">AMA Signed (PDF)</a>`);
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> prashant@openhouse.in, accounts@openhouse.in</p>
@@ -502,6 +530,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Deal Type:</td><td>Acquisition/Supply</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Name:</td><td>${document.getElementById('f_cpName').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">CP Firm:</td><td>${cpFirmDisplay}</td></tr>
+${previewIsFirm?`<tr><td style="padding:1px 10px 1px 0;font-weight:600">GST Applicable:</td><td>${previewGst||'No'}</td></tr>`:''}
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Mobile Number:</td><td>${document.getElementById('f_cpPhone').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Email ID:</td><td>${document.getElementById('f_cpEmail').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Property Address:</td><td>${addr}</td></tr>

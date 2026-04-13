@@ -344,12 +344,13 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
   const amaStatus = p.cp_ama_signed_url ? 'Signed (attached below)' : 'Not signed yet';
 
-  const isIndividual = !p.cp_firm || p.cp_firm === 'INDIVIDUAL';
+  const isGstYes = !(!p.cp_firm || p.cp_firm === 'INDIVIDUAL') && p.gst_applicable === 'Yes';
   const photoLinks = [];
-  if(isIndividual && p.cp_aadhaar_front_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
-  if(isIndividual && p.cp_aadhaar_back_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
-  if(isIndividual && p.cp_pan_card_url) photoLinks.push(`<li><a href="${p.cp_pan_card_url}" target="_blank">PAN Card</a></li>`);
+  if(!isGstYes && p.cp_aadhaar_front_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
+  if(!isGstYes && p.cp_aadhaar_back_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
+  if(!isGstYes && p.cp_pan_card_url) photoLinks.push(`<li><a href="${p.cp_pan_card_url}" target="_blank">PAN Card</a></li>`);
   if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">Cancelled Cheque</a></li>`);
+  if(isGstYes && p.cp_gst_invoice_url) photoLinks.push(`<li><a href="${p.cp_gst_invoice_url}" target="_blank">GST Invoice</a></li>`);
   if(p.cp_ama_signed_url) photoLinks.push(`<li><a href="${p.cp_ama_signed_url}" target="_blank">AMA Signed (PDF)</a></li>`);
 
   const subject = `${p.uid} - CP Bill Request | ${p.unit_no||''} ${p.tower_no||''} - ${p.society_name||'Property'} | ${p.cp_name||'CP'}`.replace(/\s+/g, ' ').trim();
@@ -360,6 +361,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Deal Type:</td><td>${p.deal_type||'—'}</td></tr>
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">CP Name:</td><td>${p.cp_name||'—'}</td></tr>
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">CP Firm:</td><td>${(!p.cp_firm||p.cp_firm==='INDIVIDUAL')?'Individual':p.cp_firm}</td></tr>
+  ${p.cp_firm&&p.cp_firm!=='INDIVIDUAL'?`<tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">GST Applicable:</td><td>${p.gst_applicable||'No'}</td></tr>`:''}
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Mobile Number:</td><td>${p.cp_phone||'—'}</td></tr>
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Email ID:</td><td>${p.cp_email||'—'}</td></tr>
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Property Address:</td><td>${addr}</td></tr>

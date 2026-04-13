@@ -398,14 +398,14 @@ function buildModal(p){
 
   html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 7)</div><div class="prev-grid">
     ${ef('CP Code','cp_code',p.cp_code)}${ef('CP Name','cp_name',p.cp_name)}${ef('CP Phone','cp_phone',p.cp_phone)}
-    ${ef('CP Firm','cp_firm',p.cp_firm)}${ef('CP Email','cp_email',p.cp_email)}
+    ${ef('CP Firm','cp_firm',p.cp_firm)}${ef('CP Email','cp_email',p.cp_email)}${efSel('GST Applicable','gst_applicable',p.gst_applicable,['Yes','No'])}
     ${efSel('Deal Type','deal_type',p.deal_type,['Acquisition','Supply'])}${ef('OH Model','oh_acquired_model',p.oh_acquired_model)}
     ${ef('Agreed Brokerage','agreed_brokerage',p.agreed_brokerage)}${ef('Deal Value','deal_value',p.deal_value)}${ef('Total Brokerage','total_brokerage_amount',p.total_brokerage_amount)}
     ${ef('To Release Now','to_be_released_now',p.to_be_released_now)}${ef('Incentive Visit','incentive_visit',p.incentive_visit)}${ef('Incentive Meeting','incentive_owner_meeting',p.incentive_owner_meeting)}
     ${ef('Total CP Amount','total_cp_amount',p.total_cp_amount)}
     ${pvLink('CP Aadhaar Front',p.cp_aadhaar_front_url)}${pvLink('CP Aadhaar Back',p.cp_aadhaar_back_url)}
     ${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
-    ${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
+    ${pvLink('GST Invoice',p.cp_gst_invoice_url)}${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
     ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
   </div></div>`;
 
