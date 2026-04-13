@@ -24,7 +24,7 @@
     <div class="pf-st" id="pfSt"></div></div>
 
   <form id="dealForm" style="display:none"><input type="hidden" name="uid" id="fUid">
-    <div class="card"><div class="card-t" style="display:flex;align-items:center;justify-content:space-between">Token Amount<button type="button" class="btn btn-out btn-sm" id="refundBtn" style="display:none;color:#b45309;border-color:#b45309;font-size:10px;padding:4px 10px">Token Refunded</button></div>
+    <div class="card"><div class="card-t" style="display:flex;align-items:center;justify-content:space-between">Token Amount<button type="button" class="btn btn-out btn-sm" id="refundBtn" style="display:none;color:#b45309;border-color:#b45309;font-size:10px;padding:4px 10px">Cancel Post Token</button></div>
       <div class="fg"><label>Token (₹)</label><input type="text" name="deal_token_amount" id="dealAmt" class="pre" readonly></div></div>
 
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">NEFT Details</div>
@@ -131,7 +131,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const refBtn=document.getElementById('refundBtn');
     refBtn.style.display=submitted?'block':'none';
     updateRefundBtn(propData.is_token_refunded);
-    const refTag=propData.is_token_refunded?' <span style="color:var(--red);font-weight:700">• Token Refunded</span>':'';
+    const refTag=propData.is_token_refunded?' <span style="color:var(--red);font-weight:700">Cancelled Post Token</span>':'';
     st.className='pf-st show ok';st.textContent='';st.innerHTML=`Loaded: ${uid}${refTag}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('dealForm').style.display='none'}}
 
@@ -260,7 +260,7 @@ async function confirmSendEmail(){
 function updateRefundBtn(refunded){
   const btn=document.getElementById('refundBtn');
   if(refunded){btn.textContent='↩ Undo Refund';btn.style.color='var(--tx3)';btn.style.borderColor='var(--tx3)'}
-  else{btn.textContent='Token Refunded';btn.style.color='#b45309';btn.style.borderColor='#b45309'}
+  else{btn.textContent='Cancelled Post Token';btn.style.color='#b45309';btn.style.borderColor='#b45309'}
 }
 document.getElementById('refundBtn').addEventListener('click',async()=>{
   if(!currentUid)return;
@@ -271,7 +271,7 @@ document.getElementById('refundBtn').addEventListener('click',async()=>{
   try{
     const r=await fetch(`${API}/api/token-deal/token-refunded/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
-    toast(d.is_token_refunded?'Marked as Token Refunded':'Token Refunded undone','ok');
+    toast(d.is_token_refunded?'Marked as Cancelled Post Token':'Cancelled Post Token undone','ok');
     loadData();
   }catch(e){toast(e.message||'Failed','err')}finally{btn.disabled=false}
 });
