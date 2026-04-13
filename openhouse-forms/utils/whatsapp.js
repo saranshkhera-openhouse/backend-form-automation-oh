@@ -234,7 +234,17 @@ async function notifyDealTermsShared(property, submitterName) {
   const recipients = [...new Set(['Saurabh', ...topMgrs])];
   if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: deal_terms_shared_to_owner | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('deal_terms_shared_to_owner', bodyValues, recipients);
+  const results = await broadcastTemplate('deal_terms_shared_to_owner', bodyValues, recipients);
+  // Also notify owner, co-owner, CP directly
+  const sentPhones = new Set(results.filter(r=>r.ok).map(r=>r.phone));
+  for(const ph of [p.contact_no, p.co_owner_number, p.cp_phone].filter(Boolean)){
+    const clean = ph.replace(/\D/g,'').slice(-10);
+    if(clean.length===10 && !sentPhones.has(clean)){
+      sentPhones.add(clean);
+      await sendInterakt(clean, 'deal_terms_shared_to_owner', bodyValues);
+    }
+  }
+  return results;
 }
 
 // AMA Signed / Pending Amount Request — triggered on Form 6 email send
@@ -248,8 +258,17 @@ async function notifyAMASigned(property, submitterName) {
   if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: ama_signed | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   const results = await broadcastTemplate('ama_signed', bodyValues, recipients);
-  // Amisha — fixed phone (not in users table yet)
-  await sendInterakt('9289996736', 'ama_signed', bodyValues);
+  const sentPhones = new Set(results.filter(r=>r.ok).map(r=>r.phone));
+  // Amisha — fixed phone
+  if(!sentPhones.has('9289996736')){sentPhones.add('9289996736');await sendInterakt('9289996736', 'ama_signed', bodyValues)}
+  // Also notify owner, co-owner, CP directly
+  for(const ph of [p.contact_no, p.co_owner_number, p.cp_phone].filter(Boolean)){
+    const clean = ph.replace(/\D/g,'').slice(-10);
+    if(clean.length===10 && !sentPhones.has(clean)){
+      sentPhones.add(clean);
+      await sendInterakt(clean, 'ama_signed', bodyValues);
+    }
+  }
   return results;
 }
 
@@ -264,7 +283,17 @@ async function notifyKeyHandover(property, submitterName) {
   const recipients = [...new Set(['Saurabh', ...topMgrs])];
   if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: key_handover | UID: ${p.uid} | To: ${recipients.join(', ')}`);
-  return broadcastTemplate('key_handover', bodyValues, recipients);
+  const results = await broadcastTemplate('key_handover', bodyValues, recipients);
+  const sentPhones = new Set(results.filter(r=>r.ok).map(r=>r.phone));
+  // Also notify owner, co-owner, CP directly
+  for(const ph of [p.contact_no, p.co_owner_number, p.cp_phone].filter(Boolean)){
+    const clean = ph.replace(/\D/g,'').slice(-10);
+    if(clean.length===10 && !sentPhones.has(clean)){
+      sentPhones.add(clean);
+      await sendInterakt(clean, 'key_handover', bodyValues);
+    }
+  }
+  return results;
 }
 
 module.exports = {
