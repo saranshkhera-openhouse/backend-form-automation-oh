@@ -86,10 +86,11 @@ tr.row-dead td{color:var(--red)!important;opacity:.7}
     <div class="stat" data-filter="scheduled" id="stSch"><div class="stat-val" id="sSch">—</div><div class="stat-lbl">Scheduled</div></div>
     <div class="stat" data-filter="visited" id="stVis"><div class="stat-val" id="sVis">—</div><div class="stat-lbl">Visited</div></div>
     <div class="stat" data-filter="token" id="stTok"><div class="stat-val" id="sTok">—</div><div class="stat-lbl">Token Req</div></div>
-    <div class="stat" data-filter="deal" id="stDeal"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal</div></div>
-    <div class="stat" data-filter="ama" id="stAma"><div class="stat-val" id="sAma">—</div><div class="stat-lbl">AMA</div></div>
-    <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">PSD</div></div>
+    <div class="stat" data-filter="deal" id="stDeal"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal Terms</div></div>
+    <div class="stat" data-filter="ama" id="stAma"><div class="stat-val" id="sAma">—</div><div class="stat-lbl">AMA Req</div></div>
+    <div class="stat" data-filter="amasigned" id="stAmaSgn"><div class="stat-val" id="sAmaSgn">—</div><div class="stat-lbl">AMA Signed</div></div>
     <div class="stat" data-filter="cpbill" id="stCp"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
+    <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Key Handover</div></div>
     <div class="stat" data-filter="listed" id="stLst"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
     <div class="stat" data-filter="dead" id="stCan"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
   </div>
@@ -152,10 +153,11 @@ function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.to
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead'};
   if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
+  if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final'};
   if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill'};
-  if(p.final_submitted_at)return{label:'PSD',cls:'s-fin',key:'final'};
-  if(p.ama_submitted_at)return{label:'AMA',cls:'s-ama',key:'ama'};
-  if(p.token_deal_submitted_at)return{label:'Deal',cls:'s-deal',key:'deal'};
+  if(p.pending_request_submitted_at)return{label:'AMA Signed',cls:'s-asgn',key:'amasigned'};
+  if(p.ama_submitted_at)return{label:'AMA Req',cls:'s-ama',key:'ama'};
+  if(p.token_deal_submitted_at)return{label:'Deal Terms',cls:'s-deal',key:'deal'};
   if(p.token_submitted_at||p.token_is_draft)return{label:p.token_is_draft?'Draft':'Token',cls:'s-tok',key:'token'};
   if(p.visit_submitted_at)return{label:'Visited',cls:'s-vis',key:'visited'};
   if(p.schedule_submitted_at)return{label:'Scheduled',cls:'s-sch',key:'scheduled'};
@@ -176,8 +178,9 @@ async function loadData(){try{const r=await fetch(`${API}/api/properties`);allDa
   document.getElementById('sTok').textContent=allData.filter(p=>p._stage.key==='token').length;
   document.getElementById('sDeal').textContent=allData.filter(p=>p._stage.key==='deal').length;
   document.getElementById('sAma').textContent=allData.filter(p=>p._stage.key==='ama').length;
-  document.getElementById('sFin').textContent=allData.filter(p=>p._stage.key==='final').length;
+  document.getElementById('sAmaSgn').textContent=allData.filter(p=>p._stage.key==='amasigned').length;
   document.getElementById('sCp').textContent=allData.filter(p=>p._stage.key==='cpbill').length;
+  document.getElementById('sFin').textContent=allData.filter(p=>p._stage.key==='final').length;
   document.getElementById('sLst').textContent=allData.filter(p=>p._stage.key==='listed').length;
   document.getElementById('sCan').textContent=allData.filter(p=>p._stage.key==='dead').length;
   document.getElementById('sAll').textContent=allData.length;
@@ -195,8 +198,9 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   else if(st==='draft')d=d.filter(p=>p.token_is_draft&&!p.is_dead);
   else if(st==='deal')d=d.filter(p=>p._stage.key==='deal');
   else if(st==='ama')d=d.filter(p=>p._stage.key==='ama');
-  else if(st==='final')d=d.filter(p=>p._stage.key==='final');
+  else if(st==='amasigned')d=d.filter(p=>p._stage.key==='amasigned');
   else if(st==='cpbill')d=d.filter(p=>p._stage.key==='cpbill');
+  else if(st==='final')d=d.filter(p=>p._stage.key==='final');
   else if(st==='listed')d=d.filter(p=>p._stage.key==='listed');
   else if(st==='dead')d=d.filter(p=>p._stage.key==='dead');
   if(dateFilterStart){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();return t>=dateFilterStart.getTime()&&t<dateFilterEnd.getTime()})}
