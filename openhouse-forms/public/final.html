@@ -21,15 +21,6 @@
     <div class="pf-st" id="pfSt"></div></div>
 
   <form id="finalForm" style="display:none"><input type="hidden" name="uid" id="fUid">
-    <div class="card"><div class="card-t">Amount Summary</div>
-      <div class="r3">
-        <div class="fg"><label>Total Deposit</label><input type="text" id="pgAmt" class="pre" readonly></div>
-        <div class="fg"><label>Token Paid</label><input type="text" id="tkAmt" class="pre" readonly></div>
-        <div class="fg"><label>Remaining Amount</label><input type="text" id="remAmt" class="pre" readonly style="font-weight:700;color:var(--ac)"></div>
-      </div>
-      <input type="hidden" name="remaining_amount" id="remHidden">
-    </div>
-
     <div class="card"><div class="fg"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate" required><div class="err-msg">Required</div></div></div>
 
     <div class="card" id="ownerEmailsCard" style="display:none"><div class="card-t">Owner Email(s)</div>
@@ -38,7 +29,6 @@
 
     <div class="btn-row">
       <button type="button" class="btn btn-dark" id="submitBtn">Submit</button>
-      <button type="button" class="btn btn-grn" id="pdfBtn" disabled>Payment Receipt</button>
     </div>
     <button type="button" class="btn btn-out" id="emailBtn" disabled style="width:100%;margin-top:8px;color:var(--ac2);border-color:var(--ac2)">📧 Preview Mail</button>
   </form>
@@ -54,12 +44,6 @@
     </div>
   </div>
 </div>
-
-<div class="pdf-overlay" id="pdfModal"><div class="pdf-modal">
-  <div class="pdf-hdr"><h3>Total Deposit Receipt</h3><button class="btn btn-out btn-sm" onclick="closePdf()">✕</button></div>
-  <div class="pdf-body"><iframe id="pdfFrame"></iframe></div>
-  <div class="pdf-ftr"><a id="pdfDl" class="btn btn-dark btn-sm" target="_blank">Open in New Tab</a></div>
-</div></div>
 
 <script src="/js/shared.js"></script>
 <script>
@@ -78,11 +62,6 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
   const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
   try{const r=await fetch(`${API}/api/final/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);propData=await r.json();
     document.getElementById('fUid').value=propData.uid;currentUid=uid;
-    const pg=Number(propData.performance_guarantee)||0;const tk=Number(propData.deal_token_amount)||0;const rem=pg-tk;
-    document.getElementById('pgAmt').value=pg?'₹ '+pg.toLocaleString('en-IN'):'—';
-    document.getElementById('tkAmt').value=tk?'₹ '+tk.toLocaleString('en-IN'):'—';
-    document.getElementById('remAmt').value=rem>0?'₹ '+rem.toLocaleString('en-IN'):'₹ 0';
-    document.getElementById('remHidden').value=rem>0?rem:0;
     const sv=(n,v)=>{const el=document.querySelector(`[name="${n}"]`);if(el&&v!=null)el.value=v};
     // Key Handover Date — always show, prefill if exists
     if(propData.key_handover_date)document.getElementById('hdDate').value=propData.key_handover_date.split('T')[0];
@@ -94,7 +73,6 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     if(propData.broker_email)emails.push(`<div><strong>Broker:</strong> ${propData.broker_email}</div>`);
     if(emails.length){document.getElementById('ownerEmailsList').innerHTML=emails.join('');document.getElementById('ownerEmailsCard').style.display='block'}
     else{document.getElementById('ownerEmailsCard').style.display='none'}
-    document.getElementById('pdfBtn').disabled=!propData.final_submitted_at;
     document.getElementById('emailBtn').disabled=!propData.final_submitted_at;
     document.getElementById('finalForm').style.display='block';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${propData.final_submitted_at?' (Submitted)':''}`;
@@ -107,14 +85,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/final/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
-    document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted! Payment Receipt ready.','ok',5000)});
+    document.getElementById('emailBtn').disabled=false;toast('Submitted!','ok',5000)});
 });
-
-document.getElementById('pdfBtn').addEventListener('click',()=>{if(!currentUid)return;
-  const url=`${API}/api/final/pdf/${currentUid}`;document.getElementById('pdfFrame').src=url;
-  document.getElementById('pdfDl').href=url;document.getElementById('pdfModal').classList.add('open')});
-function closePdf(){document.getElementById('pdfModal').classList.remove('open');document.getElementById('pdfFrame').src=''}
-document.getElementById('pdfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closePdf()});
 
 // Send email to owner — show preview first
 document.getElementById('emailBtn').addEventListener('click',()=>{

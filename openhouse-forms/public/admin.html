@@ -35,6 +35,8 @@
 .stage-pill.s-cp{background:#e0f2fe;color:#0369a1}
 .stage-pill.s-lst{background:#e8f2ec;color:#2d5a3d}
 .stage-pill.s-can{background:#fdecea;color:#b33a2e}
+.stage-pill.s-ref{background:#fef3c7;color:#b45309}
+.stage-pill.s-asgn{background:#fce7f3;color:#831843}
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .modal-overlay.open{display:flex}
@@ -92,6 +94,7 @@ tr.row-dead td{color:var(--red)!important;opacity:.7}
     <div class="stat" data-filter="cpbill" id="stCp"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
     <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Key Handover</div></div>
     <div class="stat" data-filter="listed" id="stLst"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
+    <div class="stat" data-filter="refunded" id="stRef"><div class="stat-val" id="sRef" style="color:#b45309">—</div><div class="stat-lbl">Token Refunded</div></div>
     <div class="stat" data-filter="dead" id="stCan"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
@@ -152,6 +155,7 @@ function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.to
 
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead'};
+  if(p.is_token_refunded)return{label:'Token Refunded',cls:'s-ref',key:'refunded'};
   if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
   if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final'};
   if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill'};
@@ -182,6 +186,7 @@ async function loadData(){try{const r=await fetch(`${API}/api/properties`);allDa
   document.getElementById('sCp').textContent=allData.filter(p=>p._stage.key==='cpbill').length;
   document.getElementById('sFin').textContent=allData.filter(p=>p._stage.key==='final').length;
   document.getElementById('sLst').textContent=allData.filter(p=>p._stage.key==='listed').length;
+  document.getElementById('sRef').textContent=allData.filter(p=>p._stage.key==='refunded').length;
   document.getElementById('sCan').textContent=allData.filter(p=>p._stage.key==='dead').length;
   document.getElementById('sAll').textContent=allData.length;
   render()}catch(e){console.error(e)}}
@@ -202,6 +207,7 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   else if(st==='cpbill')d=d.filter(p=>p._stage.key==='cpbill');
   else if(st==='final')d=d.filter(p=>p._stage.key==='final');
   else if(st==='listed')d=d.filter(p=>p._stage.key==='listed');
+  else if(st==='refunded')d=d.filter(p=>p._stage.key==='refunded');
   else if(st==='dead')d=d.filter(p=>p._stage.key==='dead');
   if(dateFilterStart){d=d.filter(p=>{if(!p.last_activity)return false;const t=new Date(p.last_activity).getTime();return t>=dateFilterStart.getTime()&&t<dateFilterEnd.getTime()})}
   if(sortCol)d.sort((a,b)=>{let va=(a[sortCol]||'').toString().toLowerCase(),vb=(b[sortCol]||'').toString().toLowerCase();
@@ -312,12 +318,15 @@ function buildModal(p){
   currentModalUid=p.uid;
   const mb=document.getElementById('modalBody');
   document.getElementById('saveStatus').textContent='';
-  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
+  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA Req',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
   let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
 
   let html=`<div class="prev-status">${statusHtml}
-    <label style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red);font-weight:600;cursor:pointer">
+    <label style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:#b45309;font-weight:600;cursor:pointer">
+      <input type="checkbox" name="is_token_refunded" ${p.is_token_refunded?'checked':''} style="margin:0"> Token Refunded
+    </label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red);font-weight:600;cursor:pointer">
       <input type="checkbox" name="is_dead" ${p.is_dead?'checked':''} style="margin:0"> Cancelled
     </label></div>`;
 

@@ -76,5 +76,14 @@ module.exports=function(pool){
       res.status(500).json({error:e.message||'Failed to send email'});
     }
   });
+  router.post('/token-refunded/:uid',async(req,res)=>{
+    try{
+      const{rows}=await pool.query('SELECT uid,is_token_refunded FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      const newVal=!rows[0].is_token_refunded;
+      await pool.query('UPDATE properties SET is_token_refunded=$1,updated_at=NOW() WHERE uid=$2',[newVal,req.params.uid]);
+      res.json({success:true,is_token_refunded:newVal});
+    }catch(e){res.status(500).json({error:e.message})}
+  });
   return router;
 };
