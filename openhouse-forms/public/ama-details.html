@@ -405,7 +405,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(loanVisible&&!alreadySubmitted){
     const missingLoan=[];
     ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
-    if(!fileUrls.lod){missingLoan.push('LOD');document.getElementById('up_lod').classList.add('missing')}
+    if(!fileUrls.soa){missingLoan.push('Statement of Accounts');document.getElementById('up_soa').classList.add('missing')}
     if(missingLoan.length){toast(`Upload required: ${missingLoan.join(', ')}`,'err');return}
     // Validate loan detail fields
     if(!document.getElementById('loanApplicant').value.trim()){toast('Applicant Name required','err');return}
