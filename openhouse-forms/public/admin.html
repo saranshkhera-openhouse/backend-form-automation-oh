@@ -19,7 +19,7 @@
 .tbl .col-owner{width:110px}.tbl .col-phone{width:90px}.tbl .col-name{width:100px}.tbl .col-dt{width:85px}
 .tbl th{position:sticky;top:0;background:var(--bg);z-index:2;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);border-bottom:2px solid var(--bd);cursor:pointer;user-select:none}
 .tbl td{padding:6px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
-.tbl tr:hover:not(.row-dead){background:rgba(0,0,0,.02)}
+.tbl tr:hover:not(.row-dead):not(.row-refunded){background:rgba(0,0,0,.02)}
 .tbl th[data-s]:hover{color:var(--ac)}
 .tbl th.sorted-asc::after{content:' ▲';font-size:8px;color:var(--ac)}
 .tbl th.sorted-desc::after{content:' ▼';font-size:8px;color:var(--ac)}
@@ -67,10 +67,14 @@
 .prev-step.pending{background:#f3f4f6;color:#999}
 .prev-step.draft{background:#fef3c7;color:#92400e}
 .prev-step.dead{background:#fdecea;color:#b33a2e}
+.prev-step.refunded{background:#fef3c7;color:#b45309}
 .last-dt{font-size:10px;color:var(--tx3);font-family:var(--mono)}
 tr.row-dead{background:#fef2f2!important}
 tr.row-dead td{color:var(--red)!important;opacity:.7}
+tr.row-refunded{background:#fefbeb!important}
+tr.row-refunded td{color:#b45309!important;opacity:.7}
 .badge.dead-badge{background:#fdecea;color:#b33a2e;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px}
+.badge.refund-badge{background:#fef3c7;color:#b45309;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px}
 .export-btn{font-size:11px;padding:4px 12px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);cursor:pointer;color:var(--tx2);font-weight:500}
 .export-btn:hover{border-color:var(--ac);color:var(--ac)}
 .kbd{font-size:9px;color:var(--tx3);background:var(--bg);border:1px solid var(--bd);border-radius:3px;padding:1px 4px;font-family:var(--mono)}
@@ -223,9 +227,9 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
   const unitCol=p=>[p.tower_no,p.unit_no].filter(Boolean).join('-');
   const clickName=(name,field)=>name?`<a href="#" class="link person-link" data-name="${name}" data-field="${field||''}">${name}</a>`:'—';
   tb.innerHTML=d.map((p,idx)=>{
-    const dead=p.is_dead;const stage=p._stage;
+    const dead=p.is_dead;const refunded=p.is_token_refunded;const stage=p._stage;
     let acts=[];
-    if(!dead){
+    if(!dead&&!refunded){
       if(!p.visit_submitted_at)acts.push(`<a href="/visit?uid=${p.uid}" class="link">Visit</a>`);
       if(p.visit_submitted_at&&!p.token_submitted_at)acts.push(`<a href="/token-request?uid=${p.uid}" class="link">Token</a>`);
       if((p.token_submitted_at||p.token_is_draft)&&!p.token_deal_submitted_at)acts.push(`<a href="/token-deal?uid=${p.uid}" class="link">Deal</a>`);
@@ -237,9 +241,12 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
     }
     const lastDt=p.last_activity?fmtDt(p.last_activity):'—';
     const deadBadge=dead?'<span class="badge dead-badge">Cancelled</span>':'';
-    return`<tr class="${dead?'row-dead':''}"><td class="col-sn" style="font-size:10px;color:var(--tx3);text-align:center">${idx+1}</td><td class="col-uid" style="font-family:var(--mono);font-size:10px;font-weight:600"><a href="#" class="link uid-link" data-uid="${p.uid}">${p.uid}</a>${deadBadge}</td>
+    const refundBadge=refunded&&!dead?'<span class="badge refund-badge">Refunded</span>':'';
+    const rowCls=dead?'row-dead':refunded?'row-refunded':'';
+    const noActs=dead||refunded;
+    return`<tr class="${rowCls}"><td class="col-sn" style="font-size:10px;color:var(--tx3);text-align:center">${idx+1}</td><td class="col-uid" style="font-family:var(--mono);font-size:10px;font-weight:600"><a href="#" class="link uid-link" data-uid="${p.uid}">${p.uid}</a>${deadBadge}${refundBadge}</td>
       <td class="col-stage"><span class="stage-pill ${stage.cls}">${stage.label}</span></td>
-      <td class="col-act">${dead?'<span style="color:var(--red);font-size:10px">—</span>':acts.join(' ')}</td>
+      <td class="col-act">${noActs?'<span style="font-size:10px">—</span>':acts.join(' ')}</td>
       <td class="col-city">${p.city||'—'}</td><td class="col-soc">${p.society_name||'—'}</td><td class="col-unit">${unitCol(p)||'—'}</td><td class="col-owner">${p.owner_broker_name||'—'}</td><td class="col-phone" style="font-family:var(--mono);font-size:10px">${p.contact_no||'—'}</td>
       <td class="col-name">${clickName(p.assigned_by,'ab')}</td><td class="col-name">${p.field_exec||'—'}</td><td class="col-name">${clickName(p.token_requested_by,'q')}</td>
       <td class="col-dt last-dt">${lastDt}</td></tr>`}).join('');
@@ -319,7 +326,7 @@ function buildModal(p){
   const mb=document.getElementById('modalBody');
   document.getElementById('saveStatus').textContent='';
   const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA Req',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
-  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
+  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':p.is_token_refunded?'refunded':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':p.is_token_refunded?'Refunded':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
 
   let html=`<div class="prev-status">${statusHtml}

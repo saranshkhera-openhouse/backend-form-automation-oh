@@ -26,7 +26,7 @@ module.exports=function(pool){
     try{
       const society=req.query.society;
       if(!society)return res.json([]);
-      const{rows}=await pool.query('SELECT uid,unit_no,tower_no,floor,area_sqft,configuration FROM properties WHERE society_name=$1 AND is_dead IS NOT TRUE ORDER BY created_at DESC',[society]);
+      const{rows}=await pool.query('SELECT uid,unit_no,tower_no,floor,area_sqft,configuration FROM properties WHERE society_name=$1 AND is_dead IS NOT TRUE AND is_token_refunded IS NOT TRUE ORDER BY created_at DESC',[society]);
       res.json(rows);
     }catch(e){res.status(500).json({error:e.message})}
   });
@@ -38,7 +38,7 @@ module.exports=function(pool){
       if(!field_exec||!date)return res.json([]);
       const{rows}=await pool.query(
         `SELECT schedule_time,uid,society_name,unit_no,tower_no FROM properties
-         WHERE field_exec=$1 AND schedule_date=$2 AND is_dead IS NOT TRUE
+         WHERE field_exec=$1 AND schedule_date=$2 AND is_dead IS NOT TRUE AND is_token_refunded IS NOT TRUE
          ORDER BY schedule_time ASC`,[field_exec,date]);
       // Return busy hours (extract hour from each time)
       const slots=rows.map(r=>{
@@ -62,7 +62,7 @@ module.exports=function(pool){
       if(d.field_exec&&d.schedule_date&&d.schedule_time){
         const[sh,sm]=d.schedule_time.split(':').map(Number);const selMin=sh*60+sm;
         const{rows:busy}=await pool.query(
-          `SELECT schedule_time FROM properties WHERE field_exec=$1 AND schedule_date=$2 AND is_dead IS NOT TRUE`,
+          `SELECT schedule_time FROM properties WHERE field_exec=$1 AND schedule_date=$2 AND is_dead IS NOT TRUE AND is_token_refunded IS NOT TRUE`,
           [d.field_exec,d.schedule_date]);
         const windows=busy.map(r=>{const[h,m]=r.schedule_time.split(':').map(Number);const s=h*60+m;return{start:s,end:s+60}});
         const newEnd=selMin+60;

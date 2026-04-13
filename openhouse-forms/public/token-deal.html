@@ -24,7 +24,7 @@
     <div class="pf-st" id="pfSt"></div></div>
 
   <form id="dealForm" style="display:none"><input type="hidden" name="uid" id="fUid">
-    <div class="card"><div class="card-t">Token Amount</div>
+    <div class="card"><div class="card-t" style="display:flex;align-items:center;justify-content:space-between">Token Amount<button type="button" class="btn btn-out btn-sm" id="refundBtn" style="display:none;color:#b45309;border-color:#b45309;font-size:10px;padding:4px 10px">Token Refunded</button></div>
       <div class="fg"><label>Token (₹)</label><input type="text" name="deal_token_amount" id="dealAmt" class="pre" readonly></div></div>
 
     <div class="card" style="border-left:3px solid var(--ac2)"><div class="card-t">NEFT Details</div>
@@ -56,7 +56,6 @@
       <button type="button" class="btn btn-grn btn-sm" id="pdfBtn" disabled style="flex:none;max-width:none">PDF</button>
       <button type="button" class="btn btn-out btn-sm" id="emailBtn" disabled style="flex:none;max-width:none;color:var(--ac2);border-color:var(--ac2)">📧 Preview Mail</button>
     </div>
-    <button type="button" class="btn btn-out btn-sm" id="refundBtn" style="width:100%;margin-top:8px;color:var(--red);border-color:var(--red);display:none">Token Refunded</button>
 
     <div class="preview-section" id="previewSection">
       <div class="preview-card"><div class="pc-t">Property Details</div><div id="pcProp"></div></div>
@@ -260,24 +259,20 @@ async function confirmSendEmail(){
 }
 function updateRefundBtn(refunded){
   const btn=document.getElementById('refundBtn');
-  if(refunded){btn.textContent='↩ Undo Token Refunded';btn.style.color='var(--tx3)';btn.style.borderColor='var(--tx3)'}
-  else{btn.textContent='Token Refunded';btn.style.color='var(--red)';btn.style.borderColor='var(--red)'}
+  if(refunded){btn.textContent='↩ Undo Refund';btn.style.color='var(--tx3)';btn.style.borderColor='var(--tx3)'}
+  else{btn.textContent='Token Refunded';btn.style.color='#b45309';btn.style.borderColor='#b45309'}
 }
 document.getElementById('refundBtn').addEventListener('click',async()=>{
   if(!currentUid)return;
   const isRefunded=propData?.is_token_refunded;
-  const msg=isRefunded?'Undo token refunded for this property?':'Mark token as refunded? This means the property deal is lost.';
+  const msg=isRefunded?'Undo token refunded for this property?':'Mark token as refunded? This means the property deal is lost and it will be hidden from all forms.';
   if(!confirm(msg))return;
   const btn=document.getElementById('refundBtn');btn.disabled=true;
   try{
     const r=await fetch(`${API}/api/token-deal/token-refunded/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'}});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
-    if(propData)propData.is_token_refunded=d.is_token_refunded;
-    updateRefundBtn(d.is_token_refunded);
-    const st=document.getElementById('pfSt');
-    const refTag=d.is_token_refunded?' <span style="color:var(--red);font-weight:700">• Token Refunded</span>':'';
-    st.innerHTML=`Loaded: ${currentUid}${refTag}`;
     toast(d.is_token_refunded?'Marked as Token Refunded':'Token Refunded undone','ok');
+    loadData();
   }catch(e){toast(e.message||'Failed','err')}finally{btn.disabled=false}
 });
 </script>
