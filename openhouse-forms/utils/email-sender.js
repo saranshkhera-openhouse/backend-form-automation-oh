@@ -5,12 +5,12 @@ const puppeteer = require('puppeteer');
 let _pool = null;
 function init(pool) { _pool = pool; }
 
-// Add managers to CC if any of their team members are in TO or CC
-async function addManagerEmails(toStr, ccStr) {
+// Add managers to CC if any of their team members are in TO, CC, or is the sender
+async function addManagerEmails(toStr, ccStr, fromEmail) {
   if (!_pool) return ccStr;
   try {
-    // Collect all recipient emails
-    const allEmails = [...(toStr||'').split(','), ...(ccStr||'').split(',')]
+    // Collect all recipient emails + sender
+    const allEmails = [...(toStr||'').split(','), ...(ccStr||'').split(','), fromEmail||'']
       .map(e => e.trim().toLowerCase()).filter(Boolean);
     if (!allEmails.length) return ccStr;
 
@@ -195,7 +195,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
 
   console.log('Building MIME email...');
   const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in','supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in',fromEmail);
-  const emailCcFinal = await addManagerEmails(emailTo, emailCc);
+  const emailCcFinal = await addManagerEmails(emailTo, emailCc, fromEmail);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
     to: emailTo,
@@ -279,7 +279,7 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
 
   console.log('Building MIME email with PDF attachment...');
   const {to:dtTo,cc:dtCc}=testOverride(p.uid,'deal_terms',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
-  const dtCcFinal = await addManagerEmails(dtTo, dtCc);
+  const dtCcFinal = await addManagerEmails(dtTo, dtCc, fromEmail);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
     to: dtTo,
@@ -352,7 +352,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">Cancelled Cheque</a></li>`);
   if(p.cp_ama_signed_url) photoLinks.push(`<li><a href="${p.cp_ama_signed_url}" target="_blank">AMA Signed (PDF)</a></li>`);
 
-  const subject = `${p.uid} - Openhouse Offer | ${p.unit_no||''} ${p.tower_no||''} - ${p.society_name||'Property'} | ${p.owner_broker_name||'Owner'}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - CP Bill Request | ${p.unit_no||''} ${p.tower_no||''} - ${p.society_name||'Property'} | ${p.cp_name||'CP'}`.replace(/\s+/g, ' ').trim();
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Hi Accounts Team,</p>
 <p>Kindly prepare the CP bill for the below mentioned property:</p>
@@ -379,7 +379,7 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
 </body></html>`;
 
   const {to:cpTo,cc:cpCc}=testOverride(p.uid,'cp_bill','prashant@openhouse.in,accounts@openhouse.in','supply@openhouse.in',fromEmail);
-  const cpCcFinal = await addManagerEmails(cpTo, cpCc);
+  const cpCcFinal = await addManagerEmails(cpTo, cpCc, fromEmail);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: cpTo,
@@ -439,7 +439,7 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
   const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in'].filter(Boolean);
 
   const {to:paTo,cc:paCc}=testOverride(p.uid,'pending_amount',toList.join(', '),ccList.length?ccList.join(', '):'',fromEmail);
-  const paCcFinal = await addManagerEmails(paTo, paCc);
+  const paCcFinal = await addManagerEmails(paTo, paCc, fromEmail);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: paTo,
@@ -482,7 +482,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
 
   const {to:khTo,cc:khCc}=testOverride(p.uid,'key_handover',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
-  const khCcFinal = await addManagerEmails(khTo, khCc);
+  const khCcFinal = await addManagerEmails(khTo, khCc, fromEmail);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
     to: khTo,
