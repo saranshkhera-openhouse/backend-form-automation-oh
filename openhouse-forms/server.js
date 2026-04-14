@@ -7,7 +7,7 @@ const PgSession = require('connect-pg-simple')(session);
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('./db/pool');
-const { MIGRATION_SQL, COMPAT_SQL } = require('./db/migrate');
+const { MIGRATION_SQL, COMPAT_SQL, LOGS_TABLE_SQL } = require('./db/migrate');
 const { SOCIETIES } = require('./db/seed');
 const { isAuthenticated, hasFormAccess, isAdmin } = require('./middleware/auth');
 const { visibilityFilter } = require('./utils/visibility');
@@ -94,8 +94,9 @@ app.get('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
 // Admin: Update any property fields
 app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
   try{
-    const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[req.params.uid]);
+    const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
     if(!rows.length)return res.status(404).json({error:'UID not found'});
+    const oldProp=rows[0];
     const d=req.body;delete d.uid;delete d.created_at;delete d.updated_at;
     const allowed=new Set(['city','locality','society_name','unit_no','tower_no','floor','area_sqft','configuration',
       'demand_price','source','owner_broker_name','first_name','last_name','contact_no','assigned_by','field_exec',
@@ -123,9 +124,14 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'water_supply','dg_charges','alpha_beta','beta_pct','loan_status','seller_location',
       'circle_rate','parking_number','is_dead','is_token_refunded']);
     const sets=[];const vals=[];let i=1;
+    const changes={};
     for(const[k,v]of Object.entries(d)){
       if(!allowed.has(k))continue;
-      sets.push(`${k}=$${i}`);vals.push(v===''?null:v);i++;
+      const newVal=v===''?null:v;
+      const oldStr=oldProp[k]!=null?String(oldProp[k]):null;
+      const newStr=newVal!=null?String(newVal):null;
+      if(oldStr!==newStr)changes[k]={old:oldProp[k],new:newVal};
+      sets.push(`${k}=$${i}`);vals.push(newVal);i++;
     }
     if(!sets.length)return res.status(400).json({error:'No valid fields to update'});
     sets.push(`updated_at=NOW()`);
@@ -133,6 +139,17 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
     await pool.query(`UPDATE properties SET ${sets.join(',')} WHERE uid=$${i}`,vals);
     const{rows:updated}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
     res.json({success:true,property:updated[0]});
+    // Log changes
+    const logger=require('./utils/logger');
+    if(Object.keys(changes).length){
+      // Log status changes separately
+      if(changes.is_dead)logger.logStatusChange(req.params.uid,'is_dead',changes.is_dead.old,changes.is_dead.new,req.user?.email,req.user?.name).catch(()=>{});
+      if(changes.is_token_refunded)logger.logStatusChange(req.params.uid,'is_token_refunded',changes.is_token_refunded.old,changes.is_token_refunded.new,req.user?.email,req.user?.name).catch(()=>{});
+      if(changes.assigned_by)logger.logFieldChange(req.params.uid,'assigned_by',changes.assigned_by.old,changes.assigned_by.new,req.user?.email,req.user?.name,'admin_edit').catch(()=>{});
+      if(changes.field_exec)logger.logFieldChange(req.params.uid,'field_exec',changes.field_exec.old,changes.field_exec.new,req.user?.email,req.user?.name,'admin_edit').catch(()=>{});
+      // Log full admin edit
+      logger.logAdminEdit(req.params.uid,changes,req.user?.email,req.user?.name).catch(()=>{});
+    }
   }catch(e){console.error('Admin update error:',e.message);res.status(500).json({error:e.message})}
 });
 
@@ -168,8 +185,10 @@ async function start() {
   try {
     await pool.query(MIGRATION_SQL); console.log('Migration done');
     await pool.query(COMPAT_SQL); console.log('Compat done, DB ready');
+    await pool.query(LOGS_TABLE_SQL); console.log('Logs table ready');
     require('./utils/whatsapp').init(pool);
     require('./utils/email-sender').init(pool);
+    require('./utils/logger').init(pool);
     // Auto-seed user phone/roles if not yet populated
     const needSeed=await pool.query(`SELECT COUNT(*) as c FROM users WHERE phone IS NOT NULL AND phone!=''`);
     if(parseInt(needSeed.rows[0].c)===0){

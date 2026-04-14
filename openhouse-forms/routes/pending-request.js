@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{visibilityFilter}=require('../utils/visibility');
 const{sendPendingAmountEmail}=require('../utils/email-sender');
 const{notifyAMASigned}=require('../utils/whatsapp');
@@ -28,6 +29,7 @@ module.exports=function(pool){
          d.co_owner_aadhaar_front_url||null,d.co_owner_aadhaar_back_url||null,
          d.co_owner_pan_url||null,d.co_owner_cheque_url||null]);
       res.json({success:true,uid:d.uid});
+      logger.logFormSubmit(d.uid,'pending_request',6,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('PendingRequest:',e);res.status(500).json({error:e.message})}
   });
 

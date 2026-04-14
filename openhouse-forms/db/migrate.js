@@ -233,7 +233,24 @@ DO $$ BEGIN
 END $$;
 `;
 
-module.exports = { MIGRATION_SQL, COMPAT_SQL };
+const LOGS_TABLE_SQL = `
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id SERIAL PRIMARY KEY,
+  uid TEXT,
+  action TEXT NOT NULL,
+  category TEXT NOT NULL,
+  actor_email TEXT,
+  actor_name TEXT,
+  details JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_logs_uid ON activity_logs(uid);
+CREATE INDEX IF NOT EXISTS idx_logs_action ON activity_logs(action);
+CREATE INDEX IF NOT EXISTS idx_logs_actor ON activity_logs(actor_email);
+CREATE INDEX IF NOT EXISTS idx_logs_created ON activity_logs(created_at DESC);
+`;
+
+module.exports = { MIGRATION_SQL, COMPAT_SQL, LOGS_TABLE_SQL };
 
 // One-time seed: populate phone, can_assign, can_visit, is_top_manager from old hardcoded data
 // Run via: node db/migrate.js seed
@@ -288,6 +305,7 @@ if (require.main === module) {
     try {
       await pool.query(MIGRATION_SQL); console.log('Migration done');
       await pool.query(COMPAT_SQL); console.log('Compat done');
+      await pool.query(LOGS_TABLE_SQL); console.log('Logs table done');
       if (process.argv[2] === 'seed') await seedUserRoles();
       process.exit(0);
     } catch(e) { console.error(e); process.exit(1); }

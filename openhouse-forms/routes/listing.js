@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{visibilityFilter}=require('../utils/visibility');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
@@ -28,6 +29,7 @@ module.exports=function(pool){
          d.gas_pipeline||null,d.club_facility||null,
          d.seller_residential_status||null,d.sellers_available_on_registry||null,d.uid]);
       res.json({success:true,uid:d.uid});
+      logger.logFormSubmit(d.uid,'listing',9,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('Listing:',e);res.status(500).json({error:e.message})}
   });
   return router;

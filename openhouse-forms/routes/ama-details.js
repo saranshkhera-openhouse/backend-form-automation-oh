@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{visibilityFilter}=require('../utils/visibility');
 const{notifyAMASubmitted}=require('../utils/whatsapp');
 
@@ -60,7 +61,7 @@ module.exports=function(pool){
          d.bank_name_loan||null,d.loan_account_number||null,
          parseFloat(d.outstanding_loan)||null,d.loan_pay_willingness||null]);
       res.json({success:true,uid:d.uid});
-      // Fire-and-forget WhatsApp notification
+      logger.logFormSubmit(d.uid,'ama_details',5,req.user?.email,req.user?.name).catch(()=>{});
       pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
         if(rows[0])notifyAMASubmitted(rows[0]).catch(e=>console.error('WA AMA notify error:',e));
       }).catch(e=>console.error('WA AMA fetch error:',e));

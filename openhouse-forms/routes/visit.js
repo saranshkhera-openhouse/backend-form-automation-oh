@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{visibilityFilter}=require('../utils/visibility');
 const{notifyVisitCompleted,notifyVisitReassigned,notifyVisitCancelled,notifyVisitScheduled}=require('../utils/whatsapp');
 module.exports=function(pool){
@@ -30,7 +31,7 @@ module.exports=function(pool){
          d.exit_facing||null,d.exit_compass_image||null,d.video_link||null,
          d.balcony_details||'[]',d.additional_images||'[]',d.visit_remarks||null,d.uid]);
       res.json({success:true,uid:d.uid});
-      // Fire-and-forget WhatsApp notification to assigned_by
+      logger.logFormSubmit(d.uid,'visit',2,req.user?.email,req.user?.name).catch(()=>{});
       pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
         if(rows[0])notifyVisitCompleted(rows[0]).catch(e=>console.error('WA visit notify error:',e));
       }).catch(e=>console.error('WA visit fetch error:',e));
@@ -43,6 +44,7 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query('UPDATE properties SET is_dead=TRUE,updated_at=NOW() WHERE uid=$1',[req.params.uid]);
       res.json({success:true,uid:req.params.uid});
+      logger.logStatusChange(req.params.uid,'is_dead',false,true,req.user?.email,req.user?.name).catch(()=>{});
       // Notify assigned_by that visit is cancelled
       const cancelledBy=req.user?.name||req.user?.email||'Unknown';
       notifyVisitCancelled(rows[0],cancelledBy).catch(e=>console.error('WA cancel notify error:',e));
@@ -100,7 +102,10 @@ module.exports=function(pool){
       if(schedule_date)resp.schedule_date=schedule_date;
       if(schedule_time)resp.schedule_time=schedule_time;
       res.json(resp);
-      // Notify if reassigned
+      // Log changes
+      const old=rows[0];
+      if(field_exec)logger.logScheduleChange(req.params.uid,'reassign',{old_exec:old.field_exec,new_exec:field_exec},req.user?.email,req.user?.name).catch(()=>{});
+      if(schedule_date||schedule_time)logger.logScheduleChange(req.params.uid,'reschedule',{old_date:old.schedule_date,new_date:schedule_date||old.schedule_date,old_time:old.schedule_time,new_time:schedule_time||old.schedule_time},req.user?.email,req.user?.name).catch(()=>{});
       if(field_exec)notifyVisitReassigned(rows[0],field_exec).catch(e=>console.error('WA reassign notify error:',e));
     }catch(e){console.error('Update:',e);res.status(500).json({error:e.message})}
   });

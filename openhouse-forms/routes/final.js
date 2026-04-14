@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{generateInvoiceHTML}=require('../utils/invoice-template');
 const{sendKeyHandoverEmail}=require('../utils/email-sender');
 const{notifyKeyHandover}=require('../utils/whatsapp');
@@ -25,6 +26,7 @@ module.exports=function(pool){
         WHERE uid=$2`,
         [parseFloat(d.remaining_amount)||null,d.uid,d.key_handover_date||null]);
       res.json({success:true,uid:d.uid});
+      logger.logFormSubmit(d.uid,'key_handover',8,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
   router.get('/pdf/:uid',async(req,res)=>{

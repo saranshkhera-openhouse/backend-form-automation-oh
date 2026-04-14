@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{generateReceiptHTML}=require('../utils/pdf-template');
 const{sendTokenRequestEmail}=require('../utils/email-sender');
 const{visibilityFilter}=require('../utils/visibility');
@@ -47,6 +48,7 @@ module.exports=function(pool){
          d.owner_pan_url||null,d.owner_aadhaar_front_url||null,d.owner_aadhaar_back_url||null,d.owner_property_doc_url||null,
          d.total_deposit!=null&&d.total_deposit!==''?parseFloat(d.total_deposit):null,d.refundable_deposit!=null&&d.refundable_deposit!==''?parseFloat(d.refundable_deposit):null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
+      logger.logFormSubmit(d.uid,'token_request',3,req.user?.email,req.user?.name,isDraft).catch(()=>{});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
   // Update owner name (CP → Owner correction)

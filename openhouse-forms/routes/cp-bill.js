@@ -1,4 +1,5 @@
 const express=require('express'),router=express.Router();
+const logger=require('../utils/logger');
 const{visibilityFilter}=require('../utils/visibility');
 const{sendCPBillEmail}=require('../utils/email-sender');
 
@@ -103,6 +104,7 @@ module.exports=function(pool){
          d.cp_pan_card_url||null,d.cp_cancelled_cheque_url||null,d.cp_ama_signed_url||null,
          d.uid,cpCode,d.gst_applicable||'No',d.cp_gst_invoice_url||null]);
       res.json({success:true,uid:d.uid,cp_code:cpCode});
+      logger.logFormSubmit(d.uid,'cp_bill',7,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('CPBill:',e);res.status(500).json({error:e.message})}
   });
   router.post('/send-email/:uid',async(req,res)=>{
