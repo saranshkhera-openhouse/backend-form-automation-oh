@@ -98,7 +98,7 @@ tr.row-refunded td{color:#b45309!important;opacity:.7}
     <div class="stat" data-filter="cpbill" id="stCp"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
     <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Key Handover</div></div>
     <div class="stat" data-filter="listed" id="stLst"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
-    <div class="stat" data-filter="refunded" id="stRef"><div class="stat-val" id="sRef" style="color:#b45309">—</div><div class="stat-lbl">Token Refunded</div></div>
+    <div class="stat" data-filter="refunded" id="stRef"><div class="stat-val" id="sRef" style="color:#b45309">—</div><div class="stat-lbl">Cancelled PT</div></div>
     <div class="stat" data-filter="dead" id="stCan"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
   </div>
   <div class="card" style="padding:0;overflow:hidden">
@@ -113,7 +113,7 @@ tr.row-refunded td{color:#b45309!important;opacity:.7}
           <option value="deal">Deal Terms</option><option value="ama">AMA Req</option>
           <option value="amasigned">AMA Signed</option><option value="cpbill">CP Bill</option>
           <option value="final">Key Handover</option>
-          <option value="listed">Listed</option><option value="refunded">Token Refunded</option><option value="dead">Cancelled</option>
+          <option value="listed">Listed</option><option value="refunded">Cancelled Post Token</option><option value="dead">Cancelled</option>
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()" title="Refresh data">↻</button>
       </div>
@@ -163,7 +163,7 @@ function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.to
 
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead'};
-  if(p.is_token_refunded)return{label:'Token Refunded',cls:'s-ref',key:'refunded'};
+  if(p.is_token_refunded)return{label:'Cancelled Post Token',cls:'s-ref',key:'refunded'};
   if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
   if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final'};
   if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill'};
@@ -245,7 +245,7 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
     }
     const lastDt=p.last_activity?fmtDt(p.last_activity):'—';
     const deadBadge=dead?'<span class="badge dead-badge">Cancelled</span>':'';
-    const refundBadge=refunded&&!dead?'<span class="badge refund-badge">Refunded</span>':'';
+    const refundBadge=refunded&&!dead?'<span class="badge refund-badge">Cancelled PT</span>':'';
     const rowCls=dead?'row-dead':refunded?'row-refunded':'';
     const noActs=dead||refunded;
     return`<tr class="${rowCls}"><td class="col-sn" style="font-size:10px;color:var(--tx3);text-align:center">${idx+1}</td><td class="col-uid" style="font-family:var(--mono);font-size:10px;font-weight:600"><a href="#" class="link uid-link" data-uid="${p.uid}">${p.uid}</a>${deadBadge}${refundBadge}</td>
@@ -340,12 +340,12 @@ function buildModal(p){
   const mb=document.getElementById('modalBody');
   document.getElementById('saveStatus').textContent='';
   const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA Req',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
-  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':p.is_token_refunded?'refunded':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':p.is_token_refunded?'Refunded':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
+  let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':p.is_token_refunded?'refunded':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':p.is_token_refunded?'Cancelled PT':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
 
   let html=`<div class="prev-status">${statusHtml}
     <label style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:#b45309;font-weight:600;cursor:pointer">
-      <input type="checkbox" name="is_token_refunded" ${p.is_token_refunded?'checked':''} style="margin:0"> Token Refunded
+      <input type="checkbox" name="is_token_refunded" ${p.is_token_refunded?'checked':''} style="margin:0"> Cancelled Post Token
     </label>
     <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red);font-weight:600;cursor:pointer">
       <input type="checkbox" name="is_dead" ${p.is_dead?'checked':''} style="margin:0"> Cancelled

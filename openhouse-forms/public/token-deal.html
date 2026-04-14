@@ -131,7 +131,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const refBtn=document.getElementById('refundBtn');
     refBtn.style.display=submitted?'block':'none';
     updateRefundBtn(propData.is_token_refunded);
-    const refTag=propData.is_token_refunded?' <span style="color:var(--red);font-weight:700">Cancelled Post Token</span>':'';
+    const refTag=propData.is_token_refunded?' <span style="color:#b45309;font-weight:700">• Cancelled Post Token</span>':'';
     st.className='pf-st show ok';st.textContent='';st.innerHTML=`Loaded: ${uid}${refTag}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('dealForm').style.display='none'}}
 
@@ -259,13 +259,13 @@ async function confirmSendEmail(){
 }
 function updateRefundBtn(refunded){
   const btn=document.getElementById('refundBtn');
-  if(refunded){btn.textContent='↩ Undo Refund';btn.style.color='var(--tx3)';btn.style.borderColor='var(--tx3)'}
-  else{btn.textContent='Cancelled Post Token';btn.style.color='#b45309';btn.style.borderColor='#b45309'}
+  if(refunded){btn.textContent='↩ Undo Cancel';btn.style.color='var(--tx3)';btn.style.borderColor='var(--tx3)'}
+  else{btn.textContent='Cancel Post Token';btn.style.color='#b45309';btn.style.borderColor='#b45309'}
 }
 document.getElementById('refundBtn').addEventListener('click',async()=>{
   if(!currentUid)return;
   const isRefunded=propData?.is_token_refunded;
-  const msg=isRefunded?'Undo token refunded for this property?':'Mark token as refunded? This means the property deal is lost and it will be hidden from all forms.';
+  const msg=isRefunded?'Undo cancelled post token for this property?':'Cancel post token? This means the property deal is lost and it will be hidden from all forms.';
   if(!confirm(msg))return;
   const btn=document.getElementById('refundBtn');btn.disabled=true;
   try{
