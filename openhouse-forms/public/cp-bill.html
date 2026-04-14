@@ -483,9 +483,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
   if(!body.to_be_released_now){toast('To be Released Now required','err');return}
 
-  // Validate documents — skip if already submitted
-  const alreadySubmitted=!!(loadedData&&loadedData.cp_bill_submitted_at);
-  if(!alreadySubmitted){
+  // Validate documents — always required
+  {
     const isFirm=cpType==='HAS_FIRM';
     const isGstYes=isFirm&&gstVal==='Yes';
     let DOC_LABELS;
