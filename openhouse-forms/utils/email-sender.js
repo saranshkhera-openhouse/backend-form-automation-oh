@@ -175,7 +175,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const society = p.society_name || 'Property';
   const tokenAmt = p.deal_token_amount!=null&&p.deal_token_amount!=='' ? '₹ ' + Number(p.deal_token_amount).toLocaleString('en-IN') : '';
 
-  const subject = `${p.uid} - Token Request | ${unit} ${tower} - ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - Token Request | ${tower} ${unit} - ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
 
   const senderName = fromEmail.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -245,7 +245,7 @@ async function sendDealTermsEmail({ accessToken, refreshToken, fromEmail, proper
   const tokenAmtFmt = tokenAmt!=null&&tokenAmt!=='' ? 'INR ' + Number(tokenAmt).toLocaleString('en-IN') + '/-' : 'INR [Token Amount]';
   const neftRef = p.deal_neft_reference || '[Transaction Reference No.]';
 
-  const subject = `${p.uid} - Openhouse Offer | ${unit} ${tower} - ${society} | ${sellerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - Openhouse Offer | ${tower} ${unit} - ${society} | ${sellerName}`.replace(/\s+/g, ' ').trim();
 
   const bodyHtml = `<html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.8">
 <p>Dear <strong>${sellerName}</strong>,</p>
@@ -359,7 +359,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   if(isGstYes && p.cp_gst_invoice_url) photoLinks.push(`<li><a href="${p.cp_gst_invoice_url}" target="_blank">GST Invoice</a></li>`);
   if(p.cp_ama_signed_url) photoLinks.push(`<li><a href="${p.cp_ama_signed_url}" target="_blank">AMA Signed (PDF)</a></li>`);
 
-  const subject = `${p.uid} - CP Bill Request | ${p.unit_no||''} ${p.tower_no||''} - ${p.society_name||'Property'} | ${p.cp_name||'CP'}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - CP Bill Request | ${p.tower_no||''} ${p.unit_no||''} - ${p.society_name||'Property'} | ${p.cp_name||'CP'}`.replace(/\s+/g, ' ').trim();
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Hi Accounts Team,</p>
 <p>Kindly prepare the CP bill for the below mentioned property:</p>
@@ -426,7 +426,7 @@ async function sendPendingAmountEmail({ accessToken, refreshToken, fromEmail, se
   }
   amountLines += `</ul>`;
 
-  const subject = `${p.uid} - Openhouse Offer | ${p.unit_no||''} ${p.tower_no||''} - ${p.society_name||'Property'} | ${ownerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - Openhouse Offer | ${p.tower_no||''} ${p.unit_no||''} - ${p.society_name||'Property'} | ${ownerName}`.replace(/\s+/g, ' ').trim();
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Dear <strong>${ownerName}</strong>,</p>
 <p>Congratulations on the successful execution of the Asset Management Agreement dated <strong>${amaDate}</strong>.</p>
@@ -480,7 +480,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   const sellerName = p.owner_broker_name || 'Seller';
   const hdDate = p.key_handover_date ? new Date(p.key_handover_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
-  const subject = `${p.uid} - Openhouse Offer | ${p.unit_no||''} ${p.tower_no||''} - ${p.society_name||'Property'} | ${sellerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - Openhouse Offer | ${p.tower_no||''} ${p.unit_no||''} - ${p.society_name||'Property'} | ${sellerName}`.replace(/\s+/g, ' ').trim();
   const bodyHtml = `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.8">
 <p>Dear <strong>${sellerName}</strong>,</p>
 <p>This email serves as official confirmation that we collected the keys to your property <strong>${addr}</strong> on <strong>${hdDate}</strong>. Consequently, the timeline of the agreement will commence from <strong>${hdDate}</strong>. Please consider this message as formal notification regarding the start of our timeline.</p>
