@@ -47,4 +47,10 @@ function logAdminEdit(uid, changes, actorEmail, actorName) {
   return log(uid, 'admin_edit', 'admin', actorEmail, actorName, { changes });
 }
 
-module.exports = { init, log, logFormSubmit, logEmailSent, logStatusChange, logAssignment, logScheduleChange, logAdminEdit };
+// ── WhatsApp Notifications ──
+function logWhatsApp(uid, templateName, recipients, actorEmail, actorName) {
+  const action = `wa_${templateName}`;
+  return log(uid, action, 'whatsapp', actorEmail || null, actorName || null, { template: templateName, recipients: recipients || [] });
+}
+
+module.exports = { init, log, logFormSubmit, logEmailSent, logWhatsApp, logStatusChange, logAssignment, logScheduleChange, logAdminEdit };

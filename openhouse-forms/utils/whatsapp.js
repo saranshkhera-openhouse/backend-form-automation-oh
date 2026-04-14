@@ -1,6 +1,7 @@
 // WhatsApp notification via Interakt API (Official WhatsApp Business API)
 // All team data now pulled from users table in DB
 const https = require('https');
+const logger = require('./logger');
 
 let _pool = null;
 function init(pool) { _pool = pool; }
@@ -164,7 +165,7 @@ function notifyVisitScheduled(property, actor) {
   const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),p.field_exec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
   return getRecipients(p, [p.field_exec]).then(r => {
     console.log(`WA: visit_scheduled | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_scheduled', bodyValues, r);
+    return broadcastTemplate('visit_scheduled', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_scheduled',res,actor?.email,actor?.name).catch(()=>{});return res});
   });
 }
 
@@ -173,7 +174,7 @@ function notifyVisitCompleted(property, actor) {
   const bodyValues = [p.uid||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.field_exec||'-',p.assigned_by||'-'];
   return getRecipients(p, [p.assigned_by]).then(r => {
     console.log(`WA: visit_completed_1v | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_completed_1v', bodyValues, r);
+    return broadcastTemplate('visit_completed_1v', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_completed_1v',res,actor?.email,actor?.name).catch(()=>{});return res});
   });
 }
 
@@ -183,7 +184,7 @@ function notifyTokenRequest(property, actor) {
   const bodyValues = [p.uid||'-',amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
   return getRecipients(p, [p.assigned_by, p.token_requested_by, 'Saurabh']).then(r => {
     console.log(`WA: token_request | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('token_request', bodyValues, r);
+    return broadcastTemplate('token_request', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'token_request',res,actor?.email,actor?.name).catch(()=>{});return res});
   });
 }
 
@@ -192,7 +193,7 @@ function notifyVisitReassigned(property, newExec, actor) {
   const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),newExec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
   return getRecipients(p, [newExec, p.assigned_by]).then(r => {
     console.log(`WA: visit_reassigned | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_reassigned_2', bodyValues, r);
+    return broadcastTemplate('visit_reassigned_2', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_reassigned_2',res,actor?.email,actor?.name).catch(()=>{});return res});
   });
 }
 
@@ -201,7 +202,7 @@ function notifyVisitCancelled(property, cancelledBy, actor) {
   const bodyValues = [p.uid||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-',cancelledBy||'-'];
   return getRecipients(p, [p.assigned_by, p.field_exec]).then(r => {
     console.log(`WA: visit_cancelled | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_cancelled', bodyValues, r);
+    return broadcastTemplate('visit_cancelled', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_cancelled',res,actor?.email,actor?.name).catch(()=>{});return res});
   });
 }
 
@@ -220,6 +221,7 @@ async function notifyAMASubmitted(property, submitterName, actor) {
   if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   const results = await broadcastTemplate('ama_notification', bodyValues, recipients);
+  logger.logWhatsApp(p.uid,'ama_notification',results,actor?.email,actor?.name).catch(()=>{});
   return results;
 }
 
@@ -246,6 +248,7 @@ async function notifyDealTermsShared(property, submitterName, actor) {
       allRecipients.push({name:'direct',phone:clean,ok});
     }
   }
+  logger.logWhatsApp(p.uid,'deal_terms_shared_to_owner',allRecipients,actor?.email,actor?.name).catch(()=>{});
   return results;
 }
 
@@ -271,6 +274,7 @@ async function notifyAMASigned(property, submitterName, actor) {
       allRecipients.push({name:'direct',phone:clean,ok});
     }
   }
+  logger.logWhatsApp(p.uid,'ama_signed',allRecipients,actor?.email,actor?.name).catch(()=>{});
   return results;
 }
 
@@ -296,6 +300,7 @@ async function notifyKeyHandover(property, submitterName, actor) {
       allRecipients.push({name:'direct',phone:clean,ok});
     }
   }
+  logger.logWhatsApp(p.uid,'key_handover',allRecipients,actor?.email,actor?.name).catch(()=>{});
   return results;
 }
 
