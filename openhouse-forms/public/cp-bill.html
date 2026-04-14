@@ -127,10 +127,6 @@
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_back" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_back')">
         </div>
-        <div class="pu-item cp-coi-doc" id="pu_coi" onclick="pickFile('cp_coi')" style="display:none">
-          <div class="pu-icon">📄</div><div class="pu-label">Certificate of Incorporation (COI) <span class="req">*</span></div>
-          <input type="file" id="fi_cp_coi" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_coi')">
-        </div>
         <div class="pu-item cp-individual-doc" id="pu_pan" onclick="pickFile('cp_pan_card')">
           <div class="pu-icon">📄</div><div class="pu-label">PAN Card <span class="req">*</span></div>
           <input type="file" id="fi_cp_pan_card" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_pan_card')">
@@ -142,6 +138,10 @@
         <div class="pu-item cp-gst-doc" id="pu_gstInvoice" onclick="pickFile('cp_gst_invoice')" style="display:none">
           <div class="pu-icon">📄</div><div class="pu-label">GST Invoice <span class="req">*</span></div>
           <input type="file" id="fi_cp_gst_invoice" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_gst_invoice')">
+        </div>
+        <div class="pu-item cp-coi-doc" id="pu_coi" onclick="pickFile('cp_coi')" style="display:none;grid-column:span 2">
+          <div class="pu-icon">📄</div><div class="pu-label">Certificate of Incorporation (COI) <span class="req">*</span></div>
+          <input type="file" id="fi_cp_coi" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_coi')">
         </div>
         <div class="pu-item" id="pu_ama" onclick="pickFile('cp_ama_signed')" style="grid-column:span 2">
           <div class="pu-icon">📄</div><div class="pu-label">AMA Signed (PDF) <span class="req">*</span></div>
