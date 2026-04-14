@@ -241,13 +241,19 @@ CREATE TABLE IF NOT EXISTS activity_logs (
   category TEXT NOT NULL,
   actor_email TEXT,
   actor_name TEXT,
+  dashboard TEXT NOT NULL,
   details JSONB NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Kolkata')
 );
 CREATE INDEX IF NOT EXISTS idx_logs_uid ON activity_logs(uid);
 CREATE INDEX IF NOT EXISTS idx_logs_action ON activity_logs(action);
 CREATE INDEX IF NOT EXISTS idx_logs_actor ON activity_logs(actor_email);
 CREATE INDEX IF NOT EXISTS idx_logs_created ON activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_logs_dashboard ON activity_logs(dashboard);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='activity_logs' AND column_name='dashboard')
+  THEN ALTER TABLE activity_logs ADD COLUMN dashboard TEXT; END IF;
+END $$;
 `;
 
 module.exports = { MIGRATION_SQL, COMPAT_SQL, LOGS_TABLE_SQL };

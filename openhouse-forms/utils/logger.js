@@ -1,14 +1,16 @@
 // Activity Logger — non-blocking, fire-and-forget
 let _pool = null;
+const DASHBOARD = 'Forms';
+
 function init(pool) { _pool = pool; }
 
 async function log(uid, action, category, actorEmail, actorName, details = {}) {
   if (!_pool) return;
   try {
     await _pool.query(
-      `INSERT INTO activity_logs (uid, action, category, actor_email, actor_name, details)
-       VALUES ($1,$2,$3,$4,$5,$6)`,
-      [uid || null, action, category, actorEmail || null, actorName || null, JSON.stringify(details)]
+      `INSERT INTO activity_logs (uid, action, category, actor_email, actor_name, dashboard, details, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, NOW() AT TIME ZONE 'Asia/Kolkata')`,
+      [uid || null, action, category, actorEmail || null, actorName || null, DASHBOARD, JSON.stringify(details)]
     );
   } catch (e) { console.error('Logger error:', e.message); }
 }
