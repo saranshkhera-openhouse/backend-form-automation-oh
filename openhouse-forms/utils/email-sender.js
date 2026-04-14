@@ -174,7 +174,7 @@ async function sendTokenRequestEmail({ accessToken, refreshToken, fromEmail, pro
   const society = p.society_name || 'Property';
   const tokenAmt = p.deal_token_amount!=null&&p.deal_token_amount!=='' ? '₹ ' + Number(p.deal_token_amount).toLocaleString('en-IN') : '';
 
-  const subject = `${p.uid} - Openhouse Offer | ${unit} ${tower} - ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
+  const subject = `${p.uid} - Token Request | ${unit} ${tower} - ${society} | ${ownerName}`.replace(/\s+/g, ' ').trim();
 
   const senderName = fromEmail.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
