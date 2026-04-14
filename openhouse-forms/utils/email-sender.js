@@ -217,7 +217,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   });
 
   console.log(`Email sent! messageId: ${result.data.id}`);
-  logger.logEmailSent(p.uid,'token_request',fromEmail,emailTo,emailCcFinal,result.data.id,subject).catch(()=>{});
+  logger.logEmailSent(p.uid,'email_token_request',fromEmail,emailTo,emailCcFinal,result.data.id,subject).catch(()=>{});
   const realMsgId = await getMessageId(gmail, result.data.id);
   return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
@@ -297,7 +297,7 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
   if (threadId) dtReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: dtReqBody });
   console.log(`Deal Terms email sent! messageId: ${result.data.id}`);
-  logger.logEmailSent(p.uid,'deal_terms',fromEmail,dtTo,dtCcFinal,result.data.id,subject).catch(()=>{});
+  logger.logEmailSent(p.uid,'email_deal_terms',fromEmail,dtTo,dtCcFinal,result.data.id,subject).catch(()=>{});
   const realMsgId = await getMessageId(gmail, result.data.id);
   return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
@@ -398,7 +398,7 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
   if (threadId) cpReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: cpReqBody });
   console.log(`CP Bill email sent! messageId: ${result.data.id}`);
-  logger.logEmailSent(p.uid,'cp_bill',fromEmail,cpTo,cpCcFinal,result.data.id,subject).catch(()=>{});
+  logger.logEmailSent(p.uid,'email_cp_bill',fromEmail,cpTo,cpCcFinal,result.data.id,subject).catch(()=>{});
   const realMsgId = await getMessageId(gmail, result.data.id);
   return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
@@ -459,7 +459,7 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
   if (threadId) paReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: paReqBody });
   console.log(`Pending amount email sent! messageId: ${result.data.id}`);
-  logger.logEmailSent(p.uid,'pending_amount',fromEmail,paTo,paCcFinal,result.data.id,subject).catch(()=>{});
+  logger.logEmailSent(p.uid,'email_pending_amount',fromEmail,paTo,paCcFinal,result.data.id,subject).catch(()=>{});
   const realMsgId = await getMessageId(gmail, result.data.id);
   return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }
@@ -503,7 +503,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
   if (threadId) khReqBody.threadId = threadId;
   const result = await gmail.users.messages.send({ userId: 'me', requestBody: khReqBody });
   console.log(`Key handover email sent! messageId: ${result.data.id}`);
-  logger.logEmailSent(p.uid,'key_handover',fromEmail,khTo,khCcFinal,result.data.id,subject).catch(()=>{});
+  logger.logEmailSent(p.uid,'email_key_handover',fromEmail,khTo,khCcFinal,result.data.id,subject).catch(()=>{});
   const realMsgId = await getMessageId(gmail, result.data.id);
   return { messageId: result.data.id, threadId: result.data.threadId, rfc822MsgId: realMsgId || msgId };
 }

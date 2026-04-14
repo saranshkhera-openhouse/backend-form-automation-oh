@@ -13,44 +13,36 @@ async function log(uid, action, category, actorEmail, actorName, details = {}) {
   } catch (e) { console.error('Logger error:', e.message); }
 }
 
-// ── Form Submissions ──
-function logFormSubmit(uid, formName, formNumber, actorEmail, actorName, isDraft = false) {
-  return log(uid, 'form_submit', 'form', actorEmail, actorName, { form: formName, form_number: formNumber, is_draft: isDraft });
+// ── Form Submissions — action = form name ──
+function logFormSubmit(uid, action, formNumber, actorEmail, actorName, isDraft = false) {
+  return log(uid, action, 'form', actorEmail, actorName, { form_number: formNumber, is_draft: isDraft });
 }
 
-// ── Assignment Changes ──
-function logFieldChange(uid, field, oldVal, newVal, actorEmail, actorName, reason) {
-  return log(uid, 'field_change', 'assignment', actorEmail, actorName, { field, old: oldVal || null, new: newVal || null, reason: reason || null });
-}
-
-// ── Emails Sent ──
-function logEmailSent(uid, emailType, sender, toList, ccList, gmailId, subject) {
+// ── Emails — action = email type ──
+function logEmailSent(uid, action, sender, toList, ccList, gmailId, subject) {
   const to = Array.isArray(toList) ? toList : (toList || '').split(',').map(e => e.trim()).filter(Boolean);
   const cc = Array.isArray(ccList) ? ccList : (ccList || '').split(',').map(e => e.trim()).filter(Boolean);
-  return log(uid, 'email_sent', 'email', sender, null, { type: emailType, to, cc, gmail_id: gmailId || null, subject: subject || null });
+  return log(uid, action, 'email', sender, null, { to, cc, gmail_id: gmailId || null, subject: subject || null });
 }
 
-// ── WhatsApp Notifications ──
-function logWhatsApp(uid, templateName, recipients) {
-  // recipients: [{name, phone, ok}]
-  return log(uid, 'wa_sent', 'whatsapp', null, null, { template: templateName, recipients: recipients || [] });
+// ── Status — action = specific status name ──
+function logStatusChange(uid, action, oldVal, newVal, actorEmail, actorName) {
+  return log(uid, action, 'status', actorEmail, actorName, { old: oldVal, new: newVal });
 }
 
-// ── Status Changes ──
-function logStatusChange(uid, field, oldVal, newVal, actorEmail, actorName) {
-  return log(uid, 'status_change', 'status', actorEmail, actorName, { field, old: oldVal, new: newVal });
+// ── Assignment — action = specific change name ──
+function logAssignment(uid, action, oldVal, newVal, actorEmail, actorName, source) {
+  return log(uid, action, 'assignment', actorEmail, actorName, { old: oldVal || null, new: newVal || null, source: source || null });
+}
+
+// ── Schedule — action = reschedule/reassign ──
+function logScheduleChange(uid, action, details, actorEmail, actorName) {
+  return log(uid, action, 'schedule', actorEmail, actorName, details);
 }
 
 // ── Admin Edits ──
 function logAdminEdit(uid, changes, actorEmail, actorName) {
-  // changes: {field: {old, new}, ...}
   return log(uid, 'admin_edit', 'admin', actorEmail, actorName, { changes });
 }
 
-// ── Schedule Changes ──
-function logScheduleChange(uid, changeType, details, actorEmail, actorName) {
-  // changeType: 'reschedule', 'reassign', 'visit_cancelled'
-  return log(uid, 'schedule_change', 'schedule', actorEmail, actorName, { type: changeType, ...details });
-}
-
-module.exports = { init, log, logFormSubmit, logFieldChange, logEmailSent, logWhatsApp, logStatusChange, logAdminEdit, logScheduleChange };
+module.exports = { init, log, logFormSubmit, logEmailSent, logStatusChange, logAssignment, logScheduleChange, logAdminEdit };

@@ -1,7 +1,6 @@
 // WhatsApp notification via Interakt API (Official WhatsApp Business API)
 // All team data now pulled from users table in DB
 const https = require('https');
-const logger = require('./logger');
 
 let _pool = null;
 function init(pool) { _pool = pool; }
@@ -160,53 +159,53 @@ function fmtTime(t) {
 // NOTIFICATION FUNCTIONS
 // ═══════════════════════════════════════════════════════
 
-function notifyVisitScheduled(property) {
+function notifyVisitScheduled(property, actor) {
   const p = property;
   const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),p.field_exec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
   return getRecipients(p, [p.field_exec]).then(r => {
     console.log(`WA: visit_scheduled | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_scheduled', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_scheduled',res).catch(()=>{});return res});
+    return broadcastTemplate('visit_scheduled', bodyValues, r);
   });
 }
 
-function notifyVisitCompleted(property) {
+function notifyVisitCompleted(property, actor) {
   const p = property;
   const bodyValues = [p.uid||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.field_exec||'-',p.assigned_by||'-'];
   return getRecipients(p, [p.assigned_by]).then(r => {
     console.log(`WA: visit_completed_1v | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_completed_1v', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_completed_1v',res).catch(()=>{});return res});
+    return broadcastTemplate('visit_completed_1v', bodyValues, r);
   });
 }
 
-function notifyTokenRequest(property) {
+function notifyTokenRequest(property, actor) {
   const p = property;
   const amt = p.deal_token_amount!=null&&p.deal_token_amount!=='' ? '₹' + Number(p.deal_token_amount).toLocaleString('en-IN') : '-';
   const bodyValues = [p.uid||'-',amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
   return getRecipients(p, [p.assigned_by, p.token_requested_by, 'Saurabh']).then(r => {
     console.log(`WA: token_request | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('token_request', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'token_request',res).catch(()=>{});return res});
+    return broadcastTemplate('token_request', bodyValues, r);
   });
 }
 
-function notifyVisitReassigned(property, newExec) {
+function notifyVisitReassigned(property, newExec, actor) {
   const p = property;
   const bodyValues = [p.uid||'-',fmtDate(p.schedule_date),fmtTime(p.schedule_time),newExec||'-',p.assigned_by||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-'];
   return getRecipients(p, [newExec, p.assigned_by]).then(r => {
     console.log(`WA: visit_reassigned | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_reassigned_2', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_reassigned_2',res).catch(()=>{});return res});
+    return broadcastTemplate('visit_reassigned_2', bodyValues, r);
   });
 }
 
-function notifyVisitCancelled(property, cancelledBy) {
+function notifyVisitCancelled(property, cancelledBy, actor) {
   const p = property;
   const bodyValues = [p.uid||'-',p.society_name||'-',p.tower_no||'-',p.unit_no||'-',cancelledBy||'-'];
   return getRecipients(p, [p.assigned_by, p.field_exec]).then(r => {
     console.log(`WA: visit_cancelled | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('visit_cancelled', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'visit_cancelled',res).catch(()=>{});return res});
+    return broadcastTemplate('visit_cancelled', bodyValues, r);
   });
 }
 
-async function notifyAMASubmitted(property, submitterName) {
+async function notifyAMASubmitted(property, submitterName, actor) {
   const p = property;
   let dateStr = '-';
   if(p.deal_transfer_date){const dt=new Date(p.deal_transfer_date);dateStr=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`}
@@ -221,14 +220,13 @@ async function notifyAMASubmitted(property, submitterName) {
   if(submitterName && submitterName!=='-') recipients.push(submitterName);
   console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
   const results = await broadcastTemplate('ama_notification', bodyValues, recipients);
-  logger.logWhatsApp(p.uid,'ama_notification',results).catch(()=>{});
   return results;
 }
 
 // Deal Terms shared to owner — triggered on Form 4 email send
 // Recipients: Top Managers, Submitter, Saurabh
 // To add more recipients: add names to the recipients array below
-async function notifyDealTermsShared(property, submitterName) {
+async function notifyDealTermsShared(property, submitterName, actor) {
   const p = property;
   const gsp = p.guaranteed_sale_price ? '₹' + Number(p.guaranteed_sale_price).toLocaleString('en-IN') + ' Lakhs' : '-';
   const bodyValues = [p.uid||'-', p.society_name||'-', p.tower_no||'-', p.unit_no||'-', p.owner_broker_name||'-', p.co_owner||'-', gsp];
@@ -248,14 +246,13 @@ async function notifyDealTermsShared(property, submitterName) {
       allRecipients.push({name:'direct',phone:clean,ok});
     }
   }
-  logger.logWhatsApp(p.uid,'deal_terms_shared_to_owner',allRecipients).catch(()=>{});
   return results;
 }
 
 // AMA Signed / Pending Amount Request — triggered on Form 6 email send
 // Recipients: Top Managers, Submitter, Saurabh, Akash Teotia, Amisha (9289996736)
 // To add more recipients: add names to the recipients array below
-async function notifyAMASigned(property, submitterName) {
+async function notifyAMASigned(property, submitterName, actor) {
   const p = property;
   const bodyValues = [p.uid||'-', p.society_name||'-', p.tower_no||'-', p.unit_no||'-', p.owner_broker_name||'-', p.co_owner||'-'];
   const topMgrs = await getTopManagers();
@@ -274,14 +271,13 @@ async function notifyAMASigned(property, submitterName) {
       allRecipients.push({name:'direct',phone:clean,ok});
     }
   }
-  logger.logWhatsApp(p.uid,'ama_signed',allRecipients).catch(()=>{});
   return results;
 }
 
 // Key Handover — triggered on Form 7 email send
 // Recipients: Top Managers, Submitter, Saurabh
 // To add more recipients: add names to the recipients array below
-async function notifyKeyHandover(property, submitterName) {
+async function notifyKeyHandover(property, submitterName, actor) {
   const p = property;
   const hdDate = p.key_handover_date ? fmtDate(p.key_handover_date) : '-';
   const bodyValues = [p.uid||'-', p.society_name||'-', p.tower_no||'-', p.unit_no||'-', hdDate];
@@ -300,7 +296,6 @@ async function notifyKeyHandover(property, submitterName) {
       allRecipients.push({name:'direct',phone:clean,ok});
     }
   }
-  logger.logWhatsApp(p.uid,'key_handover',allRecipients).catch(()=>{});
   return results;
 }
 

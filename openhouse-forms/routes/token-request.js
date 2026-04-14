@@ -48,7 +48,7 @@ module.exports=function(pool){
          d.owner_pan_url||null,d.owner_aadhaar_front_url||null,d.owner_aadhaar_back_url||null,d.owner_property_doc_url||null,
          d.total_deposit!=null&&d.total_deposit!==''?parseFloat(d.total_deposit):null,d.refundable_deposit!=null&&d.refundable_deposit!==''?parseFloat(d.refundable_deposit):null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
-      logger.logFormSubmit(d.uid,'token_request',3,req.user?.email,req.user?.name,isDraft).catch(()=>{});
+      logger.logFormSubmit(d.uid,'token_request_submitted',3,req.user?.email,req.user?.name,isDraft).catch(()=>{});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
   // Update owner name (CP → Owner correction)
@@ -94,7 +94,7 @@ module.exports=function(pool){
       });
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
-      notifyTokenRequest(p).catch(e=>console.error('WA token notify error:',e));
+      notifyTokenRequest(p,{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA token notify error:',e));
     }catch(e){
       console.error('SendEmail:',e);
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){

@@ -143,10 +143,10 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
     const logger=require('./utils/logger');
     if(Object.keys(changes).length){
       // Log status changes separately
-      if(changes.is_dead)logger.logStatusChange(req.params.uid,'is_dead',changes.is_dead.old,changes.is_dead.new,req.user?.email,req.user?.name).catch(()=>{});
-      if(changes.is_token_refunded)logger.logStatusChange(req.params.uid,'is_token_refunded',changes.is_token_refunded.old,changes.is_token_refunded.new,req.user?.email,req.user?.name).catch(()=>{});
-      if(changes.assigned_by)logger.logFieldChange(req.params.uid,'assigned_by',changes.assigned_by.old,changes.assigned_by.new,req.user?.email,req.user?.name,'admin_edit').catch(()=>{});
-      if(changes.field_exec)logger.logFieldChange(req.params.uid,'field_exec',changes.field_exec.old,changes.field_exec.new,req.user?.email,req.user?.name,'admin_edit').catch(()=>{});
+      if(changes.is_dead)logger.logStatusChange(req.params.uid,changes.is_dead.new?'visit_cancelled':'visit_uncancelled',changes.is_dead.old,changes.is_dead.new,req.user?.email,req.user?.name).catch(()=>{});
+      if(changes.is_token_refunded)logger.logStatusChange(req.params.uid,changes.is_token_refunded.new?'cancelled_post_token':'undo_cancelled_post_token',changes.is_token_refunded.old,changes.is_token_refunded.new,req.user?.email,req.user?.name).catch(()=>{});
+      if(changes.assigned_by)logger.logAssignment(req.params.uid,'assigned_by_changed',changes.assigned_by.old,changes.assigned_by.new,req.user?.email,req.user?.name,'admin_edit').catch(()=>{});
+      if(changes.field_exec)logger.logAssignment(req.params.uid,'assigned_to_changed',changes.field_exec.old,changes.field_exec.new,req.user?.email,req.user?.name,'admin_edit').catch(()=>{});
       // Log full admin edit
       logger.logAdminEdit(req.params.uid,changes,req.user?.email,req.user?.name).catch(()=>{});
     }

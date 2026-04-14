@@ -29,7 +29,7 @@ module.exports=function(pool){
          d.co_owner_aadhaar_front_url||null,d.co_owner_aadhaar_back_url||null,
          d.co_owner_pan_url||null,d.co_owner_cheque_url||null]);
       res.json({success:true,uid:d.uid});
-      logger.logFormSubmit(d.uid,'pending_request',6,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logFormSubmit(d.uid,'pending_request_submitted',6,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('PendingRequest:',e);res.status(500).json({error:e.message})}
   });
 
@@ -57,7 +57,7 @@ module.exports=function(pool){
         await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=COALESCE($3,email_message_id) WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
       }
       console.log(`Pending amount email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
-      notifyAMASigned(pRows[0], user.name||user.email).catch(e=>console.error('WA ama_signed error:', e));
+      notifyAMASigned(pRows[0],user.name||user.email,{email:user.email,name:user.name}).catch(e=>console.error('WA ama_signed error:', e));
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('PendingAmountEmail:',e);

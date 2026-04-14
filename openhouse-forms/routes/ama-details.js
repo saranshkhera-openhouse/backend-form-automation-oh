@@ -61,9 +61,9 @@ module.exports=function(pool){
          d.bank_name_loan||null,d.loan_account_number||null,
          parseFloat(d.outstanding_loan)||null,d.loan_pay_willingness||null]);
       res.json({success:true,uid:d.uid});
-      logger.logFormSubmit(d.uid,'ama_details',5,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logFormSubmit(d.uid,'ama_details_submitted',5,req.user?.email,req.user?.name).catch(()=>{});
       pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
-        if(rows[0])notifyAMASubmitted(rows[0]).catch(e=>console.error('WA AMA notify error:',e));
+        if(rows[0])notifyAMASubmitted(rows[0],null,{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA AMA notify error:',e));
       }).catch(e=>console.error('WA AMA fetch error:',e));
     }catch(e){console.error('AMA:',e);res.status(500).json({error:e.message})}
   });

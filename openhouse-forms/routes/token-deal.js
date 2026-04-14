@@ -29,7 +29,7 @@ module.exports=function(pool){
          d.deal_bank_name||null,d.deal_bank_account_number||null,d.deal_ifsc_code||null,d.deal_transfer_date||null,(d.deal_neft_reference||'').toUpperCase()||null,
          d.uid,d.owner_email||null,d.co_owner_email||null,d.third_owner_email||null,d.broker_email||null]);
       res.json({success:true,uid:d.uid});
-      logger.logFormSubmit(d.uid,'deal_terms',4,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logFormSubmit(d.uid,'deal_terms_submitted',4,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('TokenDeal:',e);res.status(500).json({error:e.message})}
   });
   router.get('/pdf/:uid',async(req,res)=>{
@@ -68,7 +68,7 @@ module.exports=function(pool){
         await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=$3 WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
       }
       console.log(`Deal email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
-      notifyDealTermsShared(p, signatoryName).catch(e=>console.error('WA deal_terms error:', e));
+      notifyDealTermsShared(p,signatoryName,{email:user.email,name:user.name}).catch(e=>console.error('WA deal_terms error:', e));
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('DealEmail:',e);
@@ -85,7 +85,7 @@ module.exports=function(pool){
       const newVal=!rows[0].is_token_refunded;
       await pool.query('UPDATE properties SET is_token_refunded=$1,updated_at=NOW() WHERE uid=$2',[newVal,req.params.uid]);
       res.json({success:true,is_token_refunded:newVal});
-      logger.logStatusChange(req.params.uid,'is_token_refunded',!newVal,newVal,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logStatusChange(req.params.uid,newVal?'cancelled_post_token':'undo_cancelled_post_token',!newVal,newVal,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){res.status(500).json({error:e.message})}
   });
   return router;

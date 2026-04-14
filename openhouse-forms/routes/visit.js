@@ -31,9 +31,9 @@ module.exports=function(pool){
          d.exit_facing||null,d.exit_compass_image||null,d.video_link||null,
          d.balcony_details||'[]',d.additional_images||'[]',d.visit_remarks||null,d.uid]);
       res.json({success:true,uid:d.uid});
-      logger.logFormSubmit(d.uid,'visit',2,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logFormSubmit(d.uid,'visit_submitted',2,req.user?.email,req.user?.name).catch(()=>{});
       pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
-        if(rows[0])notifyVisitCompleted(rows[0]).catch(e=>console.error('WA visit notify error:',e));
+        if(rows[0])notifyVisitCompleted(rows[0],{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA visit notify error:',e));
       }).catch(e=>console.error('WA visit fetch error:',e));
     }catch(e){console.error('Visit:',e);res.status(500).json({error:e.message})}
   });
@@ -44,10 +44,10 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query('UPDATE properties SET is_dead=TRUE,updated_at=NOW() WHERE uid=$1',[req.params.uid]);
       res.json({success:true,uid:req.params.uid});
-      logger.logStatusChange(req.params.uid,'is_dead',false,true,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logStatusChange(req.params.uid,'visit_cancelled',false,true,req.user?.email,req.user?.name).catch(()=>{});
       // Notify assigned_by that visit is cancelled
       const cancelledBy=req.user?.name||req.user?.email||'Unknown';
-      notifyVisitCancelled(rows[0],cancelledBy).catch(e=>console.error('WA cancel notify error:',e));
+      notifyVisitCancelled(rows[0],cancelledBy,{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA cancel notify error:',e));
     }catch(e){console.error('Dead:',e);res.status(500).json({error:e.message})}
   });
   // Re-assign field_exec
@@ -60,7 +60,7 @@ module.exports=function(pool){
       await pool.query('UPDATE properties SET field_exec=$1,updated_at=NOW() WHERE uid=$2',[field_exec,req.params.uid]);
       res.json({success:true,uid:req.params.uid,field_exec});
       // Notify new assignee
-      notifyVisitReassigned(rows[0],field_exec).catch(e=>console.error('WA reassign notify error:',e));
+      notifyVisitReassigned(rows[0],field_exec,{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA reassign notify error:',e));
     }catch(e){console.error('Reassign:',e);res.status(500).json({error:e.message})}
   });
   // Reschedule visit date/time
@@ -104,9 +104,9 @@ module.exports=function(pool){
       res.json(resp);
       // Log changes
       const old=rows[0];
-      if(field_exec)logger.logScheduleChange(req.params.uid,'reassign',{old_exec:old.field_exec,new_exec:field_exec},req.user?.email,req.user?.name).catch(()=>{});
-      if(schedule_date||schedule_time)logger.logScheduleChange(req.params.uid,'reschedule',{old_date:old.schedule_date,new_date:schedule_date||old.schedule_date,old_time:old.schedule_time,new_time:schedule_time||old.schedule_time},req.user?.email,req.user?.name).catch(()=>{});
-      if(field_exec)notifyVisitReassigned(rows[0],field_exec).catch(e=>console.error('WA reassign notify error:',e));
+      if(field_exec)logger.logScheduleChange(req.params.uid,'visit_reassigned',{old_exec:old.field_exec,new_exec:field_exec},req.user?.email,req.user?.name).catch(()=>{});
+      if(schedule_date||schedule_time)logger.logScheduleChange(req.params.uid,'visit_rescheduled',{old_date:old.schedule_date,new_date:schedule_date||old.schedule_date,old_time:old.schedule_time,new_time:schedule_time||old.schedule_time},req.user?.email,req.user?.name).catch(()=>{});
+      if(field_exec)notifyVisitReassigned(rows[0],field_exec,{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA reassign notify error:',e));
     }catch(e){console.error('Update:',e);res.status(500).json({error:e.message})}
   });
   // Resend WhatsApp scheduled notification
@@ -115,7 +115,7 @@ module.exports=function(pool){
       const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       if(!rows[0].schedule_submitted_at)return res.status(400).json({error:'Schedule not submitted'});
-      await notifyVisitScheduled(rows[0]);
+      await notifyVisitScheduled(rows[0],{email:req.user?.email,name:req.user?.name});
       res.json({success:true,uid:req.params.uid});
     }catch(e){console.error('Notify:',e);res.status(500).json({error:e.message})}
   });

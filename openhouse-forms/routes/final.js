@@ -26,7 +26,7 @@ module.exports=function(pool){
         WHERE uid=$2`,
         [parseFloat(d.remaining_amount)||null,d.uid,d.key_handover_date||null]);
       res.json({success:true,uid:d.uid});
-      logger.logFormSubmit(d.uid,'key_handover',8,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logFormSubmit(d.uid,'key_handover_submitted',8,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
   router.get('/pdf/:uid',async(req,res)=>{
@@ -62,7 +62,7 @@ module.exports=function(pool){
         await pool.query('UPDATE properties SET email_thread_id=$1,email_message_id=COALESCE($3,email_message_id) WHERE uid=$2',[result.threadId,req.params.uid,result.rfc822MsgId||null]);
       }
       console.log(`Key handover email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
-      notifyKeyHandover(p, senderName).catch(e=>console.error('WA key_handover error:', e));
+      notifyKeyHandover(p,senderName,{email:user.email,name:user.name}).catch(e=>console.error('WA key_handover error:', e));
       res.json({success:true,messageId:result.messageId});
     }catch(e){
       console.error('KeyHandoverEmail:',e);
