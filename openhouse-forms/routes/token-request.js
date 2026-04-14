@@ -56,9 +56,17 @@ module.exports=function(pool){
     try{
       const{first_name,last_name,owner_broker_name,contact_no,cp_name,cp_phone}=req.body;
       if(!owner_broker_name)return res.status(400).json({error:'Name required'});
+      const{rows:old}=await pool.query('SELECT owner_broker_name,contact_no,cp_name,cp_phone FROM properties WHERE uid=$1',[req.params.uid]);
       await pool.query('UPDATE properties SET first_name=$1,last_name=$2,owner_broker_name=$3,contact_no=COALESCE($4,contact_no),cp_name=COALESCE($5,cp_name),cp_phone=COALESCE($6,cp_phone),updated_at=NOW() WHERE uid=$7',
         [first_name||null,last_name||null,owner_broker_name,contact_no||null,cp_name||null,cp_phone||null,req.params.uid]);
       res.json({success:true});
+      if(old.length){
+        const changes={};
+        if(old[0].owner_broker_name!==owner_broker_name)changes.owner_broker_name={old:old[0].owner_broker_name,new:owner_broker_name};
+        if(contact_no&&old[0].contact_no!==contact_no)changes.contact_no={old:old[0].contact_no,new:contact_no};
+        if(cp_name&&old[0].cp_name!==cp_name)changes.cp_name={old:old[0].cp_name,new:cp_name};
+        if(Object.keys(changes).length)logger.logAdminEdit(req.params.uid,changes,req.user?.email,req.user?.name).catch(()=>{});
+      }
     }catch(e){console.error('UpdateOwner:',e);res.status(500).json({error:e.message})}
   });
 

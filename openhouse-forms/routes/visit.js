@@ -59,6 +59,7 @@ module.exports=function(pool){
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query('UPDATE properties SET field_exec=$1,updated_at=NOW() WHERE uid=$2',[field_exec,req.params.uid]);
       res.json({success:true,uid:req.params.uid,field_exec});
+      logger.logScheduleChange(req.params.uid,'visit_reassigned',{old_exec:rows[0].field_exec,new_exec:field_exec},req.user?.email,req.user?.name).catch(()=>{});
       // Notify new assignee
       notifyVisitReassigned(rows[0],field_exec,{email:req.user?.email,name:req.user?.name}).catch(e=>console.error('WA reassign notify error:',e));
     }catch(e){console.error('Reassign:',e);res.status(500).json({error:e.message})}
@@ -76,6 +77,7 @@ module.exports=function(pool){
       if(rows[0].visit_submitted_at)return res.status(400).json({error:'Visit already completed, cannot reschedule'});
       await pool.query('UPDATE properties SET schedule_date=$1,schedule_time=$2,updated_at=NOW() WHERE uid=$3',[schedule_date,schedule_time,req.params.uid]);
       res.json({success:true,uid:req.params.uid,schedule_date,schedule_time});
+      logger.logScheduleChange(req.params.uid,'visit_rescheduled',{old_date:rows[0].schedule_date,new_date:schedule_date,old_time:rows[0].schedule_time,new_time:schedule_time},req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('Reschedule:',e);res.status(500).json({error:e.message})}
   });
   // Combined update: reassign + reschedule in one call
