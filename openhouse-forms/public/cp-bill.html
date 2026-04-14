@@ -119,13 +119,17 @@
     <div class="card" id="docsCard">
       <div class="card-t">Documents Upload for CP <span class="req">*</span></div>
       <div class="photo-upload">
-        <div class="pu-item cp-individual-doc" id="pu_aadhaarFront" onclick="pickFile('cp_aadhaar_front')">
+        <div class="pu-item cp-aadhaar-doc" id="pu_aadhaarFront" onclick="pickFile('cp_aadhaar_front')">
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_front" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_front')">
         </div>
-        <div class="pu-item cp-individual-doc" id="pu_aadhaarBack" onclick="pickFile('cp_aadhaar_back')">
+        <div class="pu-item cp-aadhaar-doc" id="pu_aadhaarBack" onclick="pickFile('cp_aadhaar_back')">
           <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_back" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_back')">
+        </div>
+        <div class="pu-item cp-coi-doc" id="pu_coi" onclick="pickFile('cp_coi')" style="display:none">
+          <div class="pu-icon">📄</div><div class="pu-label">Certificate of Incorporation (COI) <span class="req">*</span></div>
+          <input type="file" id="fi_cp_coi" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_coi')">
         </div>
         <div class="pu-item cp-individual-doc" id="pu_pan" onclick="pickFile('cp_pan_card')">
           <div class="pu-icon">📄</div><div class="pu-label">PAN Card <span class="req">*</span></div>
@@ -165,9 +169,9 @@
 <script src="/js/shared.js"></script>
 <script>
 let currentUid=null,loadedData=null,isAdmin=false,isManager=false;
-const docUrls={cp_aadhaar_front:'',cp_aadhaar_back:'',cp_pan_card:'',cp_cancelled_cheque:'',cp_gst_invoice:'',cp_ama_signed:''};
-const DOC_MAP={cp_aadhaar_front:'cp_aadhaar_front_url',cp_aadhaar_back:'cp_aadhaar_back_url',cp_pan_card:'cp_pan_card_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',cp_gst_invoice:'cp_gst_invoice_url',cp_ama_signed:'cp_ama_signed_url'};
-const ITEM_MAP={cp_aadhaar_front:'pu_aadhaarFront',cp_aadhaar_back:'pu_aadhaarBack',cp_pan_card:'pu_pan',cp_cancelled_cheque:'pu_cheque',cp_gst_invoice:'pu_gstInvoice',cp_ama_signed:'pu_ama'};
+const docUrls={cp_aadhaar_front:'',cp_aadhaar_back:'',cp_pan_card:'',cp_cancelled_cheque:'',cp_gst_invoice:'',cp_coi:'',cp_ama_signed:''};
+const DOC_MAP={cp_aadhaar_front:'cp_aadhaar_front_url',cp_aadhaar_back:'cp_aadhaar_back_url',cp_pan_card:'cp_pan_card_url',cp_cancelled_cheque:'cp_cancelled_cheque_url',cp_gst_invoice:'cp_gst_invoice_url',cp_coi:'cp_coi_url',cp_ama_signed:'cp_ama_signed_url'};
+const ITEM_MAP={cp_aadhaar_front:'pu_aadhaarFront',cp_aadhaar_back:'pu_aadhaarBack',cp_pan_card:'pu_pan',cp_cancelled_cheque:'pu_cheque',cp_gst_invoice:'pu_gstInvoice',cp_coi:'pu_coi',cp_ama_signed:'pu_ama'};
 let cloudCfg=null;
 fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
 
@@ -191,13 +195,13 @@ async function setCpMode(mode){
     document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
     document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
     document.getElementById('f_cpType').value='';document.getElementById('f_cpFirmName').value='';toggleCpType();
-    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque','cp_gst_invoice']);
+    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque','cp_gst_invoice','cp_coi']);
   }else{
     document.getElementById('cpCodeWrap').style.display='none';cpCode='';
     document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
     document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
     document.getElementById('f_cpType').value='';document.getElementById('f_cpFirmName').value='';toggleCpType();
-    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque','cp_gst_invoice']);
+    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque','cp_gst_invoice','cp_coi']);
     document.getElementById('cpSearchInput').focus();
   }
 }
@@ -406,14 +410,17 @@ function toggleCpType(){
   const isFirm=type==='HAS_FIRM';
   const gstVal=document.querySelector('input[name="gst_applicable"]:checked')?.value;
   const isGstYes=isFirm&&gstVal==='Yes';
+  const isFirmNoGst=isFirm&&!isGstYes;
   // Show/hide firm name + GST radio
   document.getElementById('cpFirmNameWrap').style.display=isFirm?'block':'none';
   document.getElementById('gstWrap').style.display=isFirm?'flex':'none';
-  // Individual OR Firm+GST No → show all 5 docs (aadhaar, PAN, cheque, AMA), hide GST invoice
-  // Firm+GST Yes → hide aadhaar/PAN, show cheque + GST invoice + AMA
+  // Individual → Aadhaar F/B, PAN, Cheque, AMA
+  // Firm+GST No → COI, PAN, Cheque, AMA
+  // Firm+GST Yes → Cheque, GST Invoice, AMA
+  document.querySelectorAll('.cp-aadhaar-doc').forEach(el=>{el.style.display=(!isFirm)?'flex':'none'});
+  document.getElementById('pu_coi').style.display=isFirmNoGst?'flex':'none';
   document.querySelectorAll('.cp-individual-doc').forEach(el=>{el.style.display=isGstYes?'none':'flex'});
   document.getElementById('pu_gstInvoice').style.display=isGstYes?'flex':'none';
-  // Cheque layout: span 2 only when firm+GST No (no aadhaar/PAN hidden but GST invoice also hidden)
   document.getElementById('pu_cheque').style.gridColumn='';
   // Set hidden cp_firm
   if(!isFirm){document.getElementById('f_cpFirm').value='INDIVIDUAL';document.getElementById('f_cpFirmName').value='';document.querySelectorAll('input[name="gst_applicable"]').forEach(r=>r.checked=false)}
@@ -484,6 +491,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     let DOC_LABELS;
     if(isGstYes){
       DOC_LABELS={cp_cancelled_cheque:'Cancelled Cheque',cp_gst_invoice:'GST Invoice',cp_ama_signed:'AMA Signed'};
+    }else if(isFirm){
+      DOC_LABELS={cp_coi:'Certificate of Incorporation',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
     }else{
       DOC_LABELS={cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
     }
@@ -511,10 +520,12 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const previewIsFirm=previewCpType==='HAS_FIRM';
   const previewGst=document.querySelector('input[name="gst_applicable"]:checked')?.value;
   const previewGstYes=previewIsFirm&&previewGst==='Yes';
+  const previewFirmNoGst=previewIsFirm&&!previewGstYes;
   const cpFirmDisplay=previewIsFirm?document.getElementById('f_cpFirmName').value||'—':'Individual';
   const photoLines=[];
-  if(!previewGstYes&&docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
-  if(!previewGstYes&&docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
+  if(!previewIsFirm&&docUrls.cp_aadhaar_front)photoLines.push(`• <a href="${docUrls.cp_aadhaar_front}" target="_blank">Aadhaar Front</a>`);
+  if(!previewIsFirm&&docUrls.cp_aadhaar_back)photoLines.push(`• <a href="${docUrls.cp_aadhaar_back}" target="_blank">Aadhaar Back</a>`);
+  if(previewFirmNoGst&&docUrls.cp_coi)photoLines.push(`• <a href="${docUrls.cp_coi}" target="_blank">Certificate of Incorporation</a>`);
   if(!previewGstYes&&docUrls.cp_pan_card)photoLines.push(`• <a href="${docUrls.cp_pan_card}" target="_blank">PAN Card</a>`);
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">Cancelled Cheque</a>`);
   if(previewGstYes&&docUrls.cp_gst_invoice)photoLines.push(`• <a href="${docUrls.cp_gst_invoice}" target="_blank">GST Invoice</a>`);

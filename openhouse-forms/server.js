@@ -117,7 +117,7 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'remaining_amount','bank_name','bank_account_number','ifsc_code','neft_reference',
       'cp_code','cp_name','cp_phone','cp_firm','cp_email','deal_type','oh_acquired_model','agreed_brokerage',
       'deal_value','total_brokerage_amount','to_be_released_now','incentive_visit','incentive_owner_meeting','total_cp_amount',
-      'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_cancelled_cheque_url','cp_ama_signed_url','cp_gst_invoice_url','gst_applicable',
+      'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_cancelled_cheque_url','cp_ama_signed_url','cp_gst_invoice_url','cp_coi_url','gst_applicable',
       'super_area','carpet_area','seller_residential_status','sellers_available_on_registry',
       'listing_asking_price','listing_availability','listing_highlights','listing_description',
       'society_age_years','total_units','maintenance_charges','society_move_in_charges','electricity_charges',

@@ -347,10 +347,13 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   const addr = [p.unit_no, p.tower_no, p.society_name, p.locality, p.city].filter(Boolean).join(', ');
   const amaStatus = p.cp_ama_signed_url ? 'Signed (attached below)' : 'Not signed yet';
 
-  const isGstYes = !(!p.cp_firm || p.cp_firm === 'INDIVIDUAL') && p.gst_applicable === 'Yes';
+  const isFirm = p.cp_firm && p.cp_firm !== 'INDIVIDUAL';
+  const isGstYes = isFirm && p.gst_applicable === 'Yes';
+  const isFirmNoGst = isFirm && !isGstYes;
   const photoLinks = [];
-  if(!isGstYes && p.cp_aadhaar_front_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
-  if(!isGstYes && p.cp_aadhaar_back_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
+  if(!isFirm && p.cp_aadhaar_front_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_front_url}" target="_blank">Aadhaar Card Front</a></li>`);
+  if(!isFirm && p.cp_aadhaar_back_url) photoLinks.push(`<li><a href="${p.cp_aadhaar_back_url}" target="_blank">Aadhaar Card Back</a></li>`);
+  if(isFirmNoGst && p.cp_coi_url) photoLinks.push(`<li><a href="${p.cp_coi_url}" target="_blank">Certificate of Incorporation</a></li>`);
   if(!isGstYes && p.cp_pan_card_url) photoLinks.push(`<li><a href="${p.cp_pan_card_url}" target="_blank">PAN Card</a></li>`);
   if(p.cp_cancelled_cheque_url) photoLinks.push(`<li><a href="${p.cp_cancelled_cheque_url}" target="_blank">Cancelled Cheque</a></li>`);
   if(isGstYes && p.cp_gst_invoice_url) photoLinks.push(`<li><a href="${p.cp_gst_invoice_url}" target="_blank">GST Invoice</a></li>`);

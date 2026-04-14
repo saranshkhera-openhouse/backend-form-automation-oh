@@ -418,7 +418,7 @@ function buildModal(p){
     ${ef('To Release Now','to_be_released_now',p.to_be_released_now)}${ef('Incentive Visit','incentive_visit',p.incentive_visit)}${ef('Incentive Meeting','incentive_owner_meeting',p.incentive_owner_meeting)}
     ${ef('Total CP Amount','total_cp_amount',p.total_cp_amount)}
     ${pvLink('CP Aadhaar Front',p.cp_aadhaar_front_url)}${pvLink('CP Aadhaar Back',p.cp_aadhaar_back_url)}
-    ${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
+    ${pvLink('COI',p.cp_coi_url)}${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
     ${pvLink('GST Invoice',p.cp_gst_invoice_url)}${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
     ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
   </div></div>`;
