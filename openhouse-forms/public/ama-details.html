@@ -8,6 +8,7 @@
 .doc-toggle button{padding:4px 14px;border:1.5px solid var(--bd);border-radius:16px;background:var(--bg);font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
 .doc-toggle button.active-yes{background:var(--grn);color:#fff;border-color:var(--grn)}
 .doc-toggle button.active-no{background:var(--red,#b33a2e);color:#fff;border-color:var(--red,#b33a2e)}
+.doc-toggle button.active-na{background:#6b7280;color:#fff;border-color:#6b7280}
 .doc-upload{margin-top:6px;display:none}
 .doc-upload.show{display:block}
 .doc-upload-status{font-size:10px;color:var(--grn);margin-top:3px}
@@ -164,7 +165,8 @@ const PROP_DOCS=[
   {key:'conveyance_deed',label:'Conveyance Deed/Sub Lease Deed/Sale Deed'},
   {key:'parking_allotment',label:'Car Parking letter (if applicable)',optional:true},
   {key:'noc',label:'NOC (if applicable)',optional:true},
-  {key:'gpa',label:'GPA (if applicable)',optional:true}
+  {key:'gpa',label:'GPA (if applicable)',optional:true},
+  {key:'mutation',label:'Mutation',isMutation:true}
 ];
 let propDocState={};
 
@@ -174,8 +176,44 @@ function buildPropDocs(existing){
   container.innerHTML='';
   PROP_DOCS.forEach(doc=>{
     const saved=existing&&existing[doc.key];
-    const status=saved?saved.status:(doc.optional?'':'Yes');
     const url=saved?saved.url:'';
+
+    if(doc.isMutation){
+      const mutationStatus=saved?saved.mutationStatus:'NA';
+      const status=saved?saved.status:'NA';
+      propDocState[doc.key]={status,url,mutationStatus};
+      const row=document.createElement('div');
+      row.innerHTML=`
+        <div class="doc-row">
+          <div class="doc-name">${doc.label}</div>
+          <select id="mutationDd" style="font-size:12px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);min-width:120px" onchange="onMutationDdChange(this.value)">
+            <option value="NA" ${mutationStatus==='NA'?'selected':''}>NA</option>
+            <option value="Completed" ${mutationStatus==='Completed'?'selected':''}>Completed</option>
+            <option value="Pending" ${mutationStatus==='Pending'?'selected':''}>Pending</option>
+          </select>
+        </div>
+        <div id="mutationUploadSection" style="display:${mutationStatus!=='NA'?'block':'none'}">
+          <div class="doc-row" style="padding-top:0">
+            <div class="doc-name" style="font-size:10px;color:var(--tx3)">Upload Status</div>
+            <div class="doc-toggle">
+              <button type="button" data-key="${doc.key}" data-val="NA" class="${status==='NA'?'active-na':''}">NA</button>
+              <button type="button" data-key="${doc.key}" data-val="Yes" class="${status==='Yes'?'active-yes':''}">Yes</button>
+              <button type="button" data-key="${doc.key}" data-val="No" class="${status==='No'?'active-no':''}">No</button>
+            </div>
+          </div>
+          <div class="doc-upload ${status==='No'?'show':''}" id="docUp_${doc.key}">
+            <div class="upload-row ${url?'done':''}" id="docRow_${doc.key}" onclick="document.getElementById('docFi_${doc.key}').click()">
+              ${url?'✓ Uploaded — click to replace':'📄 Upload document'}
+              <input type="file" id="docFi_${doc.key}" accept="image/*,.pdf" onchange="uploadPropDoc(this,'${doc.key}')">
+            </div>
+            ${url?`<div class="doc-upload-status"><a href="${url}" target="_blank" style="color:var(--ac2);font-size:10px">View uploaded</a></div>`:''}
+          </div>
+        </div>`;
+      container.appendChild(row);
+      return;
+    }
+
+    const status=saved?saved.status:(doc.optional?'':'Yes');
     propDocState[doc.key]={status,url};
 
     const row=document.createElement('div');
@@ -202,8 +240,8 @@ function buildPropDocs(existing){
       const key=this.dataset.key;const val=this.dataset.val;
       const currentStatus=propDocState[key].status;
       const docDef=PROP_DOCS.find(d=>d.key===key);
-      // Optional docs (last 2) can be deselected; required docs cannot
-      if(currentStatus===val&&docDef&&docDef.optional){
+      // Optional docs can be deselected; required docs cannot
+      if(currentStatus===val&&docDef&&docDef.optional&&val!=='NA'){
         propDocState[key].status='';
         this.parentElement.querySelectorAll('button').forEach(b=>{b.className=''});
         document.getElementById('docUp_'+key).classList.remove('show');
@@ -212,10 +250,24 @@ function buildPropDocs(existing){
       propDocState[key].status=val;
       const toggle=this.parentElement;
       toggle.querySelectorAll('button').forEach(b=>{b.className=''});
-      this.className=val==='Yes'?'active-yes':'active-no';
+      if(val==='Yes')this.className='active-yes';
+      else if(val==='No')this.className='active-no';
+      else if(val==='NA')this.className='active-na';
       document.getElementById('docUp_'+key).classList.toggle('show',val==='No');
     });
   });
+}
+
+function onMutationDdChange(val){
+  propDocState.mutation.mutationStatus=val;
+  const sec=document.getElementById('mutationUploadSection');
+  if(val==='NA'){
+    sec.style.display='none';
+    propDocState.mutation.status='NA';
+    propDocState.mutation.url='';
+  }else{
+    sec.style.display='block';
+  }
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
