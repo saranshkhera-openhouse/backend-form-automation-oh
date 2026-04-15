@@ -187,7 +187,7 @@ function buildPropDocs(existing){
       row.innerHTML=`
         <div class="doc-row">
           <div class="doc-name">${doc.label} <span class="req">*</span></div>
-          <select id="mutationDd" style="font-size:11px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);width:auto;margin-left:auto" onchange="onMutationDdChange(this.value)">
+          <select id="mutationDd" style="padding:4px 14px;border:1.5px solid var(--bd);border-radius:16px;background:var(--bg);font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;appearance:auto" onchange="onMutationDdChange(this.value)">
             <option value="">Select...</option>
             <option value="NA" ${ddVal==='NA'?'selected':''}>NA</option>
             <option value="Completed" ${ddVal==='Completed'?'selected':''}>Completed</option>
