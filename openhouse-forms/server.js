@@ -112,7 +112,7 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'owner_pan_url','owner_aadhaar_front_url','owner_aadhaar_back_url','owner_property_doc_url',
       'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference','owner_email','co_owner_email','third_owner_email','broker_email',
       'ama_sanction_url','ama_soa_url','ama_lod_url','ama_pg_non_forfeitable','ama_beta_max_pct','ama_beta_min_pct',
-      'ama_maint_alignment','ama_elec_alignment','ama_special_terms','ama_prop_docs',
+      'ama_maint_alignment','ama_elec_alignment','ama_special_terms','ama_prop_docs','docs_verification_mode',
       'ama_date','signed_ama_url','co_owner_aadhaar_front_url','co_owner_aadhaar_back_url','co_owner_pan_url','co_owner_cheque_url',
       'remaining_amount','bank_name','bank_account_number','ifsc_code','neft_reference',
       'cp_code','cp_name','cp_phone','cp_firm','cp_email','deal_type','oh_acquired_model','agreed_brokerage',

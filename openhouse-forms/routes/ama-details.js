@@ -50,6 +50,7 @@ module.exports=function(pool){
         loan_applicant_name=COALESCE($12,loan_applicant_name),loan_co_applicant_name=COALESCE($13,loan_co_applicant_name),
         bank_name_loan=COALESCE($14,bank_name_loan),loan_account_number=COALESCE($15,loan_account_number),
         outstanding_loan=COALESCE($16,outstanding_loan),loan_pay_willingness=COALESCE($17,loan_pay_willingness),
+        docs_verification_mode=COALESCE($18,docs_verification_mode),
         ama_submitted_at=NOW(),updated_at=NOW()
         WHERE uid=$11`,
         [d.ama_sanction_url||null,d.ama_soa_url||null,d.ama_lod_url||null,
@@ -59,7 +60,8 @@ module.exports=function(pool){
          d.uid,
          d.loan_applicant_name||null,d.loan_co_applicant_name||null,
          d.bank_name_loan||null,d.loan_account_number||null,
-         parseFloat(d.outstanding_loan)||null,d.loan_pay_willingness||null]);
+         parseFloat(d.outstanding_loan)||null,d.loan_pay_willingness||null,
+         d.docs_verification_mode||null]);
       res.json({success:true,uid:d.uid});
       logger.logFormSubmit(d.uid,'ama_details_submitted',5,req.user?.email,req.user?.name).catch(()=>{});
       pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{

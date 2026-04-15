@@ -121,6 +121,14 @@
     <div class="card">
       <div class="card-t">Property Documents</div>
       <div id="propDocsContainer"></div>
+      <div class="doc-row" id="docsVerifyRow" style="display:none">
+        <div class="doc-name">Documents Verification Done <span class="req">*</span></div>
+        <select id="docsVerifyDd" style="padding:4px 14px;border:1.5px solid var(--bd);border-radius:16px;background:var(--bg);font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;appearance:auto;max-width:140px">
+          <option value="">Select...</option>
+          <option value="Physically">Physically</option>
+          <option value="Video Call">Video Call</option>
+        </select>
+      </div>
     </div>
 
     <button type="button" class="btn btn-dark" id="submitBtn" style="width:100%">Submit Details</button>
@@ -187,9 +195,9 @@ function buildPropDocs(existing){
       row.innerHTML=`
         <div class="doc-row">
           <div class="doc-name">${doc.label} <span class="req">*</span></div>
-          <select id="mutationDd" style="padding:4px 14px;border:1.5px solid var(--bd);border-radius:16px;background:var(--bg);font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;appearance:auto;max-width:140px" onchange="onMutationDdChange(this.value)">
+          <select id="mutationDd" style="padding:4px 14px;border:1.5px solid var(--bd);border-radius:16px;background:var(--bg);font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;appearance:auto" onchange="onMutationDdChange(this.value)">
             <option value="">Select...</option>
-            <option value="NA" ${ddVal==='NA'?'selected':''}>N/A</option>
+            <option value="NA" ${ddVal==='NA'?'selected':''}>NA</option>
             <option value="Completed" ${ddVal==='Completed'?'selected':''}>Completed</option>
             <option value="Pending" ${ddVal==='Pending'?'selected':''}>Pending</option>
           </select>
@@ -312,6 +320,8 @@ async function loadUID(uid){
     const hasLoan=d.has_loan||((d.bank_name_loan||d.outstanding_loan||d.loan_account_number)?'Yes':'No');
     document.getElementById('loanDocsCard').style.display=hasLoan==='Yes'?'block':'none';
     document.getElementById('loanDetailsCard').style.display=hasLoan==='Yes'?'block':'none';
+    document.getElementById('docsVerifyRow').style.display=hasLoan==='Yes'?'none':'flex';
+    if(d.docs_verification_mode)document.getElementById('docsVerifyDd').value=d.docs_verification_mode;
     if(hasLoan==='Yes'){
       document.getElementById('loanApplicant').value=d.loan_applicant_name||d.owner_broker_name||'';
       document.getElementById('loanCoApplicant').value=d.loan_co_applicant_name||d.co_owner||'';
@@ -458,8 +468,13 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   }
   // Mutation is required — must select from dropdown
   if(!propDocState.mutation?.status){missingPropDocs.push('Mutation (select status)')}
+  // Docs verification required when no loan
+  const docsVerifyVisible=document.getElementById('docsVerifyRow').style.display!=='none';
+  if(docsVerifyVisible&&!document.getElementById('docsVerifyDd').value){missingPropDocs.push('Documents Verification Done (select mode)')}
   if(missingPropDocs.length){toast(`${missingPropDocs[0]}`,'err');return}
   const body={uid:currentUid};
+  // Docs verification mode
+  if(docsVerifyVisible)body.docs_verification_mode=document.getElementById('docsVerifyDd').value||null;
   // Loan detail fields
   const loanDetailsVisible=document.getElementById('loanDetailsCard').style.display!=='none';
   if(loanDetailsVisible){
