@@ -179,36 +179,20 @@ function buildPropDocs(existing){
     const url=saved?saved.url:'';
 
     if(doc.isMutation){
-      const mutationStatus=saved?saved.mutationStatus:'';
-      const status=saved?saved.status:'';
-      propDocState[doc.key]={status,url,mutationStatus};
+      // Mutation: map saved status back to dropdown value
+      const MUTATION_MAP={'NA':'NA','Yes':'Completed','No':'Pending'};
+      const ddVal=saved?MUTATION_MAP[saved.status]||'':'';
+      propDocState[doc.key]={status:saved?.status||'',url:''};
       const row=document.createElement('div');
       row.innerHTML=`
         <div class="doc-row">
           <div class="doc-name">${doc.label} <span class="req">*</span></div>
           <select id="mutationDd" style="font-size:12px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);min-width:120px" onchange="onMutationDdChange(this.value)">
             <option value="">Select...</option>
-            <option value="NA" ${mutationStatus==='NA'?'selected':''}>NA</option>
-            <option value="Completed" ${mutationStatus==='Completed'?'selected':''}>Completed</option>
-            <option value="Pending" ${mutationStatus==='Pending'?'selected':''}>Pending</option>
+            <option value="NA" ${ddVal==='NA'?'selected':''}>NA</option>
+            <option value="Completed" ${ddVal==='Completed'?'selected':''}>Completed</option>
+            <option value="Pending" ${ddVal==='Pending'?'selected':''}>Pending</option>
           </select>
-        </div>
-        <div id="mutationUploadSection" style="display:${mutationStatus&&mutationStatus!=='NA'?'block':'none'}">
-          <div class="doc-row" style="padding-top:0">
-            <div class="doc-name" style="font-size:10px;color:var(--tx3)">Upload Status</div>
-            <div class="doc-toggle">
-              <button type="button" data-key="${doc.key}" data-val="NA" class="${status==='NA'?'active-na':''}">NA</button>
-              <button type="button" data-key="${doc.key}" data-val="Yes" class="${status==='Yes'?'active-yes':''}">Yes</button>
-              <button type="button" data-key="${doc.key}" data-val="No" class="${status==='No'?'active-no':''}">No</button>
-            </div>
-          </div>
-          <div class="doc-upload ${status==='No'?'show':''}" id="docUp_${doc.key}">
-            <div class="upload-row ${url?'done':''}" id="docRow_${doc.key}" onclick="document.getElementById('docFi_${doc.key}').click()">
-              ${url?'✓ Uploaded — click to replace':'📄 Upload document'}
-              <input type="file" id="docFi_${doc.key}" accept="image/*,.pdf" onchange="uploadPropDoc(this,'${doc.key}')">
-            </div>
-            ${url?`<div class="doc-upload-status"><a href="${url}" target="_blank" style="color:var(--ac2);font-size:10px">View uploaded</a></div>`:''}
-          </div>
         </div>`;
       container.appendChild(row);
       return;
@@ -260,15 +244,9 @@ function buildPropDocs(existing){
 }
 
 function onMutationDdChange(val){
-  propDocState.mutation.mutationStatus=val;
-  const sec=document.getElementById('mutationUploadSection');
-  if(!val||val==='NA'){
-    sec.style.display='none';
-    propDocState.mutation.status='';
-    propDocState.mutation.url='';
-  }else{
-    sec.style.display='block';
-  }
+  const STATUS_MAP={'NA':'NA','Completed':'Yes','Pending':'No'};
+  propDocState.mutation.status=STATUS_MAP[val]||'';
+  propDocState.mutation.url='';
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
@@ -479,7 +457,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     }
   }
   // Mutation is required — must select from dropdown
-  if(!propDocState.mutation?.mutationStatus){missingPropDocs.push('Mutation (select status)')}
+  if(!propDocState.mutation?.status){missingPropDocs.push('Mutation (select status)')}
   if(missingPropDocs.length){toast(`${missingPropDocs[0]}`,'err');return}
   const body={uid:currentUid};
   // Loan detail fields
