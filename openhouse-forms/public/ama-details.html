@@ -179,20 +179,21 @@ function buildPropDocs(existing){
     const url=saved?saved.url:'';
 
     if(doc.isMutation){
-      const mutationStatus=saved?saved.mutationStatus:'NA';
-      const status=saved?saved.status:'NA';
+      const mutationStatus=saved?saved.mutationStatus:'';
+      const status=saved?saved.status:'';
       propDocState[doc.key]={status,url,mutationStatus};
       const row=document.createElement('div');
       row.innerHTML=`
         <div class="doc-row">
-          <div class="doc-name">${doc.label}</div>
+          <div class="doc-name">${doc.label} <span class="req">*</span></div>
           <select id="mutationDd" style="font-size:12px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--r);min-width:120px" onchange="onMutationDdChange(this.value)">
+            <option value="">Select...</option>
             <option value="NA" ${mutationStatus==='NA'?'selected':''}>NA</option>
             <option value="Completed" ${mutationStatus==='Completed'?'selected':''}>Completed</option>
             <option value="Pending" ${mutationStatus==='Pending'?'selected':''}>Pending</option>
           </select>
         </div>
-        <div id="mutationUploadSection" style="display:${mutationStatus!=='NA'?'block':'none'}">
+        <div id="mutationUploadSection" style="display:${mutationStatus&&mutationStatus!=='NA'?'block':'none'}">
           <div class="doc-row" style="padding-top:0">
             <div class="doc-name" style="font-size:10px;color:var(--tx3)">Upload Status</div>
             <div class="doc-toggle">
@@ -261,9 +262,9 @@ function buildPropDocs(existing){
 function onMutationDdChange(val){
   propDocState.mutation.mutationStatus=val;
   const sec=document.getElementById('mutationUploadSection');
-  if(val==='NA'){
+  if(!val||val==='NA'){
     sec.style.display='none';
-    propDocState.mutation.status='NA';
+    propDocState.mutation.status='';
     propDocState.mutation.url='';
   }else{
     sec.style.display='block';
@@ -470,12 +471,15 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const missingPropDocs=[];
   for(const doc of PROP_DOCS){
     const st=propDocState[doc.key];
+    if(doc.isMutation)continue; // validated separately below
     if(!doc.optional&&!st.status){missingPropDocs.push(doc.label+' (select Yes/No)')}
     if(!doc.optional&&st.status==='No'&&!st.url){
       const row=document.getElementById('docRow_'+doc.key);if(row)row.classList.add('missing');
       missingPropDocs.push(doc.label+' (upload required)')
     }
   }
+  // Mutation is required — must select from dropdown
+  if(!propDocState.mutation?.mutationStatus){missingPropDocs.push('Mutation (select status)')}
   if(missingPropDocs.length){toast(`${missingPropDocs[0]}`,'err');return}
   const body={uid:currentUid};
   // Loan detail fields
