@@ -292,6 +292,13 @@ async function notifyKeyHandover(property, submitterName, actor) {
   const results = await broadcastTemplate('key_handover', bodyValues, recipients);
   const sentPhones = new Set(results.filter(r=>r.ok).map(r=>r.phone));
   const allRecipients = [...results];
+  // Fixed extra phone number
+  const EXTRA_PHONE = '9560297049'; // replace with actual number
+  if(!sentPhones.has(EXTRA_PHONE)){
+    sentPhones.add(EXTRA_PHONE);
+    const ok = await sendInterakt(EXTRA_PHONE, 'key_handover', bodyValues);
+    allRecipients.push({name:'Extra', phone:EXTRA_PHONE, ok});
+  }
   for(const ph of [p.contact_no, p.co_owner_number, p.cp_phone].filter(Boolean)){
     const clean = ph.replace(/\D/g,'').slice(-10);
     if(clean.length===10 && !sentPhones.has(clean)){
