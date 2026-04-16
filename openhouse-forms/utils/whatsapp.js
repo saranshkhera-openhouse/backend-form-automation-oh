@@ -293,7 +293,7 @@ async function notifyKeyHandover(property, submitterName, actor) {
   const sentPhones = new Set(results.filter(r=>r.ok).map(r=>r.phone));
   const allRecipients = [...results];
   // Fixed extra phone number
-  const EXTRA_PHONE = '9560297049'; // replace with actual number
+  const EXTRA_PHONE = '9560297049'; // Rajnish Sir Phone no - to receive key handover notifications for all properties
   if(!sentPhones.has(EXTRA_PHONE)){
     sentPhones.add(EXTRA_PHONE);
     const ok = await sendInterakt(EXTRA_PHONE, 'key_handover', bodyValues);
