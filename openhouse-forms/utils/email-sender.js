@@ -195,7 +195,7 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   const pdfFilename = `Token_Request_${p.uid || 'receipt'}.pdf`;
 
   console.log('Building MIME email...');
-  const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in','supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in',fromEmail);
+  const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in','supply@openhouse.in, bookings@openhouse.in',fromEmail);
   const emailCcFinal = await addManagerEmails(emailTo, emailCc, fromEmail);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
@@ -277,7 +277,7 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
 
   // Build recipient list
   const toList = [p.owner_email, p.co_owner_email, p.third_owner_email].filter(Boolean);
-  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'accounts@openhouse.in', 'saurabh@openhouse.in', p.broker_email].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'bookings@openhouse.in', 'accounts@openhouse.in',  p.broker_email].filter(Boolean);
 
   console.log('Building MIME email with PDF attachment...');
   const {to:dtTo,cc:dtCc}=testOverride(p.uid,'deal_terms',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
@@ -445,7 +445,7 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
 </body></html>`;
 
   const toList = [p.owner_email, p.co_owner_email, p.third_owner_email, 'accounts@openhouse.in'].filter(Boolean);
-  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in'].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'bookings@openhouse.in', 'accounts@openhouse.in'].filter(Boolean);
 
   const {to:paTo,cc:paCc}=testOverride(p.uid,'pending_amount',toList.join(', '),ccList.length?ccList.join(', '):'',fromEmail);
   const paCcFinal = await addManagerEmails(paTo, paCc, fromEmail);
@@ -489,7 +489,7 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
 </body></html>`;
 
   const toList = [p.owner_email, p.co_owner_email, p.third_owner_email].filter(Boolean);
-  const ccList = ['supply@openhouse.in', 'akash.teotia@openhouse.in', 'saurabh@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
+  const ccList = ['supply@openhouse.in', 'bookings@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
 
   const {to:khTo,cc:khCc}=testOverride(p.uid,'key_handover',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
   const khCcFinal = await addManagerEmails(khTo, khCc, fromEmail);
