@@ -94,7 +94,7 @@
       <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
         <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
       <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" id="loanAc"></div>
-      <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="number" name="outstanding_loan" id="loanAmt"></div>
+      <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="text" inputmode="numeric" name="outstanding_loan" id="loanAmt" oninput="this.value=this.value.replace(/\D/g,'')"></div>
       <div class="fg"><label>Willing to Pre-pay loan on his own?<span class="req">*</span></label>
         <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
     </div>
