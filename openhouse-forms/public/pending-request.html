@@ -273,7 +273,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   let amtHtml=`<li><strong>${o1Name}:</strong> INR ${o1Amt.toLocaleString('en-IN')}</li>`;
   if(o2Name&&o2Amt)amtHtml+=`<li><strong>${o2Name}:</strong> INR ${o2Amt.toLocaleString('en-IN')}</li>`;
   const toList=[propData.owner_email,propData.co_owner_email,propData.third_owner_email,'accounts@openhouse.in'].filter(Boolean).join(', ');
-  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','saurabh@openhouse.in'].filter(Boolean).join(', ');
+  const ccList=['supply@openhouse.in','bookings@openhouse.in'].filter(Boolean).join(', ');
   const amaUrl=signedAmaUrl||propData.signed_ama_url;
   let coDocHtml='';
   if(o2Name){

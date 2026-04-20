@@ -97,7 +97,7 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const addr=[propData.unit_no,propData.tower_no,propData.society_name,propData.locality,propData.city].filter(Boolean).join(', ');
   const hdDate=document.getElementById('hdDate').value?new Date(document.getElementById('hdDate').value+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
   const toList=[propData.owner_email,propData.co_owner_email,propData.third_owner_email].filter(Boolean).join(', ');
-  const ccList=['supply@openhouse.in','akash.teotia@openhouse.in','saurabh@openhouse.in','accounts@openhouse.in',propData.broker_email].filter(Boolean).join(', ');
+  const ccList=['supply@openhouse.in','bookings@openhouse.in','accounts@openhouse.in',propData.broker_email].filter(Boolean).join(', ');
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> ${toList}</p>
 ${ccList?`<p><strong>CC:</strong> ${ccList}</p>`:''}

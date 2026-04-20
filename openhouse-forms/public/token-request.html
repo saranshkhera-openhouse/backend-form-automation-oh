@@ -569,12 +569,13 @@ function showEmailPreview(){
   if(p.owner_property_doc_url)docLinks.push(`<strong>Property Ownership Doc:</strong> <a href="${p.owner_property_doc_url}" style="color:#1a73e8">View</a>`);
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> accounts@openhouse.in, rahool@openhouse.in</p>
-<p><strong>CC:</strong> supply@openhouse.in, akash.teotia@openhouse.in, saurabh@openhouse.in</p>
+<p><strong>CC:</strong> supply@openhouse.in, bookings@openhouse.in</p>
 <p><strong>Subject:</strong> ${currentUid} - Token Request | ${p.tower_no||''} ${p.unit_no||''} - ${p.society_name||'Property'} | ${ownerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Greetings of the day!</p>
 <p>Dear Accounts Team,</p>
 <p>Kindly process the token payment of <strong>${tokenAmt}</strong> for <strong>${propRef}</strong>. PFA the deal terms.</p>
+${p.token_remarks ? `<p><strong>Internal Team Remarks:</strong> ${p.token_remarks}</p>` : ''}
 <p>Rahool Sureka, please approve the same.</p>
 ${docLinks.length?docLinks.map(l=>`<p>${l}</p>`).join(''):''}
 <p style="margin-top:10px;font-size:11px;color:var(--tx3)">📎 Token Request PDF will be attached</p>
