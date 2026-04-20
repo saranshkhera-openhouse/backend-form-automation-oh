@@ -184,7 +184,7 @@ function notifyTokenRequest(property, actor) {
   const bodyValues = [p.uid||'-',amt,p.society_name||'-',p.tower_no||'-',p.unit_no||'-',p.token_requested_by||'-',p.owner_broker_name||'-'];
   return getRecipients(p, [p.assigned_by, p.token_requested_by, 'Saurabh']).then(r => {
     console.log(`WA: token_request | UID: ${p.uid} | To: ${r.join(', ')}`);
-    return broadcastTemplate('token_request', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'token_request',res,actor?.email,actor?.name).catch(()=>{});return res});
+    return broadcastTemplate('token_request_o8', bodyValues, r).then(res=>{logger.logWhatsApp(p.uid,'token_request',res,actor?.email,actor?.name).catch(()=>{});return res});
   });
 }
 

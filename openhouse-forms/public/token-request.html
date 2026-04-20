@@ -567,9 +567,12 @@ function showEmailPreview(){
   if(p.owner_aadhaar_front_url)docLinks.push(`<strong>Aadhaar Front:</strong> <a href="${p.owner_aadhaar_front_url}" style="color:#1a73e8">View</a>`);
   if(p.owner_aadhaar_back_url)docLinks.push(`<strong>Aadhaar Back:</strong> <a href="${p.owner_aadhaar_back_url}" style="color:#1a73e8">View</a>`);
   if(p.owner_property_doc_url)docLinks.push(`<strong>Property Ownership Doc:</strong> <a href="${p.owner_property_doc_url}" style="color:#1a73e8">View</a>`);
+  const city=(p.city||'').toLowerCase();
+  const isNoidaOrGzb=city.includes('noida')||city.includes('ghaziabad')||city.includes('gzb');
+  const ccStr=isNoidaOrGzb?'supply@openhouse.in, bookings@openhouse.in, shrey.vohra@openhouse.in':'supply@openhouse.in, bookings@openhouse.in';
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> accounts@openhouse.in, rahool@openhouse.in</p>
-<p><strong>CC:</strong> supply@openhouse.in, bookings@openhouse.in</p>
+<p><strong>CC:</strong> ${ccStr}</p>
 <p><strong>Subject:</strong> ${currentUid} - Token Request | ${p.tower_no||''} ${p.unit_no||''} - ${p.society_name||'Property'} | ${ownerName}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Greetings of the day!</p>

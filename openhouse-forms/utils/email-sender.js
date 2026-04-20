@@ -196,7 +196,11 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   const pdfFilename = `Token_Request_${p.uid || 'receipt'}.pdf`;
 
   console.log('Building MIME email...');
-  const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in','supply@openhouse.in, bookings@openhouse.in',fromEmail);
+  // Add Shrey to CC for Noida / Ghaziabad
+  const city = (p.city || '').toLowerCase();
+  const isNoidaOrGzb = city.includes('noida') || city.includes('ghaziabad') || city.includes('gzb');
+  const tokenCc = isNoidaOrGzb ? 'supply@openhouse.in, bookings@openhouse.in, shrey.vohra@openhouse.in' : 'supply@openhouse.in, bookings@openhouse.in';
+  const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in',tokenCc,fromEmail);
   const emailCcFinal = await addManagerEmails(emailTo, emailCc, fromEmail);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
