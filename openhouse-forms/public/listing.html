@@ -61,6 +61,7 @@
 </div>
 <script src="/js/shared.js"></script>
 <script>
+let currentUid='';
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
     const ur=await fetch(`${API}/api/listing/uids`);const uids=await ur.json();
@@ -72,6 +73,7 @@ document.getElementById('loadBtn').addEventListener('click',loadData);
 async function loadData(){const uid=document.getElementById('selUid').value;if(!uid){toast('Select UID','warn');return}
   const st=document.getElementById('pfSt');st.className='pf-st show';st.textContent='Loading...';
   try{const r=await fetch(`${API}/api/listing/prefill/${uid}`);if(!r.ok)throw new Error((await r.json()).error);const d=await r.json();
+    currentUid=d.uid||'';
     document.getElementById('fUid').value=d.uid;
     document.getElementById('l_uid').value=d.uid;document.getElementById('l_city').value=d.city||'';
     document.getElementById('l_soc').value=d.society_name||'';document.getElementById('l_loc').value=d.locality||'';
@@ -105,7 +107,17 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     showThankYou(body.uid)})});
 document.getElementById('sellerDashBtn').addEventListener('click',()=>{
   if(!currentUid){toast('Load a property first','warn');return}
-  toast('Coming soon','warn');
+  submitBtn(document.getElementById('sellerDashBtn'),async()=>{
+    const r=await fetch(`${API}/api/listing/update-seller-dashboard`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uid:currentUid}),
+    });
+    const res=await r.json();
+    if(!r.ok)throw new Error(res.error||'Failed to update seller dashboard');
+    console.log('[listing] update-seller-dashboard response',res);
+    toast('Seller dashboard listing updated','ok');
+  });
 });
 </script>
 </body></html>
