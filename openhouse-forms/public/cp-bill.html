@@ -118,7 +118,7 @@
     </div>
 
     <div class="card">
-      <div class="card-t">Remarks</div>
+      <div class="card-t">Remarks (THIS WILL BE SHOWN IN EMAIL)</div>
       <div class="fg"><label>CP Bill Remarks</label><textarea name="cp_bill_remarks" id="f_cpBillRemarks" rows="3" style="width:100%;font-family:inherit;resize:vertical"></textarea></div>
     </div>
 
@@ -561,6 +561,7 @@ ${previewIsFirm?`<tr><td style="padding:1px 10px 1px 0;font-weight:600">GST Appl
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Incentive for Visit:</td><td>₹${document.getElementById('f_incentiveVisit').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Incentive for Owner Meeting:</td><td>₹${document.getElementById('f_incentiveMeeting').value||'—'}</td></tr>
 <tr><td style="padding:1px 10px 1px 0;font-weight:600">Total Amount:</td><td>${document.getElementById('f_totalAmount').value||'—'}</td></tr>
+${document.getElementById('f_cpBillRemarks').value.trim()?`<tr><td style="padding:1px 10px 1px 0;font-weight:600;vertical-align:top">Remarks:</td><td>${document.getElementById('f_cpBillRemarks').value.trim()}</td></tr>`:''}
 </table>
 ${photoLines.length?`<p style="margin-top:10px"><strong>Attached Documents:</strong></p>${photoLines.join('<br>')}`:''}
 <p style="margin-top:10px">Prashant Singh, kindly approve the same.</p>

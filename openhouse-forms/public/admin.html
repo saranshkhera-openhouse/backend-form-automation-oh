@@ -96,9 +96,9 @@ tr.row-refunded td{color:#b45309!important;opacity:.7}
     <div class="stat" data-filter="deal" id="stDeal"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal Terms</div></div>
     <div class="stat" data-filter="ama" id="stAma"><div class="stat-val" id="sAma">—</div><div class="stat-lbl">AMA Req</div></div>
     <div class="stat" data-filter="amasigned" id="stAmaSgn"><div class="stat-val" id="sAmaSgn">—</div><div class="stat-lbl">AMA Signed</div></div>
+    <div class="stat" data-filter="listed" id="stLst"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
     <div class="stat" data-filter="cpbill" id="stCp"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
     <div class="stat" data-filter="final" id="stFin"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Key Handover</div></div>
-    <div class="stat" data-filter="listed" id="stLst"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
     <div class="stat" data-filter="refunded" id="stRef"><div class="stat-val" id="sRef" style="color:#b45309">—</div><div class="stat-lbl">Cancelled PT</div></div>
     <div class="stat" data-filter="dead" id="stCan"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
   </div>
@@ -112,9 +112,11 @@ tr.row-refunded td{color:#b45309!important;opacity:.7}
           <option value="scheduled">Scheduled</option><option value="visited">Visited</option>
           <option value="token">Token Req</option><option value="draft">Draft</option>
           <option value="deal">Deal Terms</option><option value="ama">AMA Req</option>
-          <option value="amasigned">AMA Signed</option><option value="cpbill">CP Bill</option>
+          <option value="amasigned">AMA Signed</option>
+          <option value="listed">Listed</option>
+          <option value="cpbill">CP Bill</option>
           <option value="final">Key Handover</option>
-          <option value="listed">Listed</option><option value="refunded">Cancelled Post Token</option><option value="dead">Cancelled</option>
+          <option value="refunded">Cancelled Post Token</option><option value="dead">Cancelled</option>
         </select>
         <button class="btn btn-out btn-sm" onclick="loadData()" title="Refresh data">↻</button>
       </div>
@@ -165,9 +167,9 @@ function latestTs(p){const ts=[p.schedule_submitted_at,p.visit_submitted_at,p.to
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead'};
   if(p.is_token_refunded)return{label:'Cancelled Post Token',cls:'s-ref',key:'refunded'};
-  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
   if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final'};
   if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill'};
+  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed'};
   if(p.pending_request_submitted_at)return{label:'AMA Signed',cls:'s-asgn',key:'amasigned'};
   if(p.ama_submitted_at)return{label:'AMA Req',cls:'s-ama',key:'ama'};
   if(p.token_deal_submitted_at)return{label:'Deal Terms',cls:'s-deal',key:'deal'};
@@ -239,9 +241,11 @@ function render(){let d=[...allData];const q=document.getElementById('fQ').value
       if(p.visit_submitted_at&&!p.token_submitted_at)acts.push(`<a href="/token-request?uid=${p.uid}" class="link">Token</a>`);
       if((p.token_submitted_at||p.token_is_draft)&&!p.token_deal_submitted_at)acts.push(`<a href="/token-deal?uid=${p.uid}" class="link">Deal</a>`);
       if(p.token_deal_submitted_at&&!p.ama_submitted_at)acts.push(`<a href="/ama-details?uid=${p.uid}" class="link">AMA</a>`);
-      if(p.ama_submitted_at&&!p.final_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">Final</a>`);
-      if(p.final_submitted_at&&!p.cp_bill_submitted_at)acts.push(`<a href="/cp-bill?uid=${p.uid}" class="link">CPBill</a>`);
-      if(p.final_submitted_at&&!p.listing_submitted_at)acts.push(`<a href="/listing?uid=${p.uid}" class="link">List</a>`);
+      if(p.ama_submitted_at&&!p.pending_request_submitted_at)acts.push(`<a href="/pending-request?uid=${p.uid}" class="link">AMASigned</a>`);
+      if(p.pending_request_submitted_at&&!p.listing_submitted_at)acts.push(`<a href="/listing?uid=${p.uid}" class="link">List</a>`);
+      const isDirect=/^OH[A-Z]*D[0-9]/.test(p.uid||'');
+      if(p.pending_request_submitted_at&&!p.cp_bill_submitted_at&&!isDirect)acts.push(`<a href="/cp-bill?uid=${p.uid}" class="link">CPBill</a>`);
+      if(p.pending_request_submitted_at&&!p.final_submitted_at)acts.push(`<a href="/final?uid=${p.uid}" class="link">KeyHO</a>`);
       if(p.final_submitted_at)acts.push(`<a href="/api/final/pdf/${p.uid}" class="link" target="_blank">PDF</a>`);
     }
     const lastDt=p.last_activity?fmtDt(p.last_activity):'—';
@@ -340,7 +344,7 @@ function buildModal(p){
   currentModalUid=p.uid;
   const mb=document.getElementById('modalBody');
   document.getElementById('saveStatus').textContent='';
-  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA Req',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at}];
+  const steps=[{name:'Schedule',done:!!p.schedule_submitted_at,ts:p.schedule_submitted_at},{name:'Visit',done:!!p.visit_submitted_at,ts:p.visit_submitted_at},{name:'Token Req',done:!!p.token_submitted_at,draft:p.token_is_draft,ts:p.token_submitted_at},{name:'Deal Terms',done:!!p.token_deal_submitted_at,ts:p.token_deal_submitted_at},{name:'AMA Req',done:!!p.ama_submitted_at,ts:p.ama_submitted_at},{name:'AMA Signed',done:!!p.pending_request_submitted_at,ts:p.pending_request_submitted_at},{name:'Listing',done:!!p.listing_submitted_at,ts:p.listing_submitted_at},{name:'CP Bill',done:!!p.cp_bill_submitted_at,ts:p.cp_bill_submitted_at},{name:'Key Handover',done:!!p.final_submitted_at,ts:p.final_submitted_at}];
   let statusHtml=steps.map(s=>{const cls=p.is_dead?'dead':p.is_token_refunded?'refunded':s.draft?'draft':s.done?'done':'pending';const label=p.is_dead?'Cancelled':p.is_token_refunded?'Cancelled PT':s.draft?s.name+' (Draft)':s.done?s.name+' ✓':s.name+' ✗';return`<div class="prev-step ${cls}" title="${s.ts?fmtDtFull(s.ts):''}">${label}</div>`}).join('');
   const extras=parseJ(p.extra_area).filter(x=>x!=='No Extra Room');const furnItems=parseJ(p.furnishing_details).filter(x=>x!=='No Items');const docs=parseJ(p.documents_available);
 
@@ -411,25 +415,7 @@ function buildModal(p){
     ${efRO('Submitted',fmtDtFull(p.pending_request_submitted_at))}
   </div></div>`;
 
-  html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 7)</div><div class="prev-grid">
-    ${ef('CP Code','cp_code',p.cp_code)}${ef('CP Name','cp_name',p.cp_name)}${ef('CP Phone','cp_phone',p.cp_phone)}
-    ${ef('CP Firm','cp_firm',p.cp_firm)}${ef('CP Email','cp_email',p.cp_email)}${efSel('GST Applicable','gst_applicable',p.gst_applicable,['Yes','No'])}
-    ${efSel('Deal Type','deal_type',p.deal_type,['Acquisition','Supply'])}${ef('OH Model','oh_acquired_model',p.oh_acquired_model)}
-    ${ef('Agreed Brokerage','agreed_brokerage',p.agreed_brokerage)}${ef('Deal Value','deal_value',p.deal_value)}${ef('Total Brokerage','total_brokerage_amount',p.total_brokerage_amount)}
-    ${ef('To Release Now','to_be_released_now',p.to_be_released_now)}${ef('Incentive Visit','incentive_visit',p.incentive_visit)}${ef('Incentive Meeting','incentive_owner_meeting',p.incentive_owner_meeting)}
-    ${ef('Total CP Amount','total_cp_amount',p.total_cp_amount)}
-    ${pvLink('CP Aadhaar Front',p.cp_aadhaar_front_url)}${pvLink('CP Aadhaar Back',p.cp_aadhaar_back_url)}
-    ${pvLink('COI',p.cp_coi_url)}${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
-    ${pvLink('GST Invoice',p.cp_gst_invoice_url)}${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
-    ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
-  </div></div>`;
-
-  html+=`<div class="prev-section"><div class="prev-section-t">Key Handover (Form 8)</div><div class="prev-grid">
-    ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Key Handover Date','key_handover_date',p.key_handover_date,'date')}
-    ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
-  </div></div>`;
-
-  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 9)</div><div class="prev-grid">
+  html+=`<div class="prev-section"><div class="prev-section-t">Listing (Form 7)</div><div class="prev-grid">
     ${ef('Super Area (sqft)','super_area',p.super_area,'number')}${ef('Carpet Area (sqft)','carpet_area',p.carpet_area,'number')}
     ${efSel('Seller Residential Status','seller_residential_status',p.seller_residential_status,['RI','NRI'])}${efSel('Sellers on Registry','sellers_available_on_registry',p.sellers_available_on_registry,['Yes','No'])}
     ${ef('Asking Price (L)','listing_asking_price',p.listing_asking_price,'number')}${ef('Availability','listing_availability',p.listing_availability)}${ef('Society Age (yrs)','society_age_years',p.society_age_years,'number')}
@@ -438,6 +424,25 @@ function buildModal(p){
     ${efSel('Alpha/Beta','alpha_beta',p.alpha_beta,['Alpha','Beta'])}${ef('Beta %','beta_pct',p.beta_pct,'number')}${ef('Loan Status','loan_status',p.loan_status)}
     ${ef('Seller Location','seller_location',p.seller_location)}${ef('Circle Rate (₹)','circle_rate',p.circle_rate,'number')}${ef('Parking Number','parking_number',p.parking_number)}
     ${efArea('Highlights','listing_highlights',p.listing_highlights)}${efArea('Description','listing_description',p.listing_description)}${efRO('Submitted',fmtDtFull(p.listing_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">CP Bill Generation (Form 8)</div><div class="prev-grid">
+    ${ef('CP Code','cp_code',p.cp_code)}${ef('CP Name','cp_name',p.cp_name)}${ef('CP Phone','cp_phone',p.cp_phone)}
+    ${ef('CP Firm','cp_firm',p.cp_firm)}${ef('CP Email','cp_email',p.cp_email)}${efSel('GST Applicable','gst_applicable',p.gst_applicable,['Yes','No'])}
+    ${efSel('Deal Type','deal_type',p.deal_type,['Acquisition','Supply'])}${ef('OH Model','oh_acquired_model',p.oh_acquired_model)}
+    ${ef('Agreed Brokerage','agreed_brokerage',p.agreed_brokerage)}${ef('Deal Value','deal_value',p.deal_value)}${ef('Total Brokerage','total_brokerage_amount',p.total_brokerage_amount)}
+    ${ef('To Release Now','to_be_released_now',p.to_be_released_now)}${ef('Incentive Visit','incentive_visit',p.incentive_visit)}${ef('Incentive Meeting','incentive_owner_meeting',p.incentive_owner_meeting)}
+    ${ef('Total CP Amount','total_cp_amount',p.total_cp_amount)}
+    ${efArea('CP Bill Remarks','cp_bill_remarks',p.cp_bill_remarks)}
+    ${pvLink('CP Aadhaar Front',p.cp_aadhaar_front_url)}${pvLink('CP Aadhaar Back',p.cp_aadhaar_back_url)}
+    ${pvLink('COI',p.cp_coi_url)}${pvLink('CP PAN Card',p.cp_pan_card_url)}${pvLink('CP Cancelled Cheque',p.cp_cancelled_cheque_url)}
+    ${pvLink('GST Invoice',p.cp_gst_invoice_url)}${pvLink('CP AMA Signed',p.cp_ama_signed_url)}
+    ${efRO('Submitted',fmtDtFull(p.cp_bill_submitted_at))}
+  </div></div>`;
+
+  html+=`<div class="prev-section"><div class="prev-section-t">Key Handover (Form 9)</div><div class="prev-grid">
+    ${ef('Remaining (₹)','remaining_amount',p.remaining_amount,'number')}${ef('Key Handover Date','key_handover_date',p.key_handover_date,'date')}
+    ${efRO('Submitted',fmtDtFull(p.final_submitted_at))}
   </div></div>`;
 
   mb.innerHTML=html;

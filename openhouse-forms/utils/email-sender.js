@@ -385,6 +385,7 @@ async function sendCPBillEmail({ accessToken, refreshToken, fromEmail, senderNam
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Incentive for Visit:</td><td>${p.incentive_visit?'₹'+Number(p.incentive_visit).toLocaleString('en-IN'):'—'}</td></tr>
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Incentive for Owner Meeting:</td><td>${p.incentive_owner_meeting?'₹'+Number(p.incentive_owner_meeting).toLocaleString('en-IN'):'—'}</td></tr>
   <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap">Total Amount:</td><td>${p.total_cp_amount?'₹'+Number(p.total_cp_amount).toLocaleString('en-IN'):'—'}</td></tr>
+${p.cp_bill_remarks?`  <tr><td style="padding:2px 12px 2px 0;font-weight:bold;white-space:nowrap;vertical-align:top">Remarks:</td><td>${p.cp_bill_remarks}</td></tr>`:''}
 </table>
 ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</strong></p><ul style="line-height:2">${photoLinks.join('')}</ul>`:''}
 <p style="margin-top:16px">Prashant Singh, kindly approve the same.</p>
@@ -517,4 +518,4 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
 }
 
 // Send offer email to property owner with PDF attachment
-module.exports = { init, sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendKeyHandoverEmail, htmlToPdf };
+module.exports = { init, sendTokenRequestEmail, sendDealTermsEmail, sendCPBillEmail, sendPendingAmountEmail, sendKeyHandoverEmail, htmlToPdf }; 

@@ -26,7 +26,7 @@ module.exports=function(pool){
         WHERE uid=$2`,
         [parseFloat(d.remaining_amount)||null,d.uid,d.key_handover_date||null]);
       res.json({success:true,uid:d.uid});
-      logger.logFormSubmit(d.uid,'key_handover_submitted',8,req.user?.email,req.user?.name).catch(()=>{});
+      logger.logFormSubmit(d.uid,'key_handover_submitted',9,req.user?.email,req.user?.name).catch(()=>{});
     }catch(e){console.error('Final:',e);res.status(500).json({error:e.message})}
   });
   router.get('/pdf/:uid',async(req,res)=>{

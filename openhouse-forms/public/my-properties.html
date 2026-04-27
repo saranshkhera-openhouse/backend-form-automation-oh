@@ -73,9 +73,9 @@
     <div class="stat" data-filter="deal"><div class="stat-val" id="sDeal">—</div><div class="stat-lbl">Deal Terms</div></div>
     <div class="stat" data-filter="ama"><div class="stat-val" id="sAma">—</div><div class="stat-lbl">AMA Req</div></div>
     <div class="stat" data-filter="amasigned"><div class="stat-val" id="sAmaSgn">—</div><div class="stat-lbl">AMA Signed</div></div>
+    <div class="stat" data-filter="listed"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
     <div class="stat" data-filter="cpbill"><div class="stat-val" id="sCp">—</div><div class="stat-lbl">CP Bill</div></div>
     <div class="stat" data-filter="final"><div class="stat-val" id="sFin">—</div><div class="stat-lbl">Key Handover</div></div>
-    <div class="stat" data-filter="listed"><div class="stat-val" id="sLst">—</div><div class="stat-lbl">Listed</div></div>
     <div class="stat" data-filter="refunded"><div class="stat-val" id="sRef" style="color:#b45309">—</div><div class="stat-lbl">Cancelled PT</div></div>
     <div class="stat" data-filter="dead"><div class="stat-val" id="sCan" style="color:var(--red)">—</div><div class="stat-lbl">Cancelled</div></div>
   </div>
@@ -89,9 +89,9 @@
       <option value="deal">Deal Terms</option>
       <option value="ama">AMA Req</option>
       <option value="amasigned">AMA Signed</option>
+      <option value="listed">Listed</option>
       <option value="cpbill">CP Bill</option>
       <option value="final">Key Handover</option>
-      <option value="listed">Listed</option>
       <option value="refunded">Cancelled Post Token</option>
       <option value="dead">Cancelled</option>
     </select>
@@ -109,9 +109,9 @@ function fmtTime12(t){if(!t)return'—';const[h,m]=t.split(':');const hr=parseIn
 function getStage(p){
   if(p.is_dead)return{label:'Cancelled',cls:'s-can',key:'dead',step:0};
   if(p.is_token_refunded)return{label:'Cancelled Post Token',cls:'s-ref',key:'refunded',step:0};
-  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:9};
-  if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final',step:8};
-  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill',step:7};
+  if(p.final_submitted_at)return{label:'Key Handover',cls:'s-fin',key:'final',step:9};
+  if(p.cp_bill_submitted_at)return{label:'CP Bill',cls:'s-cp',key:'cpbill',step:8};
+  if(p.listing_submitted_at)return{label:'Listed',cls:'s-lst',key:'listed',step:7};
   if(p.pending_request_submitted_at)return{label:'AMA Signed',cls:'s-asgn',key:'amasigned',step:6};
   if(p.ama_submitted_at)return{label:'AMA Req',cls:'s-ama',key:'ama',step:5};
   if(p.token_deal_submitted_at)return{label:'Deal Terms',cls:'s-deal',key:'deal',step:4};
@@ -169,9 +169,9 @@ function renderProps(){
       {n:'Deal Terms',ok:!!p.token_deal_submitted_at},
       {n:'AMA Req',ok:!!p.ama_submitted_at},
       {n:'AMA Signed',ok:!!p.pending_request_submitted_at},
+      {n:'Listing',ok:!!p.listing_submitted_at},
       {n:'CP Bill',ok:!!p.cp_bill_submitted_at},
-      {n:'Key Handover',ok:!!p.final_submitted_at},
-      {n:'Listing',ok:!!p.listing_submitted_at}
+      {n:'Key Handover',ok:!!p.final_submitted_at}
     ];
     const statusHtml=dead?'<span class="ps dead">Cancelled</span>':refunded?'<span class="ps" style="background:#fef3c7;color:#b45309">Cancelled Post Token</span>':steps.map(s=>{
       const cls=s.draft?'draft':s.ok?'done':'pending';
