@@ -117,6 +117,11 @@
       <div class="fg"><label>Total Amount (₹)</label><input type="text" id="f_totalAmount" class="pre" readonly></div>
     </div>
 
+    <div class="card">
+      <div class="card-t">Remarks</div>
+      <div class="fg"><label>CP Bill Remarks</label><textarea name="cp_bill_remarks" id="f_cpBillRemarks" rows="3" style="width:100%;font-family:inherit;resize:vertical"></textarea></div>
+    </div>
+
     <div class="card" id="docsCard">
       <div class="card-t">Documents Upload for CP <span class="req">*</span></div>
       <div class="photo-upload">
@@ -392,6 +397,7 @@ async function loadUID(uid){
     document.getElementById('f_release').value=d.to_be_released_now||'';
     document.getElementById('f_incentiveVisit').value=d.incentive_visit||'';
     document.getElementById('f_incentiveMeeting').value=d.incentive_owner_meeting||'';
+    document.getElementById('f_cpBillRemarks').value=d.cp_bill_remarks||'';
     calcTotal();
     // Doc URLs
     for(const[key,col]of Object.entries(DOC_MAP)){
@@ -472,6 +478,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const iv=parseFloat(body.incentive_visit)||0;
   const im=parseFloat(body.incentive_owner_meeting)||0;
   body.total_cp_amount=String(rel+iv+im);
+  body.cp_bill_remarks=document.getElementById('f_cpBillRemarks').value.trim()||null;
   for(const[key,col]of Object.entries(DOC_MAP)){body[col]=docUrls[key]||null}
 
   if(!body.cp_name){toast('CP Name required','err');return}

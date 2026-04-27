@@ -205,6 +205,7 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_gst_invoice_url') THEN ALTER TABLE properties ADD COLUMN cp_gst_invoice_url TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_coi_url') THEN ALTER TABLE properties ADD COLUMN cp_coi_url TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='docs_verification_mode') THEN ALTER TABLE properties ADD COLUMN docs_verification_mode TEXT; END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='cp_bill_remarks') THEN ALTER TABLE properties ADD COLUMN cp_bill_remarks TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='third_owner_email') THEN ALTER TABLE properties ADD COLUMN third_owner_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='broker_email') THEN ALTER TABLE properties ADD COLUMN broker_email TEXT; END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='ama_sanction_url') THEN ALTER TABLE properties ADD COLUMN ama_sanction_url TEXT; END IF;
