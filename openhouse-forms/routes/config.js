@@ -5,7 +5,7 @@ module.exports=function(pool){
     configurations:["2 BHK","2.5 BHK","3 BHK","3.5 BHK","4 BHK"],
     extraAreas:["Basement","Lawn","Terrace","Servant Room","Store Room","Study Room","Pooja Room","No Extra Room"],
     possessionStatuses:["Owner Staying","Tenant","Vacant"],
-    parkingOptions:["1 Open","1 Closed","2 Open","2 Closed","1 Open + 1 Closed","No Parking"],
+    parkingOptions:["1 Open","1 Closed","2 Open","2 Closed","1 Open + 1 Closed","Stilt Parking","No Parking"],
     furnishingLevels:["Unfurnished","Semi-Furnished","Fully Furnished"],
     furnishingDetails:["Lights","Fans","Modular Kitchen","Chimney","Almirahs","ACs","Geysers"],
     directions:["North","South","East","West","North-East","North-West","South-East","South-West"],
