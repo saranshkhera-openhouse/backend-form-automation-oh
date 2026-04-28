@@ -78,6 +78,8 @@ app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listin
 app.use('/api/cp-bill', isAuthenticated, hasFormAccess, require('./routes/cp-bill')(pool));
 app.use('/api/cp-inventory', isAuthenticated, require('./routes/cp-inventory')(pool));
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
+// External integrations — uses X-Internal-Key header auth, NO session auth
+app.use('/api/external', require('./routes/external')(pool));
 
 app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
   try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
