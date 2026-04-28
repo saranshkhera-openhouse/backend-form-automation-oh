@@ -83,7 +83,7 @@ module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
-      if(!rows[0].final_submitted_at)return res.status(400).json({error:'Key Handover (Form 8) must be submitted first'});
+      if(!rows[0].pending_request_submitted_at)return res.status(400).json({error:'AMA Acknowledgement (Form 6) must be submitted first'});
       res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
   });
   router.get('/uids',async(req,res)=>{
