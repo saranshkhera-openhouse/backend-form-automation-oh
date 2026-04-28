@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS properties (
 );
 CREATE INDEX IF NOT EXISTS idx_prop_city ON properties(city);
 CREATE INDEX IF NOT EXISTS idx_prop_created ON properties(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_prop_lead_id ON properties(lead_id);
 
 CREATE TABLE IF NOT EXISTS cp_inventory (
   id SERIAL PRIMARY KEY,
