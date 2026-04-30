@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   try{
     const[cr,pr]=await Promise.all([fetch(`${API}/api/config`),fetch(`${API}/api/my-properties`)]);
     const opts=(await cr.json()).options;
-    assignedToList=[...opts.assignedToList,...opts.assignedByList].filter((v,i,a)=>a.indexOf(v)===i).sort();
+    assignedToList=[...opts.assignedToList].sort();
     allProps=await pr.json();
     allProps.forEach(p=>p._stage=getStage(p));
     updateStatCounts();
