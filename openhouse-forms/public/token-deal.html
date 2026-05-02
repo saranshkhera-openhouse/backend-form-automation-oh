@@ -75,7 +75,7 @@
 
 <div class="email-overlay" id="emailModal">
   <div class="email-box">
-    <div class="email-hdr"><h3 style="font-size:14px;margin:0">Email Preview</h3><button class="btn btn-out btn-sm" onclick="closeEmailModal()">✕</button></div>
+    <div class="email-hdr"><h3 style="font-size:14px;margin:0">Email Preview</h3><button type="button" class="btn btn-sm" id="listPropBtn" style="background:#FFC837;color:#000;border:1px solid #e6b432;font-size:11px">Create Seller Dashboard</button></div>
     <div class="email-recipients" id="emailRecipients"></div>
     <div class="email-body" id="emailPreviewBody"></div>
     <div class="email-ftr">
@@ -238,7 +238,31 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 [Contact Number]<br>
 Website - <a href="https://www.openhouse.in" style="color:#1a73e8">www.openhouse.in</a></p>
 <p style="font-size:11px;color:#999;margin-top:12px"><em>📎 Deal Terms PDF will be attached automatically</em></p>`;
+  syncListPropBtn();
   document.getElementById('emailModal').classList.add('open');
+});
+
+function syncListPropBtn(){
+  const btn=document.getElementById('listPropBtn');
+  if(propData&&propData.core_home_id){btn.textContent='Seller dashboard linked';btn.disabled=true}
+  else{btn.textContent='Create Seller Dashboard';btn.disabled=false}
+}
+
+document.getElementById('listPropBtn').addEventListener('click',async()=>{
+  if(!currentUid){toast('Load a property first','warn');return}
+  const btn=document.getElementById('listPropBtn');btn.disabled=true;
+  try{
+    const r=await fetch(`${API}/api/ama-details/create-seller-dashboard`,{
+      method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+      body:JSON.stringify({uid:currentUid})
+    });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error||j.message||`Request failed (${r.status})`);
+    toast(j.message||(j.idempotent?'Already linked':'Seller dashboard created'),'ok');
+    const hid=j.homeId??j.home_id;
+    if(hid!=null&&propData)propData.core_home_id=hid;
+    syncListPropBtn();
+  }catch(e){toast(e.message||'Failed','err');btn.disabled=false}
 });
 
 function closeEmailModal(){document.getElementById('emailModal').classList.remove('open')}
