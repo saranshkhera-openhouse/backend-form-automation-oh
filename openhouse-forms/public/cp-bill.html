@@ -407,7 +407,7 @@ async function loadUID(uid){
         const link=item.querySelector('.pu-link');if(!link){const a=document.createElement('a');a.className='pu-link';a.href=d[col];a.target='_blank';a.textContent='View';a.onclick=e=>e.stopPropagation();item.appendChild(a)}}
     }
     document.getElementById('cpBillForm').style.display='block';
-    document.getElementById('emailBtn').style.display=((isAdmin||isManager)&&d.cp_bill_submitted_at)?'block':'none';
+    document.getElementById('emailBtn').style.display=d.cp_bill_submitted_at?'block':'none';
     st.className='pf-st show ok';st.textContent=`Loaded: ${uid}${d.cp_bill_submitted_at?' (Submitted)':''}`;
   }catch(e){st.className='pf-st show err';st.textContent=e.message;document.getElementById('cpBillForm').style.display='none'}
 }
@@ -515,7 +515,7 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);
     toast('CP Bill submitted!','ok');
-    if(isAdmin||isManager)document.getElementById('emailBtn').style.display='block';
+    document.getElementById('emailBtn').style.display='block';
   });
 });
 
