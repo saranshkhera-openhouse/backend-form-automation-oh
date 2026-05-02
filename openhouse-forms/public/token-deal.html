@@ -252,7 +252,7 @@ document.getElementById('listPropBtn').addEventListener('click',async()=>{
   if(!currentUid){toast('Load a property first','warn');return}
   const btn=document.getElementById('listPropBtn');btn.disabled=true;
   try{
-    const r=await fetch(`${API}/api/ama-details/create-seller-dashboard`,{
+    const r=await fetch(`${API}/api/token-deal/create-seller-dashboard`,{
       method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
       body:JSON.stringify({uid:currentUid})
     });
