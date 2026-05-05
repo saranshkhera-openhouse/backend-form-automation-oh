@@ -65,7 +65,7 @@ module.exports=function(pool){
         if(old[0].owner_broker_name!==owner_broker_name)changes.owner_broker_name={old:old[0].owner_broker_name,new:owner_broker_name};
         if(contact_no&&old[0].contact_no!==contact_no)changes.contact_no={old:old[0].contact_no,new:contact_no};
         if(cp_name&&old[0].cp_name!==cp_name)changes.cp_name={old:old[0].cp_name,new:cp_name};
-        if(Object.keys(changes).length)logger.logAdminEdit(req.params.uid,changes,req.user?.email,req.user?.name).catch(()=>{});
+        if(Object.keys(changes).length)logger.log(req.params.uid,'broker/cp change','pre-email change',req.user?.email,req.user?.name,{changes}).catch(()=>{});
       }
     }catch(e){console.error('UpdateOwner:',e);res.status(500).json({error:e.message})}
   });
