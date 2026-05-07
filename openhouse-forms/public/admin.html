@@ -468,7 +468,7 @@ async function saveModal(){
 
 document.querySelectorAll('.tbl th[data-s]').forEach(th=>{th.addEventListener('click',()=>{const c=th.dataset.s;if(sortCol===c)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=c;sortDir='asc'}render()})});
 document.getElementById('fQ').addEventListener('input',render);document.getElementById('fCity').addEventListener('change',render);document.getElementById('fAb').addEventListener('change',render);document.getElementById('fSt').addEventListener('change',render);
-document.addEventListener('DOMContentLoaded',()=>{const todayStr=new Date().toISOString().split('T')[0];document.getElementById('fDateFrom').max=todayStr;document.getElementById('fDateTo').max=todayStr;loadData()});
+document.addEventListener('DOMContentLoaded',()=>{const todayStr=new Date().toISOString().split('T')[0];document.getElementById('fDateFrom').max=todayStr;document.getElementById('fDateTo').max=todayStr;loadData();const qUid=new URLSearchParams(window.location.search).get('uid');if(qUid)openModal(qUid)});
 
 const FORM_KEYS=['schedule','visit','token-request','token-deal','ama-details','pending-request','cp-bill','final','listing'];
 const FORM_LABELS={schedule:'Schedule',visit:'Audit','token-request':'Token Req','token-deal':'Deal Terms','ama-details':'AMA Req','pending-request':'AMA Signed',final:'Key Handover','cp-bill':'CP Bill',listing:'Listing'};
