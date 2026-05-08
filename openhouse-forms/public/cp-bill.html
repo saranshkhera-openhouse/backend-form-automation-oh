@@ -537,9 +537,12 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   if(docUrls.cp_cancelled_cheque)photoLines.push(`• <a href="${docUrls.cp_cancelled_cheque}" target="_blank">Cancelled Cheque</a>`);
   if(previewGstYes&&docUrls.cp_gst_invoice)photoLines.push(`• <a href="${docUrls.cp_gst_invoice}" target="_blank">GST Invoice</a>`);
   if(docUrls.cp_ama_signed)photoLines.push(`• <a href="${docUrls.cp_ama_signed}" target="_blank">AMA Signed (PDF)</a>`);
+  const _city=(loadedData?.city||'').toLowerCase();
+  const _cityCc=_city.includes('gurgaon')||_city.includes('gurugram')?'shashank.kumar@openhouse.in':_city.includes('ghaziabad')||_city.includes('gzb')?'animesh.singh@openhouse.in':_city.includes('noida')?'abhishek.rathore@openhouse.in':null;
+  const _cpCc=['supply@openhouse.in',_cityCc].filter(Boolean).join(', ');
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> prashant@openhouse.in, accounts@openhouse.in</p>
-<p><strong>CC:</strong> supply@openhouse.in</p>
+<p><strong>CC:</strong> ${_cpCc}</p>
 <p><strong>Subject:</strong> ${currentUid} - CP Bill Request | ${loadedData?.tower_no||''} ${loadedData?.unit_no||''} - ${loadedData?.society_name||'Property'} | ${document.getElementById('f_cpName').value||'CP'}</p>
 <hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">
 <p>Hi Accounts Team,</p>

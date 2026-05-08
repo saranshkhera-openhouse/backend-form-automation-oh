@@ -207,7 +207,9 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
 
   // Recipient display
   const toList=[ownerEmail,document.getElementById('dCoOwnerEmail').value,document.getElementById('dThirdEmail').value].filter(Boolean);
-  const ccList=['supply@openhouse.in','bookings@openhouse.in','accounts@openhouse.in',document.getElementById('dBrokerEmail').value].filter(Boolean);
+  const _city=(d?.city||'').toLowerCase();
+  const _cityCc=_city.includes('gurgaon')||_city.includes('gurugram')?'shashank.kumar@openhouse.in':_city.includes('ghaziabad')||_city.includes('gzb')?'animesh.singh@openhouse.in':_city.includes('noida')?'abhishek.rathore@openhouse.in':null;
+  const ccList=['supply@openhouse.in','bookings@openhouse.in','accounts@openhouse.in',document.getElementById('dBrokerEmail').value,_cityCc].filter(Boolean);
   document.getElementById('emailRecipients').innerHTML=`<strong>To:</strong> ${toList.join(', ')}${ccList.length?'<br><strong>Cc:</strong> '+ccList.join(', '):''}`;
 
   document.getElementById('emailPreviewBody').innerHTML=`

@@ -45,6 +45,23 @@ async function addManagerEmails(toStr, ccStr, fromEmail) {
   } catch (e) { console.error('addManagerEmails error:', e.message); return ccStr; }
 }
 
+// City-based CC routing — cluster heads receive a copy of all property emails for their city
+function getCityCc(city) {
+  const c = (city || '').toLowerCase();
+  if (c.includes('gurgaon') || c.includes('gurugram')) return 'shashank.kumar@openhouse.in';
+  if (c.includes('ghaziabad') || c.includes('gzb')) return 'animesh.singh@openhouse.in';
+  if (c.includes('noida')) return 'abhishek.rathore@openhouse.in';
+  return null;
+}
+function appendCityCc(ccStr, city) {
+  const cityCc = getCityCc(city);
+  if (!cityCc) return ccStr || '';
+  const existing = (ccStr || '').split(',').map(e => e.trim()).filter(Boolean);
+  if (existing.some(e => e.toLowerCase() === cityCc.toLowerCase())) return existing.join(', ');
+  existing.push(cityCc);
+  return existing.join(', ');
+}
+
 // Test UIDs — override recipients per email type
 // To add test UIDs: add entries below. To disable: remove the UID key.
 const TEST_OVERRIDES = {
@@ -200,7 +217,8 @@ ${p.owner_property_doc_url ? `<p><strong>Property Ownership Document:</strong> <
   const city = (p.city || '').toLowerCase();
   const isNoidaOrGzb = city.includes('noida') || city.includes('ghaziabad') || city.includes('gzb');
   const tokenCc = isNoidaOrGzb ? 'supply@openhouse.in, bookings@openhouse.in, shrey.vohra@openhouse.in' : 'supply@openhouse.in, bookings@openhouse.in';
-  const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in',tokenCc,fromEmail);
+  const tokenCcWithCity = appendCityCc(tokenCc, p.city);
+  const {to:emailTo,cc:emailCc}=testOverride(p.uid,'token_request','accounts@openhouse.in, rahool@openhouse.in',tokenCcWithCity,fromEmail);
   const emailCcFinal = await addManagerEmails(emailTo, emailCc, fromEmail);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
@@ -283,9 +301,10 @@ ${signatoryPhone ? signatoryPhone + '<br>' : ''}Website - <a href="https://www.o
   // Build recipient list
   const toList = [p.owner_email, p.co_owner_email, p.third_owner_email].filter(Boolean);
   const ccList = ['supply@openhouse.in', 'bookings@openhouse.in', 'accounts@openhouse.in',  p.broker_email].filter(Boolean);
+  const dtCcStr = appendCityCc(ccList.join(', '), p.city);
 
   console.log('Building MIME email with PDF attachment...');
-  const {to:dtTo,cc:dtCc}=testOverride(p.uid,'deal_terms',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
+  const {to:dtTo,cc:dtCc}=testOverride(p.uid,'deal_terms',toList.join(', '),dtCcStr||null,fromEmail);
   const dtCcFinal = await addManagerEmails(dtTo, dtCc, fromEmail);
   const { raw, msgId } = buildMimeEmail({
     from: fromEmail,
@@ -392,7 +411,8 @@ ${photoLinks.length?`<p style="margin-top:16px"><strong>Attached Documents:</str
 <p>Best,<br><strong>${senderName}</strong></p>
 </body></html>`;
 
-  const {to:cpTo,cc:cpCc}=testOverride(p.uid,'cp_bill','prashant@openhouse.in,accounts@openhouse.in','supply@openhouse.in',fromEmail);
+  const cpCcStr = appendCityCc('supply@openhouse.in', p.city);
+  const {to:cpTo,cc:cpCc}=testOverride(p.uid,'cp_bill','prashant@openhouse.in,accounts@openhouse.in',cpCcStr,fromEmail);
   const cpCcFinal = await addManagerEmails(cpTo, cpCc, fromEmail);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
@@ -452,8 +472,9 @@ ${p.signed_ama_url ? `<p><strong>AMA Link:</strong> <a href="${p.signed_ama_url}
 
   const toList = [p.owner_email, p.co_owner_email, p.third_owner_email, 'accounts@openhouse.in'].filter(Boolean);
   const ccList = ['supply@openhouse.in', 'bookings@openhouse.in', 'accounts@openhouse.in'].filter(Boolean);
+  const paCcStr = appendCityCc(ccList.join(', '), p.city);
 
-  const {to:paTo,cc:paCc}=testOverride(p.uid,'pending_amount',toList.join(', '),ccList.length?ccList.join(', '):'',fromEmail);
+  const {to:paTo,cc:paCc}=testOverride(p.uid,'pending_amount',toList.join(', '),paCcStr||'',fromEmail);
   const paCcFinal = await addManagerEmails(paTo, paCc, fromEmail);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,
@@ -496,8 +517,9 @@ async function sendKeyHandoverEmail({ accessToken, refreshToken, fromEmail, send
 
   const toList = [p.owner_email, p.co_owner_email, p.third_owner_email].filter(Boolean);
   const ccList = ['supply@openhouse.in', 'bookings@openhouse.in', 'accounts@openhouse.in', p.broker_email].filter(Boolean);
+  const khCcStr = appendCityCc(ccList.join(', '), p.city);
 
-  const {to:khTo,cc:khCc}=testOverride(p.uid,'key_handover',toList.join(', '),ccList.length?ccList.join(', '):null,fromEmail);
+  const {to:khTo,cc:khCc}=testOverride(p.uid,'key_handover',toList.join(', '),khCcStr||null,fromEmail);
   const khCcFinal = await addManagerEmails(khTo, khCc, fromEmail);
   const { raw, msgId } = buildSimpleMimeEmail({
     from: fromEmail,

@@ -569,7 +569,9 @@ function showEmailPreview(){
   if(p.owner_property_doc_url)docLinks.push(`<strong>Property Ownership Doc:</strong> <a href="${p.owner_property_doc_url}" style="color:#1a73e8">View</a>`);
   const city=(p.city||'').toLowerCase();
   const isNoidaOrGzb=city.includes('noida')||city.includes('ghaziabad')||city.includes('gzb');
-  const ccStr=isNoidaOrGzb?'supply@openhouse.in, bookings@openhouse.in, shrey.vohra@openhouse.in':'supply@openhouse.in, bookings@openhouse.in';
+  const _cityCc=city.includes('gurgaon')||city.includes('gurugram')?'shashank.kumar@openhouse.in':city.includes('ghaziabad')||city.includes('gzb')?'animesh.singh@openhouse.in':city.includes('noida')?'abhishek.rathore@openhouse.in':null;
+  const _baseCc=isNoidaOrGzb?'supply@openhouse.in, bookings@openhouse.in, shrey.vohra@openhouse.in':'supply@openhouse.in, bookings@openhouse.in';
+  const ccStr=_cityCc?`${_baseCc}, ${_cityCc}`:_baseCc;
   const html=`<div style="font-size:13px;line-height:1.8">
 <p><strong>To:</strong> accounts@openhouse.in, rahool@openhouse.in</p>
 <p><strong>CC:</strong> ${ccStr}</p>
