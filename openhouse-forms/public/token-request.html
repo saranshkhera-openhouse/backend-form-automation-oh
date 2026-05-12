@@ -138,7 +138,7 @@
 
     <div class="card" id="loanDocsCard" style="display:none"><div class="card-t">Loan Documents</div>
       <div class="fg">
-        <label>Sanction Letter <span class="req">*</span></label>
+        <label>Sanction Letter</label>
         <div class="upload-row" id="up_sanction" onclick="document.getElementById('fi_sanction').click()">
           📄 Upload Sanction Letter
           <input type="file" id="fi_sanction" accept="image/*,.pdf" onchange="uploadLoanDoc(this,'sanction')">
@@ -154,7 +154,7 @@
         <div class="doc-upload-status" id="st_soa"></div>
       </div>
       <div class="fg">
-        <label>List of Documents (LOD) <span class="req">*</span></label>
+        <label>List of Documents (LOD)</label>
         <div class="upload-row" id="up_lod" onclick="document.getElementById('fi_lod').click()">
           📄 Upload LOD
           <input type="file" id="fi_lod" accept="image/*,.pdf" onchange="uploadLoanDoc(this,'lod')">
@@ -176,8 +176,6 @@
         <div class="fg"><label>Electricity Charges Alignment <span class="req">*</span></label>
           <select name="ama_elec_alignment" id="elecAlign" required><option value="">Select...</option><option>Seller</option><option>OH</option></select><div class="err-msg">Required</div></div>
       </div>
-      <div class="fg"><label>Special Terms other than AMF (Sale Price - Acq Price) <span class="req">*</span></label>
-        <textarea name="ama_special_terms" id="specialTerms" rows="3" required></textarea><div class="err-msg">Required</div></div>
     </div>
 
     <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available <span class="req">*</span></div>
@@ -498,7 +496,6 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('betaMin').value=d.ama_beta_min_pct||'';
     document.getElementById('maintAlign').value=d.ama_maint_alignment||'';
     document.getElementById('elecAlign').value=d.ama_elec_alignment||'';
-    document.getElementById('specialTerms').value=d.ama_special_terms||d.token_remarks_printed||'';
     sv('token_remarks',d.token_remarks);
     sv('token_remarks_printed',d.token_remarks_printed);
     if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
@@ -537,7 +534,6 @@ function collectBody(){const fd=new FormData(document.getElementById('tokenForm'
   body.ama_beta_min_pct=document.getElementById('betaMin').value!==''?parseFloat(document.getElementById('betaMin').value):null;
   body.ama_maint_alignment=document.getElementById('maintAlign').value||null;
   body.ama_elec_alignment=document.getElementById('elecAlign').value||null;
-  body.ama_special_terms=document.getElementById('specialTerms').value.trim()||null;
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
   submitBtn(document.getElementById('draftBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -554,13 +550,9 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
     if(!document.getElementById('loanAc').value.trim()){toast('Loan A/C Number required','err');return}
     if(!document.getElementById('loanAmt').value){toast('Outstanding Loan required','err');return}
     if(!document.querySelector('input[name="loan_pay_willingness"]:checked')){toast('Select Willing to pay loan','err');return}
-    // Validate loan documents
-    const missingLoanDocs=[];
-    ['sanction','soa','lod'].forEach(k=>document.getElementById('up_'+k).classList.remove('missing'));
-    for(const k of['sanction','soa','lod']){
-      if(!loanDocUrls[k]){missingLoanDocs.push(LOAN_DOC_LABEL[k]);document.getElementById('up_'+k).classList.add('missing')}
-    }
-    if(missingLoanDocs.length){toast(`Upload required: ${missingLoanDocs.join(', ')}`,'err');return}
+    // Validate loan documents (only SOA is mandatory)
+    document.getElementById('up_soa').classList.remove('missing');
+    if(!loanDocUrls.soa){document.getElementById('up_soa').classList.add('missing');toast(`Upload required: ${LOAN_DOC_LABEL.soa}`,'err');return}
   }
   // Validate owner documents — skip if already submitted (docs already in DB)
   const alreadySubmitted=!!(loadedData&&loadedData.token_submitted_at&&!loadedData.token_is_draft);
